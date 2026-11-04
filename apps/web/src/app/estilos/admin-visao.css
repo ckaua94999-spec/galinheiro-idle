@@ -1,0 +1,632 @@
+/* Visão geral do painel (cliente/admin/visao): KPIs, filtros de período, cartões de projeção e gráficos.
+   Escopo .admin; a grade segue a largura do conteúdo (container queries), não a da tela. */
+
+.admin .vg {
+  --vg-alt: 240px; /* altura de um gráfico (celular) */
+  container-type: inline-size;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+@container (min-width: 700px) {
+  .admin .vg-tendencias {
+    --vg-alt: 280px;
+  }
+}
+
+/* ---------------------------------------------------------------- KPIs */
+.admin .vg-kpis {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+@container (max-width: 339px) {
+  .admin .vg-kpis {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@container (min-width: 860px) {
+  .admin .vg-kpis {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+  }
+}
+.admin .vg-kpis .adm-kpi {
+  container-type: inline-size;
+  min-width: 0;
+}
+/* o valor encolhe com o cartão (moedas com muitos dígitos não estouram no celular) */
+.admin .vg-kpis .adm-kpi-valor {
+  font-size: clamp(19px, 11.5cqi, 26px);
+  white-space: nowrap;
+}
+.admin .vg-kpis .adm-kpi-detalhe {
+  line-height: 1.45;
+}
+.admin .vg-kpis .adm-kpi-detalhe strong {
+  color: var(--adm-texto);
+  font-weight: 800;
+}
+.admin .vg-kpi-linha {
+  display: block;
+}
+.admin .vg-nw {
+  white-space: nowrap;
+}
+.admin .vg-kpi-unidade {
+  color: var(--adm-suave);
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0;
+}
+.admin .vg-kpi-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 6px;
+  border-radius: 6px;
+  color: #15803d;
+  font-weight: 800;
+  text-decoration: none;
+}
+.admin .vg-kpi-link:hover {
+  text-decoration: underline;
+}
+.admin .vg-kpi-link:focus-visible {
+  outline: 2px solid var(--adm-verde);
+  outline-offset: 2px;
+}
+.admin .vg-especies {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1px 14px;
+  margin-top: 2px;
+}
+@container (min-width: 200px) {
+  .admin .vg-especies {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+.admin .vg-especie {
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+/* ---------------------------------------------------------------- filtros de período */
+.admin .vg-filtros {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px 24px;
+  margin-bottom: 14px;
+}
+.admin :is(.vg-titulo, .vg-proj-titulo, .vg-fig-titulo) {
+  font-family: var(--font-texto);
+}
+.admin .vg-titulo {
+  font-size: 19px;
+  font-weight: 900;
+  letter-spacing: -0.01em;
+}
+.admin .vg-descricao {
+  max-width: 64ch;
+  margin-top: 2px;
+  color: var(--adm-suave);
+  font-size: 13px;
+}
+.admin .vg-filtros-controles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+}
+.admin .vg-seg-grupo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.admin .vg-seg-rotulo {
+  color: var(--adm-suave);
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.admin .vg-seg {
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid var(--adm-borda);
+  border-radius: 12px;
+  background: #e9edf3;
+}
+.admin .vg-seg-opcao {
+  position: relative;
+}
+.admin .vg-seg-opcao input {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.admin .vg-seg-opcao span {
+  display: grid;
+  place-items: center;
+  min-height: 34px;
+  padding: 0 12px;
+  border-radius: 9px;
+  color: var(--adm-suave);
+  font-size: 13px;
+  font-weight: 800;
+  white-space: nowrap;
+  transition: background 0.15s, color 0.15s;
+}
+.admin .vg-seg-opcao:hover span {
+  color: var(--adm-texto);
+}
+.admin .vg-seg-opcao input:checked + span {
+  background: #fff;
+  color: #15803d;
+  box-shadow: 0 1px 2px rgb(16 24 40 / 0.1), 0 0 0 1px #d5dbe5;
+}
+.admin .vg-seg-opcao input:focus-visible + span {
+  outline: 2px solid var(--adm-verde);
+  outline-offset: 1px;
+}
+
+/* troca de período: o quadro anterior fica esmaecido (sem pular o layout) até os novos dados chegarem */
+.admin .vg-conteudo {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.admin .vg-conteudo > * {
+  transition: opacity 0.2s;
+}
+.admin .vg-conteudo[data-recarregando] > :not(.vg-recarregando) {
+  opacity: 0.5;
+}
+.admin .vg-recarregando {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 14px;
+  border: 1px solid var(--adm-borda);
+  border-radius: 999px;
+  background: #fff;
+  box-shadow: 0 6px 18px rgb(15 23 42 / 0.12);
+  color: var(--adm-texto);
+  font-size: 13px;
+  font-weight: 800;
+  white-space: nowrap;
+  transform: translateX(-50%);
+}
+.admin .vg-aviso {
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: #fef3c7;
+  color: #92400e;
+  font-size: 13px;
+  font-weight: 700;
+}
+.admin .vg-falha {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+/* ---------------------------------------------------------------- cartões de projeção */
+.admin .vg-proj {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+}
+@container (min-width: 900px) {
+  .admin .vg-proj {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+.admin .vg-proj-cartao {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid var(--adm-borda);
+  border-radius: 16px;
+  background: var(--adm-cartao);
+  box-shadow: 0 1px 2px rgb(16 24 40 / 0.04);
+}
+.admin .vg-proj-cabeca {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.admin .vg-proj-titulo {
+  font-size: 15px;
+  font-weight: 900;
+}
+.admin .vg-proj-quando {
+  margin-left: auto;
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: #f1f4f9;
+  color: var(--adm-suave);
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+.admin .vg-proj-rotulo {
+  color: var(--adm-suave);
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.admin .vg-proj-numero {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 8px;
+  margin-top: -3px;
+  font-size: 26px;
+  font-weight: 900;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+.admin .vg-proj-numero .adm-selo {
+  align-self: center;
+  font-size: 13px;
+  letter-spacing: 0;
+}
+.admin .vg-proj-unidade {
+  color: var(--adm-suave);
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0;
+}
+.admin .vg-proj-dados {
+  display: grid;
+  font-size: 13px;
+}
+.admin .vg-proj-dado {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 2px 12px;
+  padding: 6px 0;
+  border-top: 1px solid #eef1f6;
+}
+.admin .vg-proj-dado dt {
+  color: var(--adm-suave);
+  font-weight: 700;
+}
+.admin .vg-proj-dado dd {
+  font-weight: 800;
+  text-align: right;
+}
+.admin .vg-proj-hoje {
+  color: var(--adm-suave);
+  font-weight: 600;
+}
+.admin .vg-proj-nota {
+  display: flex;
+  gap: 7px;
+  margin-top: auto;
+  padding: 9px 10px;
+  border-radius: 10px;
+  background: #f5f7fb;
+  color: #55607a;
+  font-size: 12px;
+  line-height: 1.45;
+}
+.admin .vg-proj-nota svg {
+  margin-top: 2px;
+}
+
+/* ---------------------------------------------------------------- seções e figuras */
+.admin .vg-secao-nome {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+}
+.admin .vg-secao-icone {
+  display: inline-grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 9px;
+  background: #eef1f6;
+  color: var(--adm-suave);
+}
+.admin .vg-secao-icone[data-tom='verde'] {
+  background: #dcfce7;
+  color: #15803d;
+}
+.admin .vg-secao-icone[data-tom='ambar'] {
+  background: #fef3c7;
+  color: #b45309;
+}
+.admin .vg-secao-icone[data-tom='azul'] {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+@container (min-width: 700px) {
+  .admin .vg-secao,
+  .admin .vg-proj-cartao {
+    padding: 20px;
+  }
+}
+
+.admin .vg-graficos {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 28px;
+}
+@container (min-width: 980px) {
+  .admin .vg-graficos[data-colunas='2'] {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 32px;
+  }
+}
+.admin .vg-fig {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  margin: 0;
+}
+.admin .vg-fig-cabeca {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+.admin .vg-fig-titulo {
+  font-size: 15px;
+  font-weight: 900;
+}
+.admin .vg-fig-sub {
+  margin-top: 1px;
+  color: var(--adm-suave);
+  font-size: 12.5px;
+}
+.admin .vg-fig-sub strong {
+  color: var(--adm-texto);
+  font-weight: 800;
+}
+.admin .vg-fig-botao {
+  flex-shrink: 0;
+  color: var(--adm-suave);
+}
+.admin .vg-fig-botao[aria-pressed='true'] {
+  background: #eef1f6;
+  color: var(--adm-texto);
+}
+
+.admin .vg-legenda {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 4px;
+  margin-left: -8px;
+  font-size: 12px;
+}
+.admin .vg-leg,
+.admin .vg-leg-fixo {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 28px;
+  padding: 0 8px;
+  border-radius: 8px;
+}
+.admin .vg-leg {
+  color: #334155;
+  font-weight: 700;
+  cursor: pointer;
+}
+.admin .vg-leg:hover {
+  background: #f1f4f9;
+}
+.admin .vg-leg:focus-visible {
+  outline: 2px solid var(--adm-verde);
+  outline-offset: 1px;
+}
+.admin .vg-leg[aria-pressed='false'] {
+  color: #9aa4b5;
+  text-decoration: line-through;
+}
+.admin .vg-leg[aria-pressed='false'] .vg-chave {
+  opacity: 0.35;
+}
+.admin .vg-leg-fixo {
+  color: var(--adm-suave);
+  font-weight: 600;
+}
+.admin .vg-chave {
+  flex-shrink: 0;
+}
+
+.admin .vg-paineis {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.admin .vg-plot {
+  min-width: 0;
+  height: var(--vg-alt);
+}
+/* com faixa inferior (ex.: novos sob o total), o conjunto fica com a altura de um gráfico + a faixa */
+.admin .vg-plot[data-painel='principal']:has(+ .vg-plot) {
+  height: calc(var(--vg-alt) - 64px);
+}
+.admin .vg-plot[data-painel='faixa'] {
+  height: 88px;
+}
+.admin .vg-plot :is(.recharts-wrapper, .recharts-surface):focus {
+  outline: none;
+}
+.admin .vg-plot :is(.recharts-wrapper, .recharts-surface):focus-visible {
+  outline: 2px solid var(--adm-verde);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* rótulos dentro do SVG */
+.admin .vg-rotulo-hoje text {
+  fill: #475569;
+  font-size: 11px;
+  font-weight: 800;
+}
+.admin .vg-rotulo-hoje .vg-rotulo-proj {
+  fill: #8a94a8;
+  font-weight: 700;
+}
+.admin .vg-rotulo-fim {
+  fill: #1e293b;
+  font-size: 11px;
+  font-weight: 800;
+  paint-order: stroke;
+  stroke: #fff;
+  stroke-width: 3px;
+  stroke-linejoin: round;
+}
+
+.admin .vg-fig-nota {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  color: var(--adm-suave);
+  font-size: 12px;
+  line-height: 1.45;
+}
+.admin .vg-fig-nota-item {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 6px;
+}
+.admin .vg-fig-nota-item svg {
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+/* ---------------------------------------------------------------- dica (tooltip) */
+.admin .vg-dica {
+  min-width: 200px;
+  max-width: 300px;
+  padding: 10px 12px;
+  border: 1px solid var(--adm-borda);
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 10px 28px rgb(15 23 42 / 0.14);
+  color: var(--adm-texto);
+  font-size: 13px;
+}
+.admin .vg-dica-dia {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 6px;
+  font-weight: 800;
+}
+.admin .vg-dica-fase {
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: #eef1f6;
+  color: var(--adm-suave);
+  font-size: 11px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+.admin .vg-dica ul {
+  display: grid;
+  gap: 5px;
+}
+.admin .vg-dica-item {
+  display: grid;
+  grid-template-columns: 16px auto minmax(0, 1fr);
+  align-items: baseline;
+  column-gap: 8px;
+}
+.admin .vg-dica-item .vg-chave {
+  align-self: center;
+}
+.admin .vg-dica-valor {
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  white-space: nowrap;
+}
+.admin .vg-dica-nome {
+  color: var(--adm-suave);
+  font-weight: 600;
+}
+.admin .vg-dica-faixa {
+  display: block;
+  color: #8a94a8;
+  font-size: 11.5px;
+}
+
+/* ---------------------------------------------------------------- tabela (equivalente do gráfico) */
+.admin .vg-tabela {
+  position: relative;
+  max-height: calc(var(--vg-alt) + 60px);
+  overflow: auto;
+  border: 1px solid var(--adm-borda);
+  border-radius: 12px;
+}
+.admin .vg-tabela:focus-visible {
+  outline: 2px solid var(--adm-verde);
+  outline-offset: 2px;
+}
+.admin .vg-tabela .adm-tabela {
+  font-size: 13px;
+}
+.admin .vg-tabela .adm-tabela thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: #fff;
+}
+.admin .vg-tabela .adm-tabela tbody th {
+  padding: 7px 10px;
+  border-bottom: 1px solid #eef1f6;
+  color: var(--adm-texto);
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0;
+  text-align: left;
+  text-transform: none;
+  white-space: nowrap;
+}
+.admin .vg-tabela .adm-tabela td {
+  padding: 7px 10px;
+}
+.admin .vg-tabela tr[data-fase='futuro'] :is(th, td) {
+  background: #fafbfd;
+  color: #6b7690;
+}
+.admin .vg-tabela tr[data-fase='hoje'] :is(th, td) {
+  background: #f2fbf5;
+}
+.admin .vg-tab-semana {
+  margin-right: 4px;
+  color: var(--adm-suave);
+  font-weight: 600;
+}
+.admin .vg-tab-faixa {
+  display: block;
+  color: #94a3b8;
+  font-size: 11px;
+}

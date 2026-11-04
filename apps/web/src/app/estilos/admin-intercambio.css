@@ -1,0 +1,1814 @@
+/* Painel: Intercâmbio (ofertas e regras dos tickets) e Cupons (escopo .admin). Telas em cliente/admin/intercambio e
+   cliente/admin/cupons; seção Tickets da ficha do membro. Prefixos: itc- (intercâmbio e peças dos tickets), cup- (cupons).
+   Reaproveita peças da ficha (adm-us-: opções, segmentos, alertas, passo) e dos popups (pop-: filtros, switch).
+   Cores: rosa = tickets (vale do jogo), âmbar = moedas do jogo. Containers de largura só em caixas SEM modais dentro
+   (container-type faz o position: fixed dos modais se prender à caixa). */
+
+.admin {
+  --itc-rosa: #db2777;
+  --itc-rosa-escuro: #9d174d;
+  --itc-rosa-fundo: #fdf2f8;
+  --itc-rosa-borda: #fbcfe8;
+}
+
+/* ================================================================ peças dos tickets */
+.admin .itc,
+.admin .cup {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.admin :is(.itc, .cup) > .adm-pagina-cabeca {
+  margin-bottom: 0;
+}
+.admin .itc-texto-suave {
+  color: var(--adm-suave);
+  font-size: 13px;
+  line-height: 1.45;
+}
+.admin .itc-opcional {
+  color: var(--adm-suave);
+  font-weight: 600;
+}
+.admin .itc-link {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 3px;
+  color: #15803d;
+  font-weight: 800;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.admin .itc-link > svg {
+  align-self: center;
+}
+.admin .itc-link:hover {
+  text-decoration: underline;
+}
+.admin .itc-link:focus-visible {
+  border-radius: 4px;
+  outline: 2px solid var(--adm-verde);
+  outline-offset: 2px;
+}
+
+/* aviso: de onde vêm os tickets */
+.admin .itc-aviso {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 11px 14px;
+  border: 1px solid var(--itc-rosa-borda);
+  border-radius: 14px;
+  background: linear-gradient(90deg, #fdf2f8, #fff8fc 70%);
+  color: #831843;
+  font-size: 13.5px;
+  line-height: 1.45;
+}
+.admin .itc-aviso strong {
+  font-weight: 900;
+}
+.admin .itc-aviso-ticket {
+  flex: none;
+  width: 30px;
+  height: 23px;
+  margin-top: -1px;
+}
+
+/* fichinha "🎟 10 tickets" */
+.admin .itc-chip-tickets {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px 3px 6px;
+  border: 1px solid var(--itc-rosa-borda);
+  border-radius: 999px;
+  background: linear-gradient(180deg, #fff, var(--itc-rosa-fundo));
+  color: var(--itc-rosa-escuro);
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+.admin .itc-chip-icone {
+  flex: none;
+  width: 22px;
+  height: 17px;
+}
+.admin .itc-chip-n {
+  font-size: 15px;
+}
+.admin .itc-chip-rotulo {
+  color: #be185d;
+  font-size: 12px;
+  font-weight: 800;
+}
+.admin .itc-chip-tickets[data-tamanho='p'] {
+  gap: 4px;
+  padding: 2px 8px 2px 5px;
+}
+.admin .itc-chip-tickets[data-tamanho='p'] .itc-chip-icone {
+  width: 17px;
+  height: 13px;
+}
+.admin .itc-chip-tickets[data-tamanho='p'] .itc-chip-n {
+  font-size: 13px;
+}
+.admin .itc-chip-tickets[data-tamanho='p'] .itc-chip-rotulo {
+  font-size: 11px;
+}
+.admin .itc-chip-tickets[data-tamanho='g'] {
+  gap: 7px;
+  padding: 5px 14px 5px 8px;
+  box-shadow: 0 2px 0 #f9a8d4;
+}
+.admin .itc-chip-tickets[data-tamanho='g'] .itc-chip-icone {
+  width: 30px;
+  height: 23px;
+}
+.admin .itc-chip-tickets[data-tamanho='g'] .itc-chip-n {
+  font-size: 20px;
+}
+.admin .itc-chip-tickets[data-tamanho='g'] .itc-chip-rotulo {
+  font-size: 14px;
+}
+
+/* arte da oferta: ladrilho da cor da espécie com os ovos empilhados (e a quantidade) ou o animal */
+.admin .itc-arte {
+  --u: 1;
+  --ladrilho-a: #fff8eb;
+  --ladrilho-b: #ffe6c2;
+  --ladrilho-borda: #f4d5a2;
+  position: relative;
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: calc(56px * var(--u));
+  height: calc(56px * var(--u));
+  border: 1px solid var(--ladrilho-borda);
+  border-radius: calc(15px * var(--u));
+  background: radial-gradient(circle at 50% 30%, #fff 0%, var(--ladrilho-a) 42%, var(--ladrilho-b) 100%);
+  box-shadow: inset 0 calc(-3px * var(--u)) 0 rgb(120 72 0 / 0.07);
+}
+.admin .itc-arte[data-especie='pato'] {
+  --ladrilho-a: #f0f7ff;
+  --ladrilho-b: #d5e8ff;
+  --ladrilho-borda: #b9d6f6;
+}
+.admin .itc-arte[data-especie='ganso'] {
+  --ladrilho-a: #f6f3ff;
+  --ladrilho-b: #e3dbff;
+  --ladrilho-borda: #d1c5fa;
+}
+.admin .itc-arte[data-especie='avestruz'] {
+  --ladrilho-a: #fffbeb;
+  --ladrilho-b: #fdeeb8;
+  --ladrilho-borda: #f1d98a;
+}
+.admin .itc-arte[data-tamanho='p'] {
+  --u: 0.72;
+}
+.admin .itc-arte[data-tamanho='g'] {
+  --u: 1.75;
+}
+.admin .itc-arte[data-apagada] {
+  filter: grayscale(0.9);
+  opacity: 0.62;
+}
+.admin .itc-arte-ovo {
+  position: absolute;
+  width: calc(27px * var(--u));
+  height: calc(32px * var(--u));
+  filter: drop-shadow(0 calc(2px * var(--u)) 0 rgb(80 50 10 / 0.12));
+}
+.admin .itc-arte-ovo-frente {
+  bottom: calc(7px * var(--u));
+  left: 50%;
+  translate: -50% 0;
+}
+.admin .itc-arte-ovo-esq,
+.admin .itc-arte-ovo-dir {
+  bottom: calc(14px * var(--u));
+  width: calc(21px * var(--u));
+  height: calc(25px * var(--u));
+}
+.admin .itc-arte-ovo-esq {
+  left: calc(7px * var(--u));
+  rotate: -16deg;
+}
+.admin .itc-arte-ovo-dir {
+  right: calc(7px * var(--u));
+  rotate: 16deg;
+}
+.admin .itc-arte-qtd {
+  position: absolute;
+  right: calc(-7px * var(--u));
+  bottom: calc(-6px * var(--u));
+  min-width: calc(24px * var(--u));
+  padding: 1px calc(6px * var(--u));
+  border: 2px solid #fff;
+  border-radius: 999px;
+  background: #1f2a3d;
+  color: #fff;
+  font-size: calc(11.5px * var(--u));
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.35;
+  text-align: center;
+  box-shadow: 0 1px 3px rgb(15 23 42 / 0.25);
+}
+.admin .itc-arte-animal {
+  width: calc(50px * var(--u));
+  height: calc(50px * var(--u));
+}
+
+/* ================================================================ estatísticas: circulação + fluxo de 30 dias */
+.admin .adm-cartao.itc-fluxo {
+  container-type: inline-size;
+  overflow: hidden;
+  padding: 0;
+}
+.admin .itc-fluxo-grade {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+}
+.admin .itc-fluxo-circulacao {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--itc-rosa-borda);
+  background:
+    radial-gradient(circle at 15% 20%, rgb(255 255 255 / 0.8), transparent 55%),
+    linear-gradient(135deg, #fdf2f8, #fce7f3);
+}
+.admin .itc-fluxo-ticket {
+  flex: none;
+  width: 56px;
+  height: 42px;
+  rotate: -9deg;
+  filter: drop-shadow(0 3px 0 rgb(157 23 77 / 0.16));
+}
+.admin .itc-fluxo-rotulo {
+  color: var(--adm-suave);
+  font-size: 11.5px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.admin .itc-fluxo-circulacao .itc-fluxo-rotulo {
+  color: #9d174d;
+}
+.admin .itc-fluxo-total {
+  color: #500724;
+  font-size: 30px;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+  line-height: 1.15;
+}
+.admin .itc-fluxo-total span {
+  color: #9d174d;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0;
+}
+.admin .itc-fluxo-sub {
+  color: #9d174d;
+  font-size: 12.5px;
+  font-weight: 600;
+}
+.admin .itc-fluxo-periodo {
+  container-type: inline-size;
+  min-width: 0;
+  padding: 14px 16px 16px;
+}
+.admin .itc-fluxo-lista {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 8px;
+}
+.admin .itc-fluxo-item {
+  --tom: #475569;
+  --tom-fundo: #eef1f6;
+  min-width: 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: #f6f8fc;
+}
+.admin .itc-fluxo-item[data-tom='azul'] { --tom: #1d4ed8; --tom-fundo: #dbeafe; }
+.admin .itc-fluxo-item[data-tom='ambar'] { --tom: #b45309; --tom-fundo: #fef3c7; }
+.admin .itc-fluxo-item[data-tom='roxo'] { --tom: #6d28d9; --tom-fundo: #ede9fe; }
+.admin .itc-fluxo-item[data-tom='verde'] { --tom: #15803d; --tom-fundo: #dcfce7; }
+.admin .itc-fluxo-item dt {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: #334155;
+  font-size: 12.5px;
+  font-weight: 800;
+}
+.admin .itc-fluxo-icone {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 8px;
+  background: var(--tom-fundo);
+  color: var(--tom);
+}
+.admin .itc-fluxo-item dd {
+  margin-top: 6px;
+  font-size: 21px;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.15;
+}
+.admin .itc-fluxo-item dd.itc-fluxo-item-sub {
+  margin-top: 1px;
+  color: var(--adm-suave);
+  font-size: 11.5px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+@container (min-width: 720px) {
+  .admin .itc-fluxo-grade {
+    grid-template-columns: 240px minmax(0, 1fr);
+  }
+  .admin .itc-fluxo-circulacao {
+    border-right: 1px solid var(--itc-rosa-borda);
+    border-bottom: 0;
+  }
+}
+@container (min-width: 440px) {
+  .admin .itc-fluxo-lista {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+@container (min-width: 700px) {
+  .admin .itc-fluxo-lista {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+}
+
+/* ================================================================ regras */
+.admin .itc-regras {
+  container-type: inline-size;
+}
+.admin .itc-regras-selos,
+.admin .itc-confirmar-selos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.admin .itc-regras-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+}
+@container (min-width: 760px) {
+  .admin .itc-regras-form {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px 24px;
+  }
+}
+@container (max-width: 440px) {
+  .admin .itc-regras .adm-us-opcoes-grade {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.admin .itc-regra-campo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+.admin fieldset.itc-regra-campo > legend {
+  margin-bottom: 6px;
+}
+.admin .itc-opcao-ambar:has(input:checked) {
+  border-color: #f59e0b;
+  background: #fffbeb;
+  box-shadow: 0 0 0 3px rgb(245 158 11 / 0.16);
+}
+.admin .itc-opcao-ambar:has(input:checked) .adm-us-opcao-icone {
+  color: #b45309;
+}
+.admin .itc-campo-preco {
+  max-width: 340px;
+}
+.admin .itc-campo-preco input.adm-input {
+  padding-right: 92px;
+}
+.admin .itc-campo-preco input.adm-input[aria-invalid='true'] {
+  border-color: #f87171;
+  background: #fffafa;
+}
+.admin .itc-campo-sufixo {
+  position: absolute;
+  top: 50%;
+  right: 14px;
+  translate: 0 -50%;
+  color: var(--adm-suave);
+  font-size: 13px;
+  font-weight: 800;
+  pointer-events: none;
+}
+.admin .itc-dica-ok,
+.admin .itc-dica-ruim {
+  font-size: 12.5px;
+  font-weight: 700;
+  line-height: 1.45;
+}
+.admin .itc-dica-ok {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: #15803d;
+}
+.admin .itc-dica-ruim {
+  color: #b91c1c;
+}
+.admin .itc-dica-ruim .itc-link {
+  color: #b91c1c;
+  text-decoration: underline;
+}
+.admin .itc-limite {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+.admin .itc-limite .adm-us-segmentos {
+  flex: 0 1 280px;
+}
+.admin .itc-limite-campo {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #334155;
+  font-size: 13.5px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+.admin .itc-limite-campo input.adm-input {
+  width: 92px;
+  font-size: 16px;
+  font-weight: 900;
+  text-align: center;
+}
+.admin .itc-limite-campo input.adm-input[aria-invalid='true'] {
+  border-color: #f87171;
+  background: #fffafa;
+}
+.admin .itc-regras-nota {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  color: var(--adm-suave);
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+.admin .itc-regras-nota svg {
+  margin-top: 2px;
+}
+/* rodapé do cartão: o que mudou + desfazer/salvar (gruda no pé da tela enquanto há alteração) */
+.admin .itc-regras-rodape {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 16px;
+  margin: 0 -16px -16px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--adm-borda);
+  border-radius: 0 0 16px 16px;
+  background: #f8fafc;
+}
+.admin .itc-regras-rodape[data-sujo] {
+  position: sticky;
+  bottom: 0;
+  z-index: 6;
+  border-top-color: #bbf7d0;
+  background: rgb(240 253 244 / 0.97);
+  box-shadow: 0 -8px 24px rgb(22 163 74 / 0.12);
+  backdrop-filter: blur(6px);
+}
+.admin .itc-salvar-titulo {
+  font-size: 14px;
+  font-weight: 900;
+}
+.admin .itc-salvar-alerta {
+  color: #b91c1c;
+}
+.admin .itc-salvar-detalhe {
+  overflow: hidden;
+  color: #334155;
+  font-size: 12.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.admin .itc-salvar-detalhe[data-erro] {
+  color: #b91c1c;
+  font-weight: 700;
+}
+.admin .itc-salvar-ok {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--adm-suave);
+  font-size: 13px;
+  font-weight: 700;
+}
+.admin .itc-salvar-ok > svg {
+  color: #16a34a;
+}
+.admin .itc-salvar-ok .itc-link {
+  color: var(--adm-suave);
+}
+.admin .itc-salvar-botoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+@media (max-width: 520px) {
+  .admin .itc-salvar-botoes {
+    flex: 1 1 100%;
+  }
+  .admin .itc-salvar-botoes > * {
+    flex: 1 1 0;
+  }
+  .admin .itc-salvar-detalhe {
+    white-space: normal;
+  }
+}
+.admin .itc-aviso-fora {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin-bottom: 14px;
+  padding: 12px 14px;
+  border: 1px solid #fde68a;
+  border-radius: 14px;
+  background: #fffbeb;
+  color: #92400e;
+  font-size: 13.5px;
+  font-weight: 700;
+}
+.admin .itc-confirmar-novo {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border-radius: 12px;
+  background: #f6f8fc;
+}
+
+/* ================================================================ ofertas */
+.admin .itc-explica {
+  margin: -4px 0 12px;
+}
+.admin .itc-ofertas-caixa {
+  container-type: inline-size;
+}
+.admin .itc-faixa {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--adm-borda);
+  border-radius: 12px;
+  background: #f8fafc;
+  color: #334155;
+  font-size: 13px;
+  line-height: 1.45;
+}
+.admin .itc-faixa > svg {
+  margin-top: 2px;
+}
+.admin .itc-faixa[data-tom='verde'] {
+  border-color: #bbf7d0;
+  background: #f0fdf4;
+  color: #14532d;
+}
+.admin .itc-faixa[data-tom='verde'] > svg {
+  color: #16a34a;
+}
+.admin .itc-faixa[data-tom='vermelho'] {
+  border-color: #fecaca;
+  background: #fef2f2;
+  color: #7f1d1d;
+}
+.admin .itc-faixa[data-tom='vermelho'] > svg {
+  color: #dc2626;
+}
+.admin .itc-faixa-previa {
+  color: #1d4ed8;
+}
+.admin .itc-faixa-ruim {
+  color: #b45309;
+  font-weight: 800;
+}
+
+.admin .itc-ofertas {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+/* celular e larguras médias: cartão em três faixas */
+.admin .itc-oferta {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr) auto;
+  grid-template-areas:
+    'arte info custo'
+    'regra regra trocas'
+    'ordem acoes acoes';
+  align-items: center;
+  gap: 10px 12px;
+  padding: 12px;
+  border: 1px solid var(--adm-borda);
+  border-radius: 14px;
+  background: #fff;
+  transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+}
+.admin .itc-oferta:hover {
+  border-color: #cfd6e2;
+  box-shadow: 0 2px 8px rgb(16 24 40 / 0.05);
+}
+.admin .itc-oferta:not([data-ativa]) {
+  background: #fafbfc;
+}
+.admin .itc-oferta[data-lucro] {
+  border-color: #fecaca;
+  background: #fffafa;
+  box-shadow: inset 3px 0 0 #ef4444;
+}
+.admin .itc-oferta > .itc-arte {
+  grid-area: arte;
+}
+.admin .itc-oferta-ordem {
+  grid-area: ordem;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.admin .itc-seta {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 32px;
+  border: 1px solid var(--adm-borda);
+  border-radius: 9px;
+  background: #fff;
+  color: #475569;
+  cursor: pointer;
+}
+.admin .itc-seta:hover:not(:disabled) {
+  background: #f1f5f9;
+  color: var(--adm-texto);
+}
+.admin .itc-seta:focus-visible {
+  outline: 2px solid var(--adm-verde);
+  outline-offset: 1px;
+}
+.admin .itc-seta:disabled {
+  cursor: not-allowed;
+  opacity: 0.35;
+}
+.admin .itc-oferta-pos {
+  min-width: 22px;
+  color: var(--adm-suave);
+  font-size: 12.5px;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+.admin .itc-oferta-info {
+  grid-area: info;
+  min-width: 0;
+}
+.admin .itc-oferta-titulo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  font-family: var(--font-texto);
+  font-size: 15.5px;
+  font-weight: 900;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+.admin .itc-oferta:not([data-ativa]) .itc-oferta-titulo {
+  color: #5b6577;
+}
+.admin .itc-oferta-sub {
+  margin-top: 2px;
+  color: var(--adm-suave);
+  font-size: 12.5px;
+  font-weight: 700;
+}
+.admin .itc-oferta-custo {
+  grid-area: custo;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
+}
+.admin .itc-celula-rotulo {
+  color: var(--adm-suave);
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.admin .itc-oferta-regra {
+  grid-area: regra;
+  min-width: 0;
+}
+.admin .itc-regra {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 14px;
+}
+.admin .itc-regra-linha {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13.5px;
+}
+.admin .itc-regra-linha > span {
+  color: var(--adm-suave);
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.admin .itc-regra-linha > strong {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+}
+.admin .itc-regra-moeda {
+  width: 15px;
+  height: 15px;
+}
+.admin .itc-regra-vazio {
+  color: #a3acbd;
+}
+.admin .itc-previsao {
+  color: var(--adm-suave);
+  font-size: 12px;
+  font-weight: 700;
+}
+.admin .itc-previsao[data-ruim] {
+  color: #b45309;
+}
+.admin .itc-oferta-trocas {
+  grid-area: trocas;
+  display: flex;
+  gap: 14px;
+  justify-content: flex-end;
+}
+.admin .itc-oferta-trocas dt {
+  color: var(--adm-suave);
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.admin .itc-oferta-trocas dd {
+  font-size: 16px;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.25;
+}
+.admin .itc-oferta-acoes {
+  grid-area: acoes;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+}
+.admin .adm-botao.itc-excluir {
+  color: var(--adm-vermelho);
+}
+.admin .adm-botao.itc-excluir:hover {
+  background: #fef2f2;
+}
+.admin .itc-ofertas-cabeca {
+  display: none;
+}
+@container (max-width: 380px) {
+  .admin .itc-oferta {
+    grid-template-columns: 48px minmax(0, 1fr) auto;
+    gap: 10px;
+  }
+  .admin .itc-oferta > .itc-arte {
+    --u: 0.86;
+  }
+  .admin .itc-oferta-trocas {
+    gap: 10px;
+  }
+}
+/* larguras médias (tablet, desktop estreito): duas faixas — dados em cima, ordem e ações embaixo */
+@container (min-width: 660px) and (max-width: 939.98px) {
+  .admin .itc-oferta {
+    /* larguras fixas no custo e nas trocas: cada linha é uma grade própria e as colunas precisam bater */
+    grid-template-columns: 56px minmax(0, 1.3fr) 112px minmax(0, 1fr) 100px;
+    grid-template-areas:
+      'arte info custo regra trocas'
+      'ordem ordem ordem acoes acoes';
+    column-gap: 14px;
+  }
+  .admin .itc-oferta-custo {
+    align-items: flex-start;
+  }
+  .admin .itc-oferta-trocas {
+    justify-content: flex-start;
+  }
+}
+/* desktop: uma linha por oferta, com cabeçalho de colunas */
+@container (min-width: 940px) {
+  /* a coluna das ações tem largura fixa: o cabeçalho (sem botões) precisa das mesmas colunas das linhas */
+  .admin .itc-ofertas-cabeca,
+  .admin .itc-oferta {
+    grid-template-columns: 32px 56px minmax(140px, 1.3fr) 112px minmax(170px, 1.2fr) 96px 218px;
+    column-gap: 12px;
+  }
+  .admin .itc-ofertas-cabeca {
+    display: grid;
+    padding: 0 13px 6px;
+    color: var(--adm-suave);
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+  .admin .itc-oferta {
+    grid-template-areas: 'ordem arte info custo regra trocas acoes';
+    padding: 8px 12px;
+  }
+  .admin .itc-oferta-ordem {
+    flex-direction: column;
+    gap: 0;
+  }
+  .admin .itc-seta {
+    width: 30px;
+    height: 24px;
+    border-color: transparent;
+    background: transparent;
+  }
+  .admin .itc-oferta-custo {
+    align-items: flex-start;
+  }
+  .admin .itc-celula-rotulo {
+    display: none;
+  }
+  .admin .itc-regra {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 3px;
+  }
+  .admin .itc-regra-linha > span {
+    min-width: 58px;
+  }
+  .admin .itc-oferta-trocas {
+    justify-content: flex-start;
+  }
+  .admin .itc-oferta-acoes {
+    flex-wrap: nowrap;
+  }
+}
+.admin .itc-vazio {
+  padding: 8px 0;
+}
+.admin .itc-excluir-oferta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: #f6f8fc;
+}
+.admin .itc-excluir-rotulo {
+  margin-bottom: 4px;
+  font-size: 16px;
+  font-weight: 900;
+}
+
+/* ================================================================ modal da oferta */
+.admin .itc-form-oferta {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 18px;
+}
+@media (min-width: 760px) {
+  .admin .itc-form-oferta {
+    grid-template-columns: minmax(0, 1fr) 256px;
+    grid-template-areas:
+      'campos previa'
+      'rodape rodape';
+    align-items: start;
+    column-gap: 22px;
+  }
+  .admin .itc-form-campos {
+    grid-area: campos;
+  }
+  .admin .itc-form-previa {
+    grid-area: previa;
+    position: sticky;
+    top: 0;
+  }
+  .admin .itc-form-rodape {
+    grid-area: rodape;
+  }
+}
+.admin .itc-form-campos {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+.admin .itc-form-tipo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: #f6f8fc;
+  color: #334155;
+  font-size: 13.5px;
+}
+.admin .itc-form-tipo > svg {
+  flex: none;
+  color: var(--adm-suave);
+}
+.admin .itc-passo input.adm-input {
+  width: 92px;
+}
+.admin .itc-form-previa {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.admin .itc-previa-titulo {
+  color: var(--adm-suave);
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.admin .itc-previa-cartao {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 18px 12px 16px;
+  border: 1px solid #f3dcc0;
+  border-radius: 18px;
+  background:
+    radial-gradient(circle at 50% 0%, rgb(255 255 255 / 0.9), transparent 60%),
+    linear-gradient(180deg, #fff7e8, #ffeccf);
+  box-shadow: inset 0 -4px 0 rgb(170 110 40 / 0.1), 0 6px 16px rgb(120 72 0 / 0.08);
+  text-align: center;
+}
+.admin .itc-previa-cartao[data-apagada] {
+  filter: saturate(0.4);
+}
+.admin .itc-previa-rotulo {
+  font-size: 17px;
+  font-weight: 900;
+  line-height: 1.2;
+}
+.admin .itc-conta {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--adm-borda);
+  border-radius: 14px;
+  background: #fff;
+}
+.admin .itc-conta[data-lucro][data-conferida] {
+  border-color: #fecaca;
+  background: #fffafa;
+}
+.admin .itc-conta-titulo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 900;
+}
+.admin .itc-conta-linhas {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.admin .itc-conta-linhas > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 12.5px;
+}
+.admin .itc-conta-linhas > div[data-destaque] {
+  margin-top: 2px;
+  padding-top: 6px;
+  border-top: 1px dashed #dfe4ec;
+}
+.admin .itc-conta-linhas dt {
+  color: var(--adm-suave);
+  font-weight: 700;
+}
+.admin .itc-conta-linhas dd {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  white-space: nowrap;
+}
+.admin .itc-conta-linhas strong {
+  font-size: 14px;
+  font-weight: 900;
+}
+.admin .itc-conta-calc {
+  color: var(--adm-suave);
+  font-size: 11.5px;
+}
+.admin .itc-conta-veredito {
+  color: #334155;
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+.admin .itc-conta-ajuste {
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: #fff7ed;
+  color: #9a3412;
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+.admin .itc-form-rodape {
+  position: sticky;
+  bottom: -16px;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0 -16px -16px;
+  padding: 0 16px 16px;
+  border-radius: 0 0 16px 16px;
+  background: #fff;
+}
+.admin .itc-form-rodape .adm-us-modal-acoes {
+  margin-top: 0;
+}
+@media (max-width: 767.98px) {
+  .admin :is(.itc-regras, .itc-form-oferta) :is(input[type='text'], select, textarea).adm-input {
+    font-size: 16px;
+  }
+}
+
+/* ================================================================ cupons: lista */
+.admin .cup-barra-filtros {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 16px;
+}
+.admin .pop-filtros.cup-filtros {
+  flex: 1 1 auto;
+  margin-bottom: 0;
+}
+.admin .cup-busca {
+  position: relative;
+  flex: 0 1 260px;
+  min-width: 180px;
+}
+.admin .cup-busca input[type='search'].adm-input {
+  min-height: 38px;
+  padding-left: 36px;
+}
+.admin .cup-busca-lupa {
+  position: absolute;
+  top: 50%;
+  left: 12px;
+  width: 16px;
+  height: 16px;
+  translate: 0 -50%;
+  color: var(--adm-suave);
+  pointer-events: none;
+}
+@media (max-width: 767.98px) {
+  .admin .cup-busca {
+    flex: 1 1 100%;
+  }
+  .admin .cup-busca input[type='search'].adm-input {
+    font-size: 16px;
+  }
+}
+.admin .cup-lista-caixa {
+  container-type: inline-size;
+}
+.admin .cup-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.admin .cup-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas:
+    'vale'
+    'info'
+    'uso'
+    'acoes';
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--adm-borda);
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 1px 2px rgb(16 24 40 / 0.04);
+}
+@container (min-width: 560px) {
+  .admin .cup-item {
+    grid-template-columns: 180px minmax(0, 1fr);
+    grid-template-areas:
+      'vale info'
+      'vale uso'
+      'acoes acoes';
+    column-gap: 16px;
+  }
+}
+@container (min-width: 900px) {
+  .admin .cup-item {
+    grid-template-columns: 200px minmax(0, 1fr) 240px;
+    grid-template-areas:
+      'vale info uso'
+      'vale acoes acoes';
+    align-items: start;
+    padding: 16px;
+  }
+  .admin .cup-item-acoes {
+    align-self: end;
+  }
+}
+
+/* o vale: canhoto de ticket com o código, picotado e com recortes nas laterais */
+.admin .cup-item > .cup-vale {
+  grid-area: vale;
+}
+.admin .cup-vale {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-width: 0;
+  min-height: 86px;
+  padding: 12px 22px;
+  border: 2px dashed #f9a8d4;
+  border-radius: 14px;
+  background:
+    radial-gradient(circle at 50% 0%, #fff 0%, transparent 70%),
+    linear-gradient(180deg, #fff7fb, #fce7f3);
+  text-align: center;
+}
+.admin .cup-vale::before,
+.admin .cup-vale::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: 18px;
+  height: 18px;
+  border: 2px dashed #f9a8d4;
+  border-radius: 50%;
+  background: #fff;
+  translate: 0 -50%;
+}
+.admin .cup-vale::before {
+  left: -10px;
+  clip-path: inset(0 0 0 50%);
+}
+.admin .cup-vale::after {
+  right: -10px;
+  clip-path: inset(0 50% 0 0);
+}
+.admin .cup-vale:is([data-status='pausado'], [data-status='encerrado'], [data-status='esgotado']) {
+  filter: grayscale(1);
+  opacity: 0.72;
+}
+.admin .cup-vale-rotulo {
+  color: #be185d;
+  font-size: 10.5px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.admin .cup-codigo-texto {
+  max-width: 100%;
+  color: #831843;
+  font: 900 20px/1.2 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  letter-spacing: 0.06em;
+  overflow-wrap: anywhere;
+}
+.admin .cup-vale .adm-us-copiar {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  color: #be185d;
+}
+.admin .cup-vale .adm-us-copiar:hover {
+  background: #fce7f3;
+  color: #831843;
+}
+.admin .cup-item-info {
+  grid-area: info;
+  min-width: 0;
+}
+.admin .cup-item-cabeca {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+}
+.admin .cup-item-vale {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--adm-suave);
+  font-size: 12.5px;
+  font-weight: 700;
+}
+.admin .cup-item-descricao {
+  margin-top: 6px;
+  color: #334155;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+.admin .cup-item-descricao.cup-item-sem {
+  color: #a3acbd;
+  font-weight: 600;
+  font-style: italic;
+}
+.admin .cup-item-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  margin-top: 8px;
+  color: #475569;
+  font-size: 12.5px;
+  font-weight: 700;
+}
+.admin .cup-item-meta li {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+}
+.admin .cup-item-meta svg {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  color: #94a3b8;
+}
+.admin .cup-item-dica {
+  color: var(--adm-suave);
+  font-weight: 600;
+}
+.admin .cup-uso {
+  grid-area: uso;
+  min-width: 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: #f8fafc;
+}
+.admin .cup-uso-num strong {
+  font-size: 20px;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+}
+.admin .cup-uso-de {
+  color: #475569;
+  font-size: 14px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+.admin .cup-uso-rotulo {
+  color: var(--adm-suave);
+  font-size: 13px;
+  font-weight: 700;
+}
+.admin .cup-barra {
+  display: block;
+  overflow: hidden;
+  height: 8px;
+  margin-top: 6px;
+  border-radius: 999px;
+  background: #e8ecf3;
+}
+.admin .cup-barra > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #f472b6, #db2777);
+}
+.admin .cup-barra[data-cheia] > span {
+  background: linear-gradient(90deg, #f87171, #dc2626);
+}
+.admin .cup-uso-sub {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 4px;
+  color: var(--adm-suave);
+  font-size: 12px;
+  font-weight: 700;
+}
+.admin .cup-item-acoes {
+  grid-area: acoes;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+}
+@container (max-width: 559.98px) {
+  .admin .cup-item-acoes > .adm-botao {
+    flex: 1 1 0;
+  }
+  .admin .cup-item-acoes > .adm-botao:first-child {
+    flex-basis: 100%;
+  }
+  .admin .cup-item-acoes > .itc-excluir {
+    flex: none;
+  }
+  .admin .cup-item > .cup-vale {
+    min-height: 72px;
+  }
+}
+.admin .cup-contador {
+  min-width: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: #fce7f3;
+  color: #9d174d;
+  font-size: 11.5px;
+  font-weight: 900;
+  line-height: 18px;
+  text-align: center;
+}
+.admin .cup-vazio {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 36px 16px 20px;
+}
+.admin .cup-vazio .adm-vazio {
+  max-width: 460px;
+  padding-top: 12px;
+}
+.admin .cup-vazio-ticket {
+  width: 72px;
+  height: 54px;
+  rotate: -8deg;
+  filter: drop-shadow(0 4px 0 rgb(157 23 77 / 0.15));
+}
+.admin .cup-excluir-topo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+.admin .cup-excluir-topo .cup-vale {
+  min-height: 0;
+  padding: 8px 22px;
+}
+
+/* ================================================================ cupons: formulário */
+.admin .cup-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 22px;
+}
+@media (min-width: 760px) {
+  .admin .cup-form {
+    grid-template-columns: minmax(0, 1fr) 250px;
+    grid-template-areas:
+      'campos previa'
+      'rodape rodape';
+    align-items: start;
+    column-gap: 24px;
+  }
+  .admin .cup-form-campos {
+    grid-area: campos;
+  }
+  .admin .cup-form-previa {
+    grid-area: previa;
+    position: sticky;
+    top: 0;
+  }
+}
+.admin .cup-form-campos {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+.admin .cup-form-previa {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.admin .cup-form-erro {
+  flex: 1 1 100%;
+}
+.admin .cup-codigo-campo {
+  display: flex;
+  gap: 8px;
+}
+.admin .cup-codigo-campo .adm-input {
+  flex: 1;
+  min-width: 0;
+}
+.admin input.adm-input.cup-codigo-input {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+.admin .cup-codigo-fixo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+  padding: 8px 12px;
+  border: 1px dashed #f9a8d4;
+  border-radius: 10px;
+  background: #fdf2f8;
+}
+.admin .cup-codigo-fixo-nota {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--adm-suave);
+  font-size: 12px;
+  font-weight: 700;
+}
+.admin .adm-us-sugestao[data-marcada] {
+  border-style: solid;
+  border-color: var(--adm-verde);
+  background: #f0fdf4;
+  color: #15803d;
+}
+.admin .cup-limite-campo {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  color: #334155;
+  font-size: 13.5px;
+  font-weight: 800;
+}
+.admin .cup-limite-campo input.adm-input {
+  width: 120px;
+  font-size: 16px;
+  font-weight: 900;
+  text-align: center;
+}
+.admin .cup-form .adm-input[aria-invalid='true'] {
+  border-color: #f87171;
+  background: #fffafa;
+}
+@media (max-width: 767.98px) {
+  .admin .cup-form :is(input[type='text'], input[type='search'], input[type='datetime-local'], select, textarea).adm-input {
+    font-size: 16px;
+  }
+}
+
+/* prévia: o vale rosa, com picote e recortes na altura do picote */
+.admin .cup-previa-vale {
+  --recorte: calc(100% - 64px);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 16px 16px 14px;
+  border-radius: 18px;
+  background:
+    radial-gradient(circle at 50% -20%, rgb(255 255 255 / 0.55), transparent 55%),
+    linear-gradient(160deg, #f472b6, #db2777 55%, #be185d);
+  color: #fff;
+  text-align: center;
+  box-shadow: inset 0 -5px 0 rgb(80 7 36 / 0.22);
+  -webkit-mask:
+    radial-gradient(circle 11px at 0 var(--recorte), #0000 97%, #000) left / 51% 100% no-repeat,
+    radial-gradient(circle 11px at 100% var(--recorte), #0000 97%, #000) right / 51% 100% no-repeat;
+  mask:
+    radial-gradient(circle 11px at 0 var(--recorte), #0000 97%, #000) left / 51% 100% no-repeat,
+    radial-gradient(circle 11px at 100% var(--recorte), #0000 97%, #000) right / 51% 100% no-repeat;
+}
+.admin .cup-previa-vale[data-apagado] {
+  filter: grayscale(0.85);
+}
+.admin .cup-previa-topo {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.admin .cup-previa-ticket {
+  box-sizing: content-box;
+  width: 22px;
+  height: 17px;
+  padding: 3px 4px;
+  border-radius: 8px;
+  background: #fff;
+}
+.admin .cup-previa-codigo {
+  max-width: 100%;
+  margin-top: 4px;
+  font: 900 22px/1.15 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  letter-spacing: 0.08em;
+  text-shadow: 0 2px 0 rgb(80 7 36 / 0.3);
+  overflow-wrap: anywhere;
+}
+.admin .cup-previa-codigo-vazio {
+  opacity: 0.5;
+}
+.admin .cup-previa-vale-txt {
+  font-size: 14px;
+  font-weight: 700;
+}
+.admin .cup-previa-vale-txt strong {
+  font-size: 16px;
+  font-weight: 900;
+}
+.admin .cup-previa-picote {
+  display: block;
+  width: calc(100% - 12px);
+  height: 0;
+  margin: 8px 0 4px;
+  border-top: 2px dashed rgb(255 255 255 / 0.6);
+}
+.admin .cup-previa-linha {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12.5px;
+  font-weight: 700;
+}
+.admin .cup-previa-pausado {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: #fff;
+  color: #b45309;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+/* ================================================================ cupons: quem resgatou */
+.admin .cup-detalhe {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.admin .cup-detalhe-topo {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 14px;
+}
+@media (min-width: 640px) {
+  .admin .cup-detalhe-topo {
+    grid-template-columns: 200px minmax(0, 1fr);
+    align-items: center;
+  }
+}
+.admin .cup-detalhe-dados {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 16px;
+}
+.admin .cup-detalhe-dados dt {
+  color: var(--adm-suave);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.admin .cup-detalhe-dados dd {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  margin-top: 2px;
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+}
+.admin .cup-detalhe-descricao {
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: #f8fafc;
+  color: #475569;
+  font-size: 13.5px;
+  font-style: italic;
+}
+.admin .cup-detalhe-cabeca {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--adm-borda);
+}
+.admin .cup-detalhe-cabeca h3 {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  color: #334155;
+  font-family: var(--font-texto);
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.admin .cup-detalhe-cabeca h3 span {
+  color: var(--adm-suave);
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.admin .cup-detalhe .cup-busca {
+  flex: 0 1 240px;
+}
+.admin .cup-resgates {
+  display: flex;
+  flex-direction: column;
+  max-height: min(52dvh, 460px);
+  overflow-y: auto;
+  margin: 0 -4px;
+  padding: 0 4px;
+}
+.admin .cup-resgate {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 0;
+  border-bottom: 1px solid #eef1f6;
+}
+.admin .cup-resgate:last-child {
+  border-bottom: 0;
+}
+.admin .cup-resgate-nome {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 100%;
+  color: var(--adm-texto);
+  font-size: 14px;
+  font-weight: 800;
+  text-decoration: none;
+}
+.admin .cup-resgate-nome svg {
+  color: #94a3b8;
+}
+.admin .cup-resgate-nome:hover {
+  color: #15803d;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.admin .cup-resgate-email {
+  overflow: hidden;
+  color: var(--adm-suave);
+  font-size: 12.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.admin .cup-resgate-quando {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  align-items: flex-end;
+  color: #334155;
+  font-size: 12.5px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.admin .cup-resgate-rel {
+  color: var(--adm-suave);
+  font-size: 11.5px;
+}
+@media (max-width: 520px) {
+  .admin .cup-resgate {
+    flex-wrap: wrap;
+  }
+  .admin .cup-resgate-quando {
+    flex-direction: row;
+    gap: 6px;
+    width: 100%;
+    padding-left: 44px;
+  }
+  .admin .cup-detalhe-dados {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* ================================================================ ficha do membro: seção Tickets */
+/* celular: a seção entra logo depois da Economia (no desktop vale a ordem do código, na coluna da direita) */
+@container (max-width: 939.98px) {
+  .admin .adm-us-sec-tickets {
+    order: 1;
+  }
+}
+.admin .itc-ficha-saldo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid var(--itc-rosa-borda);
+  border-radius: 14px;
+  background: linear-gradient(180deg, #fff7fb, #fce7f3);
+}
+.admin .itc-ficha-rotulo {
+  color: #9d174d;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.admin .itc-ficha-valor {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 4px;
+  color: #500724;
+  font-size: 30px;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+  line-height: 1.1;
+}
+.admin .itc-ficha-valor > span {
+  align-self: flex-end;
+  margin-bottom: 3px;
+  color: #9d174d;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0;
+}
+.admin .itc-ficha-ticket {
+  flex: none;
+  width: 38px;
+  height: 29px;
+  rotate: -8deg;
+}
+.admin .itc-mov-icone[data-motivo='compra'] {
+  background: #fef3c7;
+  color: #b45309;
+}
+.admin .itc-mov-icone[data-motivo='cupom'] {
+  background: #fce7f3;
+  color: #be185d;
+}
+.admin .itc-mov-icone[data-motivo='troca'] {
+  background: #dcfce7;
+  color: #15803d;
+}
+.admin .itc-mov-icone[data-motivo='ajuste'] {
+  background: #ede9fe;
+  color: #6d28d9;
+}
+.admin .adm-us-campo-moeda-icone.itc-campo-ticket {
+  width: 26px;
+  height: 20px;
+}
+@container (max-width: 560px) {
+  .admin .itc-ficha-saldo .adm-botao {
+    flex: 1 1 100%;
+  }
+  .admin .itc-ficha-valor {
+    font-size: 26px;
+  }
+}

@@ -1,0 +1,215 @@
+@import "tailwindcss";
+@import "./estilos/ui.css";
+@import "./estilos/cenario.css";
+@import "./estilos/animais.css";
+@import "./estilos/animais-galinha.css";
+@import "./estilos/animais-pato.css";
+@import "./estilos/animais-ganso.css";
+@import "./estilos/animais-avestruz.css";
+@import "./estilos/juca.css";
+@import "./estilos/efeitos.css";
+@import "./estilos/cartas.css";
+@import "./estilos/roleta.css";
+@import "./estilos/revelacao.css";
+@import "./estilos/telas.css";
+@import "./estilos/entrar-a.css";
+@import "./estilos/admin.css";
+@import "./estilos/admin-visao.css";
+@import "./estilos/admin-usuarios.css";
+@import "./estilos/admin-atendimento.css";
+@import "./estilos/admin-popups.css";
+@import "./estilos/jogo-suporte.css";
+@import "./estilos/jogo-convites.css";
+@import "./estilos/admin-afiliados.css";
+@import "./estilos/jogo-intercambio.css";
+@import "./estilos/admin-intercambio.css";
+
+/* Tokens do design system (docs/DIRECAO_DE_ARTE.md, seção 2). Viram utilitários do Tailwind.
+   "static": todas as variáveis saem no CSS mesmo sem uso detectado (estilos inline usam var(--color-…)). */
+@theme static {
+  /* Base de interface */
+  --color-creme: #fff6e0;
+  --color-creme-claro: #fffcf3;
+  --color-creme-escuro: #ecd5a4;
+  --color-texto: #2b1d12;
+  --color-texto-suave: #6e5a46;
+  --color-contorno: #2b1a0f;
+  --color-contorno-suave: #6b4a26;
+
+  /* Ação primária (laranja-sol) */
+  --color-acao: #ff9d1e;
+  --color-acao-clara: #ffd36b;
+  --color-acao-escura: #e06a00;
+  --color-acao-contorno: #6b2c00;
+
+  /* Confirmar (verde) */
+  --color-confirmar: #6fd13f;
+  --color-confirmar-clara: #b8f27a;
+  --color-confirmar-escura: #2f9a1c;
+  --color-confirmar-contorno: #174d0b;
+
+  /* Compra (azul): botões que gastam moedas */
+  --color-compra: #46a8ff;
+  --color-compra-clara: #a8dcff;
+  --color-compra-escura: #1868d0;
+  --color-compra-contorno: #0b2d66;
+
+  /* Perigo */
+  --color-perigo: #ff5a48;
+  --color-perigo-clara: #ff9a8a;
+  --color-perigo-escura: #c4241a;
+  --color-perigo-contorno: #5c0a05;
+  --color-sucesso: #2fa61e;
+
+  /* Fazenda */
+  --color-ceu-topo: #49b8ff;
+  --color-ceu-base: #c4ecff;
+  --color-grama: #6cc644;
+  --color-grama-clara: #9be36a;
+  --color-grama-escura: #3f8f2a;
+  --color-madeira: #b9773f;
+  --color-madeira-clara: #dca066;
+  --color-madeira-escura: #7a4a22;
+  --color-madeira-contorno: #3b200c;
+  --color-palha: #f2c75c;
+  --color-palha-clara: #ffe58a;
+  --color-palha-escura: #c9932f;
+  --color-palha-contorno: #6b4416;
+  --color-terra: #9a6424;
+  --color-ouro: #ffc93c;
+  --color-ouro-claro: #fff1a8;
+  --color-ouro-escuro: #c27c00;
+  --color-ouro-contorno: #5a3a00;
+
+  /* Raridades (a base é a cor do produto e não muda) */
+  --color-comum: #9aa3af;
+  --color-comum-clara: #eef1f5;
+  --color-comum-escura: #6b7480;
+  --color-comum-contorno: #2e3642;
+  --color-comum-brilho: #dfe5ec;
+
+  --color-raro: #3b82f6;
+  --color-raro-clara: #c2deff;
+  --color-raro-escura: #1d5fd0;
+  --color-raro-contorno: #0b2a5e;
+  --color-raro-brilho: #6fb6ff;
+
+  --color-epico: #8b5cf6;
+  --color-epico-clara: #e4d6ff;
+  --color-epico-escura: #5b2fc9;
+  --color-epico-contorno: #2a0f5e;
+  --color-epico-brilho: #b48cff;
+
+  --color-lendario: #f5b301;
+  --color-lendario-clara: #fff1a8;
+  --color-lendario-escura: #c27c00;
+  --color-lendario-contorno: #4a2c00;
+  --color-lendario-brilho: #ffd84d;
+
+  /* Vida (barras em gradiente clara → base) */
+  --color-vida-verde: #43bf2a;
+  --color-vida-verde-clara: #9ef36a;
+  --color-vida-amarela: #f2b705;
+  --color-vida-amarela-clara: #ffe766;
+  --color-vida-vermelha: #e5382b;
+  --color-vida-vermelha-clara: #ff8a7a;
+  --color-trilho: #3a2a1c;
+
+  /* Fontes (variáveis criadas por next/font em layout.tsx) */
+  --font-titulo: var(--font-lilita), 'Lilita One', ui-rounded, system-ui, sans-serif;
+  --font-texto: var(--font-nunito), system-ui, sans-serif;
+
+  /* Sombras chapadas (sem blur) */
+  --shadow-botao: 0 3px 0 var(--color-contorno);
+  --shadow-carta: 0 5px 0 rgb(43 26 15 / 0.35);
+  --shadow-painel: 0 6px 0 2px rgb(43 26 15 / 0.22);
+
+  /* Curvas: geram utilitários ease-* */
+  --ease-suave: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-explosao: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-elastico: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-sugar: cubic-bezier(0.32, 0, 0.67, 0);
+  --ease-senoide: cubic-bezier(0.37, 0, 0.63, 1);
+  --ease-antecipa: cubic-bezier(0.36, 0, 0.66, -0.56);
+}
+
+:root {
+  --altura-hud: 116px;
+  --altura-abas: 70px;
+  --seguro-topo: env(safe-area-inset-top, 0px);
+  --seguro-base: env(safe-area-inset-bottom, 0px);
+  /* Tempos de animação (seção 9) */
+  --t-press: 90ms;
+  --t-solta: 220ms;
+  --t-pop: 320ms;
+  --t-voo: 650ms;
+  --t-bump: 180ms;
+  --t-entra: 240ms;
+  --t-sai: 160ms;
+  color-scheme: light;
+}
+
+@media (min-width: 1024px) {
+  :root {
+    --altura-hud: 72px;
+    --altura-abas: 78px;
+  }
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  /* Lilita tem um peso só: nada de negrito/itálico falso vindo de font-bold */
+  font-synthesis: none;
+  background: var(--color-ceu-base);
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  font-family: var(--font-texto);
+  font-weight: 700;
+  color: var(--color-texto);
+  background: linear-gradient(180deg, #49b8ff 0%, #8fd6ff 28%, #c4ecff 55%, #dff6c8 100%) fixed;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior-y: none;
+}
+
+button,
+[role='button'],
+a {
+  touch-action: manipulation;
+}
+
+h1,
+h2,
+h3,
+.titulo {
+  font-family: var(--font-titulo);
+  font-weight: 400;
+}
+
+.numeros {
+  font-variant-numeric: tabular-nums;
+}
+
+:focus-visible {
+  outline: 3px solid var(--color-compra-escura);
+  outline-offset: 2px;
+}
+
+/* Os componentes (.botao, .painel, .campo, .chip…) vivem em estilos/ui.css, dentro de @layer components. */
+
+/* Nada empurra a página para os lados (deslize da troca de tela, rajadas de efeito): recorta o eixo X
+   sem criar contêiner de rolagem (clip, não hidden, para não quebrar sticky). */
+html,
+body {
+  overflow-x: clip;
+}
+
+/* Rolagem sem barra feia no celular */
+.sem-barra::-webkit-scrollbar {
+  display: none;
+}
+.sem-barra {
+  scrollbar-width: none;
+}

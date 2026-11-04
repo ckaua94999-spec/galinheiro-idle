@@ -1,0 +1,203 @@
+/* Estilos: ganso (épico). Importado por globals.css. Só variáveis + keyframes próprios (kit em animais.css).
+ * Ritmo: respiração 3,4 s, piscar 6,1 s. Ciclo da ação 11 s (o doc pede 8,3; o ganso tem 4 tempos e
+ * precisa de pausas entre eles para continuar calmo no grid): ondula o pescoço → ajeita o cachecol com
+ * o bico → olha de lado empinando o bico → estica o pescoço na pose altiva (contrapeso da cabeça ~100 ms
+ * depois). Feliz (8,25 s): grasna duas vezes esticando o pescoço e batendo o bico (.gan-mandibula).
+ * O pescoço leva a cabeça e o cachecol: os pivôs usam transform-box: view-box (coordenadas do viewBox),
+ * na base do pescoço (50,68) e no topo do pescoço, que muda com a pose do humor (--gan-pivo).
+ * Fx épico: 2 brilhos de 4 pontas (1 path com gradiente cada) que cintilam + reflexo no broche (somem no lod-p).
+ * Piscada: a do kit (<Piscada/>) com keyframe próprio (gan-piscar) que ESCONDE a pálpebra fora da piscada
+ *   (em repouso, scale 1 0, o traço tracejado virava um fio fino na testa) e --anim-cilios: gan-cilios-piscar,
+ *   que tira o delineado/borda de desdém + cílios ANTES (corte de ~12 ms, logo antes de a pálpebra descer) e só
+ *   os devolve quando ela já descobriu a borda: nada de cinza translúcido por cima da pálpebra. */
+
+.especie-ganso {
+  --br-base: 3.4s;
+  --pisca-base: 6.1s;
+  --acao-base: 11s;
+  --anim-cabeca: gan-cabeca;
+  --anim-pescoco: gan-pescoco;
+  --pivo-cauda: 10% 90%;
+  --gan-pivo: 51.5px 34px;
+  --anim-cilios: gan-cilios-piscar;
+}
+.especie-ganso.humor-feliz {
+  --anim-cabeca: gan-grasna-cabeca;
+  --anim-pescoco: gan-grasna;
+  --gan-pivo: 52.5px 33.5px;
+}
+.especie-ganso.humor-cansado { --gan-pivo: 49px 40px; }
+.especie-ganso.humor-triste { --gan-pivo: 47px 42.5px; }
+.especie-ganso.humor-surpresa { --gan-pivo: 53px 32px; }
+.especie-ganso.humor-aposentado { --gan-pivo: 47.5px 44px; }
+
+.gi-animal.especie-ganso .ani-pescoco {
+  transform-box: view-box;
+  transform-origin: 50px 68px;
+}
+.gi-animal.especie-ganso .ani-cabeca {
+  transform-box: view-box;
+  transform-origin: var(--gan-pivo);
+}
+
+/* Piscada do kit, mas invisível fora dela (sem o "fio" do traço achatado na testa, com o olho aberto). */
+.gi-animal.especie-ganso .ani-palpebras {
+  animation-name: gan-piscar;
+}
+html.reduzir-movimento .gi-animal.especie-ganso .ani-palpebras {
+  opacity: 0;
+}
+
+/* Feliz: o bico de baixo bate duas vezes (fecha por cima da boca e reabre) junto com o grasnar.
+ * Pivô na dobradiça (68,4; 35,8) = canto de cima à direita da caixa do bico de baixo (48 35,6 20,4×5,9);
+ * fill-box porque o bico está dentro de grupos com transform (view-box erraria o pivô). */
+.gi-animal.especie-ganso .gan-mandibula {
+  transform-box: fill-box;
+  transform-origin: 100% 3.4%;
+  animation: gan-mandibula var(--acao) linear infinite;
+  animation-delay: calc(var(--atraso) * 2.3);
+}
+
+/* Susto: o pescoço encolhe e dispara para cima (one-shot), junto com o pulo do corpo. */
+.gi-animal.especie-ganso.humor-surpresa .ani-pescoco {
+  animation: gan-susto 0.55s var(--ease-elastico, ease-out) 1 both;
+}
+
+/* Brilhos épicos: cintilam defasados (o 2º meio ciclo depois). Cada brilho é UM path com gradiente
+ * (miolo branco → pontas roxas); no ponto mais baixo ainda ficam a 45% (não somem no grid). */
+.gi-animal .gan-brilho {
+  transform-box: fill-box;
+  transform-origin: 50% 50%;
+  animation: gan-cintila 2.6s var(--ease-senoide, ease-in-out) infinite;
+  animation-delay: calc(var(--atraso) * 1.3);
+}
+.gi-animal .gan-brilho-2 {
+  animation-duration: 3.1s;
+  animation-delay: calc(var(--atraso) * 1.3 - 1.4s);
+}
+/* Reflexo de joia no broche: pisca rápido (~6% de 4,2 s) e some. */
+.gi-animal .gan-reflexo {
+  transform-box: fill-box;
+  transform-origin: 50% 50%;
+  opacity: 0;
+  animation: gan-reflexo 4.2s linear infinite;
+  animation-delay: calc(var(--atraso) * 1.9);
+}
+.lod-p .gan-brilho,
+.lod-p .gan-reflexo {
+  display: none;
+}
+html.reduzir-movimento .gi-animal .gan-reflexo {
+  opacity: 0.85;
+}
+
+/* ------------------------------------------------------------------------------------- keyframes */
+/* Mesmo tempo do ani-piscar do kit (desce 94 → 95,5%, sobe até 97%); fora disso, opacity 0. */
+@keyframes gan-piscar {
+  0%, 93.9% { scale: 1 0; opacity: 0; }
+  94% { scale: 1 0; opacity: 1; }
+  95.5% { scale: 1 1; opacity: 1; }
+  97% { scale: 1 0; opacity: 1; }
+  97.1%, 100% { scale: 1 0; opacity: 0; }
+}
+/* Delineado + borda de desdém + cílios: somem num corte rápido (~12 ms) logo ANTES de a pálpebra começar a
+ * descer (93,8 → 94%) e voltam quando ela já subiu acima da borda de desdém (a ~20% do topo do olho: 96,8%),
+ * até 97% (olho aberto). */
+@keyframes gan-cilios-piscar {
+  0%, 93.8% { opacity: 1; }
+  94%, 96.8% { opacity: 0; }
+  97%, 100% { opacity: 1; }
+}
+/* Pescoço (pivô na base): ondula, abaixa para ajeitar o cachecol, recolhe e estica na pose altiva. */
+@keyframes gan-pescoco {
+  0% { rotate: 0deg; scale: 1 1; animation-timing-function: var(--ease-senoide, ease-in-out); }
+  8% { rotate: -1.8deg; animation-timing-function: var(--ease-senoide, ease-in-out); }
+  16% { rotate: 1.4deg; animation-timing-function: var(--ease-senoide, ease-in-out); }
+  /* ajeitar o cachecol: o pescoço inclina para a frente */
+  22% { rotate: 0deg; animation-timing-function: var(--ease-senoide, ease-in-out); }
+  26%, 33% { rotate: -5deg; animation-timing-function: var(--ease-senoide, ease-in-out); }
+  38% { rotate: 0.6deg; animation-timing-function: var(--ease-senoide, ease-in-out); }
+  42%, 62% { rotate: 0deg; scale: 1 1; animation-timing-function: var(--ease-senoide, ease-in-out); }
+  /* antecipação: recolhe para trás… */
+  67% { rotate: 2.6deg; scale: 1 0.97; animation-timing-function: cubic-bezier(0.2, 0, 0.2, 1); }
+  /* …e estica, altivo (segura ~1 s) */
+  72%, 81% { rotate: -3deg; scale: 1 1.05; animation-timing-function: var(--ease-senoide, ease-in-out); }
+  87% { rotate: 0.8deg; scale: 1 0.99; animation-timing-function: var(--ease-senoide, ease-in-out); }
+  92%, 100% { rotate: 0deg; scale: 1 1; }
+}
+/* Cabeça (pivô no topo do pescoço): contrapeso da ondulação, bica o cachecol, olha de lado de bico
+ * empinado e empina de novo na pose altiva, ~100 ms atrás do pescoço. + = bico para cima. */
+@keyframes gan-cabeca {
+  0% { rotate: 0deg; translate: 0 0; animation-timing-function: var(--ease-senoide, ease-in-out); }
+  8% { rotate: 1.6deg; animation-timing-function: var(--ease-senoide, ease-in-out); }
+  16% { rotate: -1.2deg; animation-timing-function: var(--ease-senoide, ease-in-out); }
+  22% { rotate: 0deg; translate: 0 0; animation-timing-function: var(--ease-senoide, ease-in-out); }
+  /* ajeita o cachecol: bico para baixo, duas bicadinhas */
+  27% { rotate: -22deg; translate: -1px 3px; animation-timing-function: ease-in-out; }
+  29% { rotate: -16deg; translate: -0.6px 1.6px; animation-timing-function: ease-in-out; }
+  31% { rotate: -23deg; translate: -1px 3.2px; animation-timing-function: ease-in-out; }
+  33% { rotate: -17deg; translate: -0.6px 1.8px; animation-timing-function: var(--ease-senoide, ease-in-out); }
+  /* sacode a cabeça (arruma as penas) */
+  38% { rotate: 3deg; translate: 0 0; animation-timing-function: ease-in-out; }
+  39.5% { rotate: -3deg; animation-timing-function: ease-in-out; }
+  41% { rotate: 2deg; animation-timing-function: var(--ease-senoide, ease-in-out); }
+  /* olha de lado, bico empinado (esnobe) */
+  43% { rotate: 0deg; translate: 0 0; animation-timing-function: var(--ease-senoide, ease-in-out); }
+  47%, 56% { rotate: 12deg; translate: 2px -1.2px; animation-timing-function: var(--ease-senoide, ease-in-out); }
+  61%, 68% { rotate: 0deg; translate: 0 0; animation-timing-function: var(--ease-senoide, ease-in-out); }
+  /* pose altiva: contrapeso */
+  73%, 82% { rotate: 8deg; translate: 0.6px -0.8px; animation-timing-function: var(--ease-senoide, ease-in-out); }
+  88% { rotate: -1.5deg; translate: 0 0; animation-timing-function: var(--ease-senoide, ease-in-out); }
+  93%, 100% { rotate: 0deg; translate: 0 0; }
+}
+/* Feliz: grasna duas vezes — o pescoço recolhe e estica, a cabeça empina a cada "Quá!". */
+@keyframes gan-grasna {
+  0% { rotate: 0deg; scale: 1 1; animation-timing-function: var(--ease-senoide, ease-in-out); }
+  14% { rotate: -2deg; animation-timing-function: var(--ease-senoide, ease-in-out); }
+  28% { rotate: 1.6deg; animation-timing-function: var(--ease-senoide, ease-in-out); }
+  42%, 52% { rotate: 0deg; scale: 1 1; animation-timing-function: var(--ease-senoide, ease-in-out); }
+  57% { rotate: 3deg; scale: 1 0.95; animation-timing-function: cubic-bezier(0.2, 0, 0.2, 1); }
+  61% { rotate: -3.5deg; scale: 1 1.07; animation-timing-function: ease-in-out; }
+  65% { rotate: 1.5deg; scale: 1 0.97; animation-timing-function: cubic-bezier(0.2, 0, 0.2, 1); }
+  69% { rotate: -3.5deg; scale: 1 1.07; animation-timing-function: var(--ease-senoide, ease-in-out); }
+  76% { rotate: 0.6deg; scale: 1 0.99; animation-timing-function: var(--ease-senoide, ease-in-out); }
+  82%, 100% { rotate: 0deg; scale: 1 1; }
+}
+@keyframes gan-grasna-cabeca {
+  0% { rotate: 0deg; animation-timing-function: var(--ease-senoide, ease-in-out); }
+  14% { rotate: 2deg; animation-timing-function: var(--ease-senoide, ease-in-out); }
+  28% { rotate: -1.6deg; animation-timing-function: var(--ease-senoide, ease-in-out); }
+  42%, 53% { rotate: 0deg; animation-timing-function: var(--ease-senoide, ease-in-out); }
+  58% { rotate: -6deg; animation-timing-function: cubic-bezier(0.2, 0, 0.2, 1); }
+  62% { rotate: 13deg; animation-timing-function: ease-in-out; }
+  66% { rotate: -2deg; animation-timing-function: cubic-bezier(0.2, 0, 0.2, 1); }
+  70% { rotate: 13deg; animation-timing-function: var(--ease-senoide, ease-in-out); }
+  78% { rotate: -1deg; animation-timing-function: var(--ease-senoide, ease-in-out); }
+  84%, 100% { rotate: 0deg; }
+}
+@keyframes gan-susto {
+  0% { scale: 1 0.88; rotate: 2deg; }
+  45% { scale: 1 1.08; rotate: -2deg; }
+  100% { scale: 1 1; rotate: 0deg; }
+}
+/* Cintilar: cresce e "torce" de leve até ficar em pé no auge (o raio vertical é o mais comprido, então
+ * o brilho não gira 90°: ida e volta, sem salto no fim do ciclo). */
+@keyframes gan-cintila {
+  0% { scale: 0.5; rotate: -16deg; opacity: 0.45; }
+  50% { scale: 1.05; rotate: 0deg; opacity: 1; }
+  100% { scale: 0.5; rotate: -16deg; opacity: 0.45; }
+}
+@keyframes gan-reflexo {
+  0%, 80% { opacity: 0; scale: 0.3; rotate: 0deg; }
+  83% { opacity: 1; scale: 1.1; rotate: 20deg; }
+  86%, 100% { opacity: 0; scale: 0.3; rotate: 40deg; }
+}
+/* Bico de baixo no grasnar (mesmo ritmo de gan-grasna): + = fecha. */
+@keyframes gan-mandibula {
+  0%, 55% { rotate: 0deg; animation-timing-function: ease-in-out; }
+  58.5% { rotate: 13deg; animation-timing-function: ease-in-out; }
+  61.5% { rotate: -1deg; animation-timing-function: ease-in-out; }
+  66% { rotate: 13deg; animation-timing-function: ease-in-out; }
+  69.5% { rotate: -1deg; animation-timing-function: ease-in-out; }
+  73%, 100% { rotate: 0deg; }
+}

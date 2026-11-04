@@ -1,0 +1,2047 @@
+/* Estilos de interface: contrato de classes do design system (docs/DIRECAO_DE_ARTE.md, seções 3 e 4).
+   Tudo que é componente fica em @layer components, para os utilitários do Tailwind (px-2, text-sm, w-full)
+   continuarem sobrescrevendo. Variantes só trocam variáveis; a estrutura fica na classe base. */
+
+@layer components {
+  /* ---------------------------------------------------------------- raridade (variáveis --rar-*) */
+  /* Qualquer elemento com data-raridade ganha as 5 cores da raridade, para ser usado nas variantes abaixo. */
+  :where([data-raridade='comum']) {
+    --rar: var(--color-comum);
+    --rar-clara: var(--color-comum-clara);
+    --rar-escura: var(--color-comum-escura);
+    --rar-contorno: var(--color-comum-contorno);
+    --rar-brilho: var(--color-comum-brilho);
+  }
+  :where([data-raridade='raro']) {
+    --rar: var(--color-raro);
+    --rar-clara: var(--color-raro-clara);
+    --rar-escura: var(--color-raro-escura);
+    --rar-contorno: var(--color-raro-contorno);
+    --rar-brilho: var(--color-raro-brilho);
+  }
+  :where([data-raridade='epico']) {
+    --rar: var(--color-epico);
+    --rar-clara: var(--color-epico-clara);
+    --rar-escura: var(--color-epico-escura);
+    --rar-contorno: var(--color-epico-contorno);
+    --rar-brilho: var(--color-epico-brilho);
+  }
+  :where([data-raridade='lendario']) {
+    --rar: var(--color-lendario);
+    --rar-clara: var(--color-lendario-clara);
+    --rar-escura: var(--color-lendario-escura);
+    --rar-contorno: var(--color-lendario-contorno);
+    --rar-brilho: var(--color-lendario-brilho);
+  }
+
+  /* ---------------------------------------------------------------- texto contornado (Supercell) */
+  /* Traço escuro POR TRÁS do preenchimento + sombra chapada embaixo. */
+  .texto-contorno,
+  .texto-contorno-fino,
+  .titulo-tela,
+  .numero-jogo {
+    font-family: var(--font-titulo);
+    font-weight: 400;
+    color: #fff;
+    /* o traço fica atrás do preenchimento: só metade aparece, por isso o mínimo em px */
+    -webkit-text-stroke: var(--contorno-largura, max(0.18em, 3px)) var(--contorno-cor, var(--color-contorno));
+    paint-order: stroke fill;
+    text-shadow: 0 max(0.09em, 2px) 0 var(--contorno-cor, var(--color-contorno));
+    letter-spacing: 0.01em;
+  }
+  .texto-contorno-fino {
+    --contorno-largura: max(0.14em, 2.5px);
+  }
+  .texto-ouro {
+    color: #ffe066;
+    --contorno-cor: var(--color-ouro-contorno);
+  }
+  .titulo-tela {
+    font-size: 30px;
+    line-height: 34px;
+  }
+  .numero-jogo {
+    font-size: 18px;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+  /* O traço grosso com paint-order cresce para FORA de cada letra e "come" o espaço entre as palavras
+     ("Vendertudo"). Devolve o espaço: ~metade do traço de cada lado. O botão calcula pelo próprio traço. */
+  .texto-contorno,
+  .texto-contorno-fino,
+  .titulo-tela,
+  .numero-jogo,
+  .faixa,
+  .chip,
+  .pilula,
+  .badge,
+  .barra-texto {
+    word-spacing: 0.16em;
+  }
+  /* só os botões com texto contornado (creme/secundário têm traço transparente) */
+  :is(.botao-primario, .botao-confirmar, .botao-compra, .botao-perigo, .botao:disabled, .botao[aria-disabled='true']) {
+    word-spacing: calc(var(--b-traco, max(0.23em, 4px)) * 0.75);
+  }
+  /* SVG dentro de texto contornado (moeda, ovo) não herda o traço nem a ordem de pintura */
+  :where(.texto-contorno, .texto-contorno-fino, .titulo-tela, .numero-jogo, .botao, .chip, .pilula, .badge, .faixa) svg {
+    paint-order: normal;
+    -webkit-text-stroke: 0;
+    text-shadow: none;
+  }
+
+  /* ---------------------------------------------------------------- botões */
+  .botao {
+    /* cores (as variantes trocam só estas) */
+    --b-claro: #fffdf6;
+    --b-base: #fbefd2;
+    --b-escuro: #ecd6a6;
+    --b-labio: #c9a66a;
+    --b-contorno: var(--color-contorno-suave);
+    --b-texto: var(--color-texto);
+    --b-texto-contorno: transparent;
+    --b-desab-texto: #8a8070;
+    --b-desab-contorno: transparent;
+    /* geometria (os tamanhos trocam estas) */
+    --b-li: 4px; /* lábio interno */
+    --b-le: 3px; /* lábio externo (3D) */
+    --b-chao: 6px; /* sombra no chão */
+    --b-afunda: 3px;
+    --b-raio: 14px;
+
+    position: relative;
+    isolation: isolate;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4em;
+    min-height: 48px;
+    padding: 0.45em 1.1em 0.6em;
+    border-radius: var(--b-raio);
+    border: 2px solid var(--b-contorno);
+    background: linear-gradient(180deg, var(--b-claro) 0%, var(--b-base) 48%, var(--b-escuro) 100%);
+    box-shadow:
+      inset 0 2px 0 rgb(255 255 255 / 0.55),
+      inset 0 calc(var(--b-li) * -1) 0 var(--b-labio),
+      0 var(--b-le) 0 var(--b-contorno),
+      0 var(--b-chao) 0 rgb(43 26 15 / 0.22),
+      var(--b-anel, 0 0 #0000);
+    font-family: var(--font-titulo);
+    font-weight: 400;
+    font-size: 18px;
+    line-height: 1.1;
+    letter-spacing: 0.01em;
+    color: var(--b-texto);
+    /* traço atrás do preenchimento: só metade aparece (≈2 px visíveis em 18 px), no peso do Supercell */
+    -webkit-text-stroke: var(--b-traco, max(0.23em, 4px)) var(--b-texto-contorno);
+    paint-order: stroke fill;
+    text-shadow: 0 max(0.1em, 2px) 0 var(--b-texto-contorno);
+    /* rótulo de jogo não fica com uma palavra sozinha na 2ª linha */
+    text-wrap: balance;
+    text-decoration: none;
+    text-align: center;
+    vertical-align: middle;
+    cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
+    /* volta com elástico ao soltar */
+    transition:
+      translate var(--t-solta) var(--ease-elastico),
+      box-shadow var(--t-solta) var(--ease-suave);
+  }
+  /* brilho de vidro na metade de cima */
+  .botao::before {
+    content: '';
+    position: absolute;
+    inset: 3px 6px auto;
+    height: 42%;
+    border-radius: calc(var(--b-raio) - 4px) calc(var(--b-raio) - 4px) 6px 6px;
+    background: linear-gradient(180deg, rgb(255 255 255 / 0.55), rgb(255 255 255 / 0.06));
+    z-index: -1;
+    pointer-events: none;
+  }
+
+  /* variantes de cor */
+  .botao-secundario {
+    --b-claro: #fffdf6;
+    --b-base: #fbefd2;
+    --b-escuro: #ecd6a6;
+    --b-labio: #c9a66a;
+    --b-contorno: #6b4a26;
+    --b-texto: #2b1d12;
+    --b-texto-contorno: transparent;
+    --b-desab-texto: #8a8070;
+    --b-desab-contorno: transparent;
+  }
+  .botao-primario {
+    --b-claro: #ffd36b;
+    --b-base: #ff9d1e;
+    --b-escuro: #f07800;
+    --b-labio: #c25500;
+    --b-contorno: #6b2c00;
+    --b-texto: #fff;
+    --b-texto-contorno: #7a3300;
+    --b-desab-texto: #fbf9f4;
+    --b-desab-contorno: #5f574b;
+  }
+  .botao-confirmar {
+    --b-claro: #b8f27a;
+    --b-base: #6fd13f;
+    --b-escuro: #3fae25;
+    --b-labio: #2a8a18;
+    --b-contorno: #174d0b;
+    --b-texto: #fff;
+    --b-texto-contorno: #1d5410;
+    --b-desab-texto: #fbf9f4;
+    --b-desab-contorno: #5f574b;
+  }
+  .botao-compra {
+    --b-claro: #a8dcff;
+    --b-base: #46a8ff;
+    --b-escuro: #1f7ae6;
+    --b-labio: #1559b8;
+    --b-contorno: #0b2d66;
+    --b-texto: #fff;
+    --b-texto-contorno: #0d3a80;
+    --b-desab-texto: #fbf9f4;
+    --b-desab-contorno: #5f574b;
+  }
+  .botao-perigo {
+    --b-claro: #ff9a8a;
+    --b-base: #ff5a48;
+    --b-escuro: #e2321f;
+    --b-labio: #ad1d10;
+    --b-contorno: #5c0a05;
+    --b-texto: #fff;
+    --b-texto-contorno: #6e0f08;
+    --b-desab-texto: #fbf9f4;
+    --b-desab-contorno: #5f574b;
+  }
+  /* tábua de madeira com raios no centro (botão de saque) */
+  .botao-saque {
+    --b-texto: #fff8e8;
+    --b-texto-contorno: #3b200c;
+    --b-contorno: #3b200c;
+    --b-labio: #5c3414;
+    --b-desab-texto: #f4efe6;
+    --b-desab-contorno: #5c4632;
+    width: 100%;
+    min-height: 56px;
+    border-width: 3px;
+    border-color: #7a4a22;
+    background:
+      repeating-conic-gradient(from 0deg at 50% 50%, rgb(255 236 190 / 0.34) 0 8deg, transparent 8deg 16deg),
+      repeating-linear-gradient(180deg, transparent 0 10px, rgb(59 32 12 / 0.22) 10px 12px),
+      linear-gradient(180deg, #e8b072 0%, #c48448 55%, #a56a32 100%);
+    box-shadow:
+      inset 0 2px 0 rgb(255 226 170 / 0.7),
+      inset 0 -4px 0 rgb(59 32 12 / 0.28),
+      0 0 0 2px #3b200c,
+      0 4px 0 #3b200c,
+      0 8px 0 rgb(43 26 15 / 0.22);
+  }
+  .botao-saque::before {
+    background: linear-gradient(180deg, rgb(255 255 255 / 0.28), transparent);
+  }
+  .botao-saque:disabled,
+  .botao-saque[aria-disabled='true'] {
+    filter: grayscale(0.55);
+    cursor: not-allowed;
+  }
+
+  /* tamanhos */
+  .botao-p {
+    --b-li: 3px;
+    --b-le: 3px;
+    --b-chao: 5px;
+    --b-raio: 12px;
+    --b-traco: max(0.22em, 3.5px);
+    min-height: 44px;
+    font-size: 15px;
+    padding: 0.35em 0.9em 0.5em;
+  }
+  .botao-g {
+    --b-li: 5px;
+    --b-le: 4px;
+    --b-chao: 8px;
+    --b-afunda: 4px;
+    --b-raio: 18px;
+    min-height: 60px;
+    font-size: 22px;
+    padding: 0.5em 1.4em 0.7em;
+  }
+
+  /* ícone redondo (X de fechar, ajustes) */
+  .botao-icone {
+    flex: none;
+    width: 44px;
+    height: 44px;
+    min-height: 44px;
+    padding: 0;
+    border-radius: 999px;
+  }
+  .botao-icone::before {
+    inset: 3px 8px auto;
+    height: 40%;
+    border-radius: 999px 999px 40% 40%;
+  }
+  .botao-icone svg {
+    width: 22px;
+    height: 22px;
+  }
+  .botao-icone svg.lucide {
+    stroke-width: 2.75;
+  }
+  .botao-icone.botao-g {
+    width: 56px;
+    height: 56px;
+    min-height: 56px;
+  }
+  .botao-icone.botao-g svg {
+    width: 28px;
+    height: 28px;
+  }
+  :is(.botao-primario, .botao-confirmar, .botao-compra, .botao-perigo) svg.lucide {
+    stroke-width: 3;
+  }
+
+  /* Ícone contornado (padrão para ícone branco sobre cor): o mesmo ícone duas vezes na mesma célula.
+     <span class="icone-contorno"><Cesto /><Cesto /></span> — o 1º vira o traço escuro, o 2º o branco. */
+  .icone-contorno {
+    --ic-contorno: var(--b-texto-contorno, var(--contorno-cor, var(--color-contorno)));
+    display: inline-grid;
+    flex: none;
+    vertical-align: middle;
+  }
+  .icone-contorno > svg {
+    grid-area: 1 / 1;
+    width: 1.3em;
+    height: 1.3em;
+  }
+  .icone-contorno > svg:first-child {
+    color: var(--ic-contorno);
+    stroke-width: 5.5;
+    translate: 0 1.5px; /* mesma sombra chapada do texto */
+  }
+  /* position: o translate do traço o põe na camada "posicionada"; o branco precisa ficar por cima */
+  .icone-contorno > svg:last-child {
+    position: relative;
+    stroke-width: 2.75;
+  }
+  .botao-icone .icone-contorno > svg {
+    width: 24px;
+    height: 24px;
+  }
+  .botao-icone.botao-g .icone-contorno > svg {
+    width: 30px;
+    height: 30px;
+  }
+
+  /* Alternativa: ícone escuro num disco claro (vai direto no svg: <Cesto className="botao-medalhao" />) */
+  svg.botao-medalhao,
+  .botao-medalhao {
+    flex: none;
+    width: 1.5em;
+    height: 1.5em;
+    padding: 0.2em;
+    border-radius: 999px;
+    background: linear-gradient(180deg, #fff, rgb(255 255 255 / 0.82));
+    box-shadow:
+      0 0 0 2px var(--b-texto-contorno, var(--color-contorno)),
+      0 3px 0 var(--b-texto-contorno, var(--color-contorno));
+    color: var(--b-texto-contorno, var(--color-contorno));
+  }
+  .botao svg.lucide.botao-medalhao {
+    stroke-width: 2.75;
+  }
+
+  /* par de botões lado a lado em 390 px: o rótulo diminui em vez de quebrar */
+  .botao-compacto {
+    font-size: clamp(13px, 3.6vw, 18px);
+    padding-inline: 0.7em;
+    white-space: nowrap;
+    min-width: 0;
+  }
+
+  /* selo de preço dentro do botão de compra */
+  .botao-preco {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2em;
+    padding: 0.05em 0.5em 0.1em 0.25em;
+    border-radius: 999px;
+    background: rgb(0 0 0 / 0.22);
+    box-shadow: inset 0 2px 0 rgb(0 0 0 / 0.2);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap; /* o número nunca se separa da moeda */
+  }
+
+  /* estados */
+  @media (hover: hover) {
+    .botao:hover:not(:active):not(:disabled):not([aria-disabled='true']):not([data-pressionado]) {
+      translate: 0 -1px;
+    }
+  }
+  .botao:not(:disabled):not([aria-disabled='true']):active,
+  .botao[data-pressionado]:not(:disabled) {
+    --b-li: 2px;
+    --b-le: 0px;
+    --b-chao: 2px;
+    translate: 0 var(--b-afunda);
+    transition-duration: var(--t-press);
+    transition-timing-function: var(--ease-suave);
+  }
+  .botao:focus-visible,
+  .botao[data-foco] {
+    outline: 3px solid #fff;
+    outline-offset: 0;
+    --b-anel: 0 0 0 6px var(--color-compra-escura);
+  }
+  /* desabilitado: cinza-pedra próprio, sem filter nem opacity */
+  .botao:disabled,
+  .botao[aria-disabled='true'] {
+    --b-claro: #eeeae2;
+    --b-base: #d9d3c7;
+    --b-escuro: #c2baa9;
+    --b-labio: #9d9483;
+    --b-contorno: #6e665a;
+    --b-texto: var(--b-desab-texto);
+    --b-texto-contorno: var(--b-desab-contorno);
+    cursor: not-allowed;
+  }
+  .botao:disabled::before,
+  .botao[aria-disabled='true']::before {
+    opacity: 0.35;
+  }
+
+  /* ---------------------------------------------------------------- painéis */
+  .painel,
+  .painel-madeira,
+  .painel-escuro,
+  .painel-raridade {
+    isolation: isolate;
+    border-radius: 22px;
+  }
+  /* claro, pergaminho */
+  .painel {
+    background: linear-gradient(180deg, #fffcf3 0%, #fbedcc 100%);
+    border: 3px solid #e6c88e;
+    box-shadow:
+      0 0 0 2px #6b4a26,
+      inset 0 2px 0 #fff,
+      inset 0 -4px 0 rgb(201 154 85 / 0.22),
+      0 6px 0 2px rgb(43 26 15 / 0.22);
+  }
+  /* placas de madeira (base da roleta, cabeçalho de seção) */
+  .painel-madeira {
+    background:
+      repeating-linear-gradient(180deg, transparent 0 22px, rgb(59 32 12 / 0.18) 22px 24px),
+      linear-gradient(180deg, #dca066 0%, #b9773f 60%, #9a5f2e 100%);
+    border: 3px solid #7a4a22;
+    box-shadow:
+      0 0 0 2px #3b200c,
+      inset 0 2px 0 rgb(255 226 170 / 0.55),
+      inset 0 -4px 0 rgb(59 32 12 / 0.25),
+      0 6px 0 2px rgb(43 26 15 / 0.22);
+    color: #fff;
+  }
+  /* toasts, dicas, pílulas sobre o cenário */
+  .painel-escuro {
+    background: linear-gradient(180deg, rgb(74 52 34 / 0.94), rgb(43 26 15 / 0.94));
+    border: 2px solid #8a6238;
+    border-radius: 16px;
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.18),
+      0 4px 0 rgb(43 26 15 / 0.25);
+    color: #fff6e0;
+    font-family: var(--font-texto);
+    font-weight: 800;
+  }
+  /* painel tingido pela raridade (use com data-raridade) */
+  .painel-raridade {
+    background: linear-gradient(180deg, var(--rar-clara, #fffcf3) 0%, #fff 100%);
+    border: 3px solid var(--rar, #e6c88e);
+    box-shadow:
+      0 0 0 2px var(--rar-contorno, #6b4a26),
+      inset 0 2px 0 #fff,
+      0 6px 0 2px rgb(43 26 15 / 0.22);
+  }
+
+  /* faixa de título sobreposta à borda de cima do painel */
+  .painel-com-faixa {
+    position: relative;
+    padding-top: 40px;
+    overflow: visible;
+  }
+  .faixa {
+    --f-claro: #ffb84a;
+    --f-base: #ff8a00;
+    --f-escuro: #e46a00;
+    --f-contorno: #6b2c00;
+    --f-ponta: #a84800;
+    --contorno-cor: #7a3300;
+    /* centralizado sem transform: assim as pontas (z-index -1) ficam atrás da fita */
+    position: absolute;
+    top: -22px;
+    left: 0;
+    right: 0;
+    width: max-content;
+    max-width: calc(100% - 24px);
+    margin-inline: auto;
+    height: 44px;
+    padding: 0 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35em;
+    border: 2px solid var(--f-contorno);
+    border-radius: 10px;
+    background: linear-gradient(180deg, var(--f-claro), var(--f-base) 55%, var(--f-escuro));
+    box-shadow:
+      inset 0 2px 0 rgb(255 255 255 / 0.5),
+      inset 0 -3px 0 rgb(0 0 0 / 0.15),
+      0 3px 0 var(--f-contorno);
+    font-family: var(--font-titulo);
+    font-weight: 400;
+    font-size: 22px;
+    line-height: 1;
+    color: #fff;
+    -webkit-text-stroke: max(0.18em, 3.5px) var(--contorno-cor);
+    paint-order: stroke fill;
+    text-shadow: 0 max(0.09em, 2px) 0 var(--contorno-cor);
+    white-space: nowrap;
+  }
+  /* Caudas da fita: descem abaixo da base, têm contorno (padding de 2 px sobre a cor do contorno)
+     e um triângulo escuro marca a dobra logo abaixo da ponta da fita. Coordenadas: a fita vai de
+     -2 a 45 px (com a sombra); a cauda de 14 a 56 px e entra 8 px por baixo da fita. */
+  .faixa::before,
+  .faixa::after {
+    --f-dobra: color-mix(in srgb, var(--f-ponta) 45%, #000);
+    --f-corte: transparent calc(50% - 2.5px), var(--f-contorno) calc(50% - 2.5px) 50%, transparent 50%;
+    content: '';
+    position: absolute;
+    top: 14px;
+    width: 26px;
+    height: 42px;
+    padding: 2px;
+    z-index: -1;
+    pointer-events: none;
+  }
+  .faixa::before {
+    left: -20px;
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%, 40% 50%);
+    background:
+      linear-gradient(to bottom left, var(--f-dobra) 50%, transparent 50%) right 0 top 31px / 8px 8px no-repeat border-box,
+      linear-gradient(to bottom left, var(--f-corte)) left top / 40% 50% no-repeat border-box,
+      linear-gradient(to top left, var(--f-corte)) left bottom / 40% 50% no-repeat border-box,
+      linear-gradient(180deg, rgb(255 255 255 / 0.18) 0 3px, transparent 3px) content-box,
+      linear-gradient(180deg, var(--f-ponta), color-mix(in srgb, var(--f-ponta) 70%, #000)) content-box,
+      linear-gradient(var(--f-contorno), var(--f-contorno)) border-box;
+  }
+  .faixa::after {
+    right: -20px;
+    clip-path: polygon(0 0, 100% 0, 60% 50%, 100% 100%, 0 100%);
+    background:
+      linear-gradient(to bottom right, var(--f-dobra) 50%, transparent 50%) left 0 top 31px / 8px 8px no-repeat border-box,
+      linear-gradient(to bottom right, var(--f-corte)) right top / 40% 50% no-repeat border-box,
+      linear-gradient(to top right, var(--f-corte)) right bottom / 40% 50% no-repeat border-box,
+      linear-gradient(180deg, rgb(255 255 255 / 0.18) 0 3px, transparent 3px) content-box,
+      linear-gradient(180deg, var(--f-ponta), color-mix(in srgb, var(--f-ponta) 70%, #000)) content-box,
+      linear-gradient(var(--f-contorno), var(--f-contorno)) border-box;
+  }
+  .faixa-azul {
+    --f-claro: #7cc4ff;
+    --f-base: #2f8ff0;
+    --f-escuro: #1868d0;
+    --f-contorno: #0b2d66;
+    --f-ponta: #12509f;
+    --contorno-cor: #0d3a80;
+  }
+  .faixa-verde {
+    --f-claro: #a6ef6a;
+    --f-base: #5cc93b;
+    --f-escuro: #2f9a1c;
+    --f-contorno: #174d0b;
+    --f-ponta: #237a14;
+    --contorno-cor: #1d5410;
+  }
+  /* faixa vermelha: modal destrutivo (<Modal variante="perigo">) */
+  .faixa-perigo {
+    --f-claro: #ff9a8a;
+    --f-base: #ff5a48;
+    --f-escuro: #c4241a;
+    --f-contorno: #5c0a05;
+    --f-ponta: #9c1a10;
+    --contorno-cor: #6e0f08;
+  }
+  .faixa[data-raridade] {
+    --f-claro: var(--rar-clara);
+    --f-base: var(--rar);
+    --f-escuro: var(--rar-escura);
+    --f-contorno: var(--rar-contorno);
+    --f-ponta: var(--rar-escura);
+    --contorno-cor: var(--rar-contorno);
+  }
+
+  /* ---------------------------------------------------------------- campo */
+  .campo {
+    width: 100%;
+    min-height: 48px;
+    padding: 0.6rem 0.9rem;
+    border-radius: 14px;
+    border: 3px solid #e2c48c;
+    background: #fff;
+    box-shadow: inset 0 3px 0 rgb(43 26 15 / 0.08);
+    font-family: var(--font-texto);
+    font-weight: 700;
+    font-size: 16px;
+    line-height: 1.3;
+    color: var(--color-texto);
+    transition:
+      border-color 120ms var(--ease-suave),
+      box-shadow 120ms var(--ease-suave);
+  }
+  .campo::placeholder {
+    color: #a8957c;
+    font-weight: 600;
+  }
+  .campo:focus,
+  .campo:focus-visible,
+  .campo[data-foco] {
+    outline: none;
+    border-color: var(--color-compra);
+    box-shadow:
+      inset 0 3px 0 rgb(43 26 15 / 0.08),
+      0 0 0 3px rgb(70 168 255 / 0.35);
+  }
+  .campo[aria-invalid='true'] {
+    border-color: var(--color-perigo);
+  }
+  .campo[aria-invalid='true']:focus {
+    box-shadow:
+      inset 0 3px 0 rgb(43 26 15 / 0.08),
+      0 0 0 3px rgb(255 90 72 / 0.3);
+  }
+  select.campo {
+    appearance: none;
+    -webkit-appearance: none;
+    padding-right: 2.4rem;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M5 7.5l5 5 5-5' fill='none' stroke='%236b4a26' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 1.1rem;
+    cursor: pointer;
+  }
+  .campo:disabled {
+    background-color: #f3efe6;
+    color: #8a8070;
+    cursor: not-allowed;
+  }
+
+  /* ---------------------------------------------------------------- interruptor (role="switch") */
+  .interruptor {
+    position: relative;
+    flex: none;
+    display: inline-block;
+    width: 56px;
+    height: 32px;
+    padding: 0;
+    border-radius: 999px;
+    border: 2px solid #6b4a26;
+    background: linear-gradient(180deg, #c8bfae, #ddd5c4);
+    box-shadow: inset 0 3px 0 rgb(0 0 0 / 0.15);
+    cursor: pointer;
+    vertical-align: middle;
+  }
+  /* alvo de toque de 48 px sem mudar o desenho */
+  .interruptor::before {
+    content: '';
+    position: absolute;
+    inset: -10px -4px;
+  }
+  .interruptor::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 24px;
+    height: 24px;
+    border-radius: 999px;
+    border: 2px solid #6b4a26;
+    background: linear-gradient(180deg, #fff, #efe7d6);
+    box-shadow: 0 2px 0 rgb(0 0 0 / 0.25);
+    transition: translate var(--t-solta) var(--ease-elastico);
+  }
+  .interruptor[aria-checked='true'] {
+    border-color: #174d0b;
+    background: linear-gradient(180deg, var(--color-confirmar-escura), var(--color-confirmar));
+  }
+  .interruptor[aria-checked='true']::after {
+    translate: 24px 0;
+    border-color: #174d0b;
+  }
+  .interruptor:disabled {
+    cursor: not-allowed;
+    border-color: #9d9483;
+    background: linear-gradient(180deg, #ddd8ce, #ebe6dc);
+  }
+  .interruptor:disabled::after {
+    border-color: #9d9483;
+  }
+
+  /* ---------------------------------------------------------------- chip (contador do HUD) */
+  .chip {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    height: 36px;
+    margin-inline-start: 8px;
+    padding: 0 12px 0 36px;
+    border-radius: 999px;
+    border: 2px solid #1c1008;
+    background: linear-gradient(180deg, #5a3d24, #2b1a0f);
+    box-shadow:
+      inset 0 2px 0 rgb(255 255 255 / 0.16),
+      0 2px 0 rgb(43 26 15 / 0.25);
+    font-family: var(--font-titulo);
+    font-weight: 400;
+    font-size: 18px;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    color: #fff;
+    -webkit-text-stroke: max(0.18em, 3px) var(--color-contorno);
+    paint-order: stroke fill;
+    text-shadow: 0 max(0.09em, 2px) 0 var(--color-contorno);
+    white-space: nowrap;
+  }
+  /* ícone saltando para fora da pílula */
+  .chip-icone {
+    position: absolute;
+    left: -8px;
+    top: 50%;
+    translate: 0 -50%;
+    width: 40px;
+    height: 40px;
+    display: grid;
+    place-items: center;
+    pointer-events: none;
+  }
+  .chip-icone > svg,
+  .chip-icone > img {
+    width: 100%;
+    height: 100%;
+  }
+  .chip.chip-claro {
+    border-color: #6b4a26;
+    background: linear-gradient(180deg, #fffcf3, #f3e2b8);
+    box-shadow:
+      inset 0 2px 0 #fff,
+      0 2px 0 rgb(43 26 15 / 0.2);
+    color: var(--color-texto);
+    -webkit-text-stroke: 0;
+    text-shadow: none;
+  }
+
+  /* ---------------------------------------------------------------- pílula (etiqueta) */
+  .pilula {
+    --p-claro: #8a6238;
+    --p-base: #5a3d24;
+    --p-contorno: #2b1a0f;
+    --contorno-cor: var(--p-contorno);
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    height: 22px;
+    padding: 0 10px;
+    border-radius: 999px;
+    border: 1.5px solid var(--p-contorno);
+    background: linear-gradient(180deg, var(--p-claro), var(--p-base));
+    box-shadow: inset 0 1.5px 0 rgb(255 255 255 / 0.35);
+    font-family: var(--font-titulo);
+    font-weight: 400;
+    font-size: 12px;
+    line-height: 1;
+    color: #fff;
+    -webkit-text-stroke: max(0.14em, 2.5px) var(--contorno-cor);
+    paint-order: stroke fill;
+    text-shadow: 0 max(0.09em, 1.5px) 0 var(--contorno-cor);
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+  }
+  .pilula svg {
+    width: 12px;
+    height: 12px;
+    flex: none;
+  }
+  .pilula[data-raridade] {
+    --p-claro: var(--rar);
+    --p-base: var(--rar-escura);
+    --p-contorno: var(--rar-contorno);
+  }
+  .pilula-timer {
+    --contorno-cor: #2b1a0f;
+    border-color: rgb(255 255 255 / 0.18);
+    background: rgb(43 26 15 / 0.82);
+    box-shadow: none;
+    font-variant-numeric: tabular-nums;
+  }
+  .pilula-perigo {
+    --p-claro: #ff5a48;
+    --p-base: #c4241a;
+    --p-contorno: #5c0a05;
+  }
+  /* extras para selos de estado (PRONTO!, ÚLTIMO CICLO) */
+  .pilula-pronto {
+    --p-claro: #7cf04a;
+    --p-base: #2f9a1c;
+    --p-contorno: #174d0b;
+  }
+  .pilula-aviso {
+    --p-claro: #ffb84a;
+    --p-base: #e46a00;
+    --p-contorno: #6b2c00;
+  }
+
+  /* ---------------------------------------------------------------- badge (notificação) */
+  .badge {
+    --contorno-cor: #7a0e08;
+    position: absolute;
+    display: inline-grid;
+    place-items: center;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 5px;
+    border-radius: 999px;
+    border: 2px solid #fff;
+    background: linear-gradient(180deg, #ff7a6a, #e0241a);
+    box-shadow:
+      0 0 0 1.5px #7a0e08,
+      0 2px 0 rgb(0 0 0 / 0.25);
+    font-family: var(--font-titulo);
+    font-weight: 400;
+    font-size: 12px;
+    line-height: 1;
+    color: #fff;
+    -webkit-text-stroke: max(0.14em, 2.5px) var(--contorno-cor);
+    paint-order: stroke fill;
+    text-shadow: 0 max(0.09em, 1.5px) 0 var(--contorno-cor);
+    font-variant-numeric: tabular-nums;
+  }
+  .badge-pulsa {
+    animation: gi-badge-pulsa 1.2s var(--ease-senoide) infinite;
+  }
+
+  /* ---------------------------------------------------------------- barra de progresso */
+  .barra {
+    --barra-clara: var(--color-vida-verde-clara);
+    --barra-base: var(--color-vida-verde);
+    position: relative;
+    display: block;
+    height: var(--barra-h, 14px);
+    border-radius: 999px;
+    background: var(--color-trilho);
+    box-shadow:
+      inset 0 2px 0 rgb(0 0 0 / 0.45),
+      0 0 0 2px var(--color-contorno);
+  }
+  .barra-preenchimento {
+    display: block;
+    height: 100%;
+    width: calc(var(--p, 0) * 1%);
+    max-width: 100%;
+    min-width: 6px;
+    border-radius: inherit;
+    background: linear-gradient(180deg, var(--barra-clara), var(--barra-base));
+    box-shadow:
+      inset 0 2px 0 rgb(255 255 255 / 0.45),
+      inset 0 -2px 0 rgb(0 0 0 / 0.15);
+  }
+  /* só barras que mudam na frente do jogador animam (width; scaleX deformaria o raio) */
+  .barra-preenchimento[data-anima] {
+    transition: width 600ms var(--ease-suave);
+  }
+  :is(.barra, .barra-preenchimento)[data-cor='verde'] {
+    --barra-clara: var(--color-vida-verde-clara);
+    --barra-base: var(--color-vida-verde);
+  }
+  :is(.barra, .barra-preenchimento)[data-cor='amarela'] {
+    --barra-clara: var(--color-vida-amarela-clara);
+    --barra-base: var(--color-vida-amarela);
+  }
+  :is(.barra, .barra-preenchimento)[data-cor='vermelha'] {
+    --barra-clara: var(--color-vida-vermelha-clara);
+    --barra-base: var(--color-vida-vermelha);
+  }
+  :is(.barra, .barra-preenchimento)[data-cor='azul'] {
+    --barra-clara: #7cc4ff;
+    --barra-base: #1f7ae6;
+  }
+  :is(.barra, .barra-preenchimento)[data-cor='ouro'] {
+    --barra-clara: #fff1a8;
+    --barra-base: #f5b301;
+  }
+  .barra-texto {
+    --contorno-cor: var(--color-contorno);
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    font-family: var(--font-titulo);
+    font-weight: 400;
+    font-size: clamp(11px, calc(var(--barra-h, 14px) * 0.8), 13px);
+    line-height: 1;
+    color: #fff;
+    -webkit-text-stroke: max(0.14em, 2.5px) var(--contorno-cor);
+    paint-order: stroke fill;
+    text-shadow: 0 max(0.09em, 1.5px) 0 var(--contorno-cor);
+    font-variant-numeric: tabular-nums;
+    pointer-events: none;
+  }
+  /* ================================================================ cabeçalho de tela */
+  /* Contrato único para o topo de TODAS as telas (Loja, Roleta, Coleção, Ajustes, Extrato):
+       <div className="tela-cabeca">
+         <IconeLoja className="tela-cabeca-icone" />     ícone ilustrado de arte/Icones.tsx (o mesmo da aba)
+         <h1 className="titulo-tela">Loja</h1>
+         <div className="tela-cabeca-acao">…</div>       opcional: botão/chip encostado à direita
+       </div>
+     Telas "filhas" (Extrato) trocam o ícone pelo botão de voltar:
+       <Link className="botao botao-icone botao-secundario tela-cabeca-voltar" aria-label="Voltar">…</Link>
+     O ícone entra com pop elástico e fica inclinado -6°; o título encolhe até 24 px em 320 px e quebra
+     em 2 linhas equilibradas em vez de vazar. Fica sobre o céu: título branco com contorno madeira. */
+  .tela-cabeca {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 4px 0 14px;
+  }
+  .tela-cabeca-icone {
+    flex: none;
+    width: 46px;
+    height: 46px;
+    rotate: -6deg;
+    animation: gi-cabeca-pop 420ms var(--ease-elastico) both;
+  }
+  .tela-cabeca > .titulo-tela {
+    --contorno-cor: #3b200c;
+    flex: 0 1 auto;
+    min-width: 0;
+    font-size: clamp(24px, 7.6vw, 30px);
+    line-height: 1.1;
+    text-wrap: balance;
+  }
+  .tela-cabeca-acao {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: auto;
+  }
+  .tela-cabeca-voltar {
+    margin-right: 2px;
+  }
+
+  /* ================================================================ moldura do jogo */
+  /* HUD, abas, modal, folha, toasts, balão do tutorial, avisos e carregamento (DIRECAO_DE_ARTE, seção 11). */
+
+  /* ícone ilustrado (SVG colorido) dentro de botão: maior que o texto e saindo um pouco para cima */
+  .botao-arte {
+    flex: none;
+    width: 1.55em;
+    height: 1.55em;
+    margin: -0.35em -0.05em -0.2em -0.25em;
+  }
+
+  /* reflexo que passa pelo botão de ação disponível (chama o olho para "Coletar Todos") */
+  .botao-brilho {
+    overflow: hidden;
+  }
+  .botao-brilho::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: linear-gradient(105deg, transparent 38%, rgb(255 255 255 / 0.55) 50%, transparent 62%);
+    translate: -110% 0;
+    animation: gi-botao-brilho 3.2s var(--ease-senoide) infinite;
+    pointer-events: none;
+  }
+  .botao-brilho:disabled::after {
+    display: none;
+  }
+
+  /* ---------------------------------------------------------------- HUD */
+  /* Faixa do céu: mesmo azul do topo do fundo, para o HUD parecer parte do cenário. */
+  .hud {
+    position: fixed;
+    inset-inline: 0;
+    top: 0;
+    z-index: 40;
+    padding-top: var(--seguro-topo);
+    background: linear-gradient(180deg, #36a5f7 0%, #4fb9ff 62%, #67c5ff 100%);
+    border-bottom: 2px solid rgb(255 255 255 / 0.6);
+    box-shadow: 0 3px 0 rgb(16 84 170 / 0.2);
+  }
+  .hud-linha {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    min-width: 0;
+  }
+
+  /* pílula escura translúcida (estilo Hay Day) com o ícone grande saltando para fora */
+  .chip.chip-hud {
+    --contorno-cor: #0a1430;
+    flex: none;
+    height: 38px;
+    margin-inline-start: 12px;
+    padding: 0 8px 0 28px;
+    border: 2px solid rgb(6 18 44 / 0.55);
+    background: linear-gradient(180deg, rgb(18 34 70 / 0.6) 0%, rgb(8 18 42 / 0.74) 100%);
+    box-shadow:
+      inset 0 2px 0 rgb(255 255 255 / 0.2),
+      inset 0 -2px 0 rgb(0 0 0 / 0.2),
+      0 2px 0 rgb(10 50 110 / 0.28);
+    font-size: clamp(14px, 4.2vw, 18px);
+    -webkit-text-stroke: max(0.18em, 3px) var(--contorno-cor);
+    text-shadow: 0 2px 0 var(--contorno-cor);
+    text-decoration: none;
+    cursor: pointer;
+    transition: scale var(--t-solta) var(--ease-elastico);
+  }
+  .chip.chip-hud:active {
+    scale: 0.94;
+    transition-duration: var(--t-press);
+  }
+  .chip.chip-hud:focus-visible {
+    outline: 3px solid #fff;
+    outline-offset: 2px;
+  }
+  .chip-hud .chip-icone {
+    left: -13px;
+    width: 40px;
+    height: 40px;
+  }
+  /* o cesto do chip de ninhos é largo (desenho ocupa a caixa toda): mais recuo antes dele, para não
+     encostar na borda do chip de ovos nem na setinha "⌄" do popover */
+  .chip.chip-hud.chip-hud-ninhos {
+    margin-inline-start: 20px;
+  }
+  /* celular/tablet: ritmo único na linha dos contadores. Cada chip recua exatamente o quanto o desenho
+     do seu ícone salta para fora da borda (medido: moeda 11 px, cesto 10, ovo 7, porque ocupa 80% da
+     caixa) e a sobra da linha se divide igual entre os 3 vãos (space-between). Resultado: a mesma
+     distância da borda de um chip ao ícone do seguinte e do último chip à engrenagem; o gap é o mínimo
+     garantido (12 px) */
+  @media (max-width: 1023px) {
+    .hud-contadores {
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .hud-contadores > .chip.chip-hud:first-child {
+      margin-inline-start: 11px;
+    }
+    .hud-contadores > .relative > .chip.chip-hud {
+      margin-inline-start: 7px;
+    }
+    .hud-contadores > .chip.chip-hud.chip-hud-ninhos {
+      margin-inline-start: 10px;
+    }
+  }
+  /* 360–399 px: a linha é justa; o cesto encolhe para 36 px e salta menos (desenho 5 px para fora,
+     recuo 5) e o vão mínimo cai para 8 px */
+  @media (min-width: 360px) and (max-width: 399px) {
+    .hud-contadores {
+      gap: 8px;
+    }
+    .hud-contadores > .chip.chip-hud.chip-hud-ninhos {
+      margin-inline-start: 5px;
+    }
+    .chip-hud.chip-hud-ninhos .chip-icone {
+      left: -8px;
+      width: 36px;
+      height: 36px;
+    }
+  }
+  /* alvo de toque de 44 px sem mudar o desenho (o gap + a margem comportam 3 px de cada lado) */
+  .chip.chip-hud::after {
+    content: '';
+    position: absolute;
+    inset: -4px -3px;
+  }
+  /* número que pulsa. Grade com "fantasma": o valor final invisível reserva a largura e o número que
+     conta fica alinhado à direita por cima, então a pílula não treme durante a contagem (Lilita não
+     tem algarismos tabulares). */
+  .chip-numero {
+    display: inline-grid;
+    justify-items: end;
+    min-width: 1.6ch;
+    transform-origin: 50% 60%;
+  }
+  .chip-numero > * {
+    grid-area: 1 / 1;
+  }
+  .chip-numero-fantasma {
+    visibility: hidden;
+  }
+  .chip-hud[data-gastou] .chip-numero {
+    color: #ffb3a8;
+  }
+  /* galinheiro cheio: pílula avermelhada */
+  .chip.chip-hud[data-cheio] {
+    --contorno-cor: #4a0703;
+    border-color: #5c0a05;
+    background: linear-gradient(180deg, rgb(232 70 50 / 0.92), rgb(150 22 12 / 0.94));
+  }
+  /* botãozinho de seta (abre o detalhe dos ovos) */
+  .chip-seta {
+    display: grid;
+    place-items: center;
+    width: 18px;
+    height: 18px;
+    margin-inline: 4px -3px;
+    border-radius: 999px;
+    background: rgb(255 255 255 / 0.2);
+    box-shadow: inset 0 -1.5px 0 rgb(0 0 0 / 0.25);
+    transition: rotate var(--t-solta) var(--ease-elastico);
+  }
+  .chip-seta svg {
+    width: 12px;
+    height: 12px;
+    stroke: #fff;
+    stroke-width: 3.5;
+  }
+  [aria-expanded='true'] > .chip-seta {
+    rotate: 180deg;
+  }
+
+  /* "Coletar Todos" sem nada pronto: cronômetro azul-noite (estilo Supercell), não um botão quebrado */
+  .botao.botao-espera:disabled {
+    --b-claro: #2c4a7c;
+    --b-base: #1b3260;
+    --b-escuro: #10224a;
+    --b-labio: #0a1838;
+    --b-contorno: #06122c;
+    --b-texto: #fff;
+    --b-texto-contorno: #0a1430;
+    gap: 0.45em;
+    padding-inline: 0.45em 0.8em;
+    cursor: default;
+  }
+  .botao.botao-espera:disabled::before {
+    opacity: 0.22;
+  }
+  .espera-relogio.toast-icone {
+    width: 28px;
+    height: 28px;
+    border-width: 2px;
+    border-color: #06122c;
+    font-size: 13px;
+  }
+  .espera-relogio .icone-contorno > svg {
+    width: 17px;
+    height: 17px;
+  }
+  /* rótulo pequeno em cima, tempo grande embaixo (como o baú do Clash Royale) */
+  .espera-texto {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1px;
+    line-height: 1;
+  }
+  .espera-rotulo {
+    font-size: 0.68em;
+    color: #b9d4ff;
+    -webkit-text-stroke-width: 3px;
+    letter-spacing: 0.02em;
+  }
+  .espera-tempo {
+    display: inline-block;
+    min-width: 5.2em;
+    text-align: left;
+    color: #ffe58a;
+  }
+
+  /* botão de ajustes do HUD: desenho de 40 px, alvo de toque de 48 px */
+  .botao.hud-ajustes {
+    width: 40px;
+    height: 40px;
+    min-height: 40px;
+  }
+  /* na tela de ajustes o botão fica dourado (aba "ativa") */
+  .botao.hud-ajustes[aria-current='page'] {
+    --b-claro: #fff3b0;
+    --b-base: #ffd24a;
+    --b-escuro: #f2a900;
+    --b-labio: #c27c00;
+    --b-contorno: #6a4300;
+  }
+  .botao.hud-ajustes::after {
+    content: '';
+    position: absolute;
+    inset: -4px;
+  }
+
+  /* popover de ovos do HUD */
+  .hud-popover {
+    position: absolute;
+    left: 50%;
+    top: calc(100% + 12px);
+    z-index: 50;
+    width: 264px;
+    max-width: calc(100vw - 16px);
+    margin-left: -132px;
+    padding: 12px 14px;
+    transform-origin: 50% -8px;
+  }
+  /* bico apontando para o chip */
+  .hud-popover::before {
+    content: '';
+    position: absolute;
+    top: -12px;
+    left: calc(50% - 3px);
+    width: 18px;
+    height: 18px;
+    rotate: 45deg;
+    background: #fffcf3;
+    border: 3px solid #e6c88e;
+    border-right: 0;
+    border-bottom: 0;
+    border-radius: 4px 0 0 0;
+    box-shadow: -2px -2px 0 0 #6b4a26;
+  }
+
+  /* ---------------------------------------------------------------- abas inferiores */
+  .abas {
+    position: fixed;
+    inset-inline: 0;
+    bottom: 0;
+    z-index: 40;
+    padding-bottom: var(--seguro-base);
+    background:
+      repeating-linear-gradient(180deg, transparent 0 15px, rgb(0 0 0 / 0.13) 15px 17px),
+      linear-gradient(180deg, #6b4829 0%, #4b301a 45%, #2b1a0f 100%);
+    border-top: 3px solid #1c1008;
+    box-shadow:
+      inset 0 2px 0 rgb(255 226 170 / 0.22),
+      0 -3px 0 rgb(43 26 15 / 0.16);
+  }
+  .abas-lista {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    height: var(--altura-abas);
+    max-width: 36rem;
+    margin-inline: auto;
+    padding-inline: 4px;
+  }
+  .aba {
+    position: relative;
+    isolation: isolate;
+    display: flex;
+    height: 100%;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 2px;
+    padding-bottom: 8px;
+    text-decoration: none;
+    outline: none;
+  }
+  .aba:focus-visible::after {
+    content: '';
+    position: absolute;
+    inset: -8px 6px 2px;
+    border-radius: 16px;
+    box-shadow:
+      0 0 0 3px #fff,
+      0 0 0 6px var(--color-compra-escura);
+    pointer-events: none;
+  }
+  /* cápsula clara elevada atrás da aba ativa (desliza entre abas com layoutId) */
+  .aba-capsula {
+    position: absolute;
+    z-index: -1;
+    left: 5px;
+    right: 5px;
+    top: -12px;
+    bottom: 4px;
+    border-radius: 18px;
+    border: 2px solid #6b4a26;
+    background: linear-gradient(180deg, #fffaea 0%, #fbe9bd 55%, #f0d08a 100%);
+    box-shadow:
+      inset 0 2px 0 #fff,
+      inset 0 -4px 0 #d6ae62,
+      0 0 0 2px #1c1008,
+      0 4px 0 #1c1008;
+  }
+  /* luz atrás do ícone ativo */
+  .aba-capsula::before {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 4px;
+    width: 70px;
+    height: 50px;
+    translate: -50% 0;
+    border-radius: 50%;
+    background: radial-gradient(closest-side, rgb(255 236 150 / 1), rgb(255 205 70 / 0.4) 60%, transparent);
+  }
+  .aba-icone {
+    position: relative;
+    display: block;
+    width: 38px;
+    height: 38px;
+  }
+  .aba-icone > svg {
+    width: 100%;
+    height: 100%;
+  }
+  .aba-rotulo {
+    --contorno-cor: #1c1008;
+    font-size: 12.5px;
+    line-height: 1;
+    color: #f6e6c8;
+  }
+  .aba[aria-current='page'] .aba-rotulo {
+    --contorno-cor: #6b2c00;
+    color: #fff;
+  }
+  .aba .badge {
+    top: 0;
+    right: calc(50% - 30px);
+    z-index: 1;
+  }
+  .aba[aria-current='page'] .badge {
+    top: -16px;
+  }
+
+  /* desktop: HUD e abas crescem (~1,15×) para não ficarem miúdos numa barra de 1100 px */
+  @media (min-width: 1024px) {
+    .chip.chip-hud {
+      height: 48px;
+      font-size: 22px;
+      margin-inline-start: 18px;
+      padding: 0 12px 0 38px;
+    }
+    .chip.chip-hud.chip-hud-ninhos {
+      margin-inline-start: 24px;
+    }
+    .chip-hud .chip-icone {
+      width: 52px;
+      height: 52px;
+      left: -17px;
+    }
+    .chip-hud .chip-seta {
+      width: 22px;
+      height: 22px;
+    }
+    .chip-hud .chip-seta svg {
+      width: 14px;
+      height: 14px;
+    }
+    .hud .botao.botao-compacto {
+      min-height: 50px;
+      font-size: 20px;
+    }
+    .aba-icone {
+      width: 44px;
+      height: 44px;
+    }
+    .aba-rotulo {
+      font-size: 14px;
+    }
+    .botao.hud-ajustes {
+      width: 48px;
+      height: 48px;
+      min-height: 48px;
+    }
+  }
+
+  /* celular pequeno (320 px): pílulas e engrenagem mais compactas para a linha caber inteira, sem a
+     engrenagem passar da margem. Mesmo ritmo do celular maior (recuo = quanto o ícone salta, sobra
+     dividida igual, ~8 px), com vão mínimo de 6 px. A moeda começa e a engrenagem termina a 8 px das
+     bordas da tela */
+  @media (max-width: 359px) {
+    .hud .hud-contadores {
+      gap: 6px;
+    }
+    .chip.chip-hud {
+      height: 34px;
+      font-size: 14px;
+      margin-inline-start: 6px;
+      padding: 0 5px 0 27px;
+    }
+    .chip-hud .chip-icone {
+      width: 34px;
+      height: 34px;
+      left: -8px;
+    }
+    .hud-contadores > .chip.chip-hud:first-child {
+      margin-inline-start: 6px;
+    }
+    /* ovo: 80% de 34 px, o desenho salta ~3 px */
+    .hud-contadores > .relative > .chip.chip-hud {
+      margin-inline-start: 3px;
+    }
+    /* 320 px: o cesto fica menor (30 px) e o desenho salta só 2 px: não cobre o número */
+    .hud-contadores > .chip.chip-hud.chip-hud-ninhos {
+      margin-inline-start: 2px;
+    }
+    .chip-hud.chip-hud-ninhos .chip-icone {
+      left: -4px;
+      width: 30px;
+      height: 30px;
+    }
+    .chip-hud .chip-seta {
+      width: 16px;
+      height: 16px;
+      margin-inline: 3px -2px;
+    }
+    .chip-hud .chip-seta svg {
+      width: 11px;
+      height: 11px;
+    }
+    .botao.hud-ajustes {
+      width: 36px;
+      height: 36px;
+      min-height: 36px;
+    }
+    .botao.hud-ajustes::after {
+      inset: -4px;
+    }
+  }
+
+  /* ---------------------------------------------------------------- modal central */
+  .modal-fundo {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 34px 16px calc(16px + var(--seguro-base));
+    background: rgb(27 19 32 / 0.6);
+  }
+  .modal-caixa {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 28rem;
+    /* 100%: dentro de um palco da galeria (fundo preso a um contêiner) também respeita a altura dele */
+    max-height: min(calc(100dvh - 60px), 100%);
+  }
+  .modal-caixa.painel-com-faixa {
+    padding-top: 30px;
+  }
+  .modal-corpo {
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 18px 20px 20px;
+  }
+  .modal-caixa.painel-com-faixa > .modal-corpo {
+    padding-top: 8px;
+  }
+  /* rodapé fixo do modal (prop rodape): fica fora da rolagem, o CTA nunca some abaixo da dobra.
+     O corpo rola por trás; a máscara .rolagem-esmaecida do corpo avisa que há mais conteúdo. */
+  .modal-rodape {
+    flex: none;
+    position: relative;
+    padding: 12px 20px 20px;
+  }
+  .modal-corpo:has(+ .modal-rodape) {
+    padding-bottom: 6px;
+  }
+  .modal-fechar {
+    position: absolute;
+    top: -14px;
+    right: -12px;
+    z-index: 2;
+  }
+  /* faixa do modal: quebra em 2 linhas em vez de vazar e não encosta no X */
+  .faixa.faixa-modal {
+    top: -24px;
+    font-size: var(--faixa-fs, 22px);
+    max-width: calc(100% - 104px);
+    height: auto;
+    min-height: 46px;
+    padding: 6px 22px 8px;
+    white-space: normal;
+    text-wrap: balance;
+    text-align: center;
+    line-height: 1.02;
+  }
+  /* se o título quebrar em 2 linhas, as caudas acompanham o meio da fita (46 px → top 14 px, igual à
+     faixa comum) em vez de ficarem presas no alto */
+  .faixa.faixa-modal::before,
+  .faixa.faixa-modal::after {
+    top: calc(50% - 9px);
+  }
+  @media (max-width: 359px) {
+    .faixa.faixa-modal {
+      font-size: calc(var(--faixa-fs, 22px) * 0.88);
+      padding-inline: 18px;
+    }
+  }
+
+  /* ---------------------------------------------------------------- folha (bottom sheet) */
+  .folha-fundo {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    background: rgb(27 19 32 / 0.6);
+  }
+  /* coluna: cabeça fixa (arrasta) + corpo rolável (o dedo rola o conteúdo em vez de fechar a folha) */
+  .painel.folha {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 28rem;
+    max-height: 92dvh;
+    border-radius: 28px 28px 0 0;
+    border-bottom-width: 0;
+    padding: 0;
+  }
+  .folha-cabeca {
+    flex: none;
+    min-height: 34px;
+    padding-inline: 16px;
+    cursor: grab;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  .folha-cabeca:active {
+    cursor: grabbing;
+  }
+  .folha-corpo {
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    touch-action: pan-y;
+    padding: 0 16px calc(16px + var(--seguro-base));
+  }
+  /* alça: área de toque generosa, desenho pequeno */
+  .folha-alca {
+    display: grid;
+    place-items: center;
+    height: 34px;
+  }
+  .folha-alca::before {
+    content: '';
+    width: 48px;
+    height: 6px;
+    border-radius: 999px;
+    background: #d9bf8a;
+    box-shadow:
+      inset 0 1.5px 0 rgb(107 74 38 / 0.35),
+      0 1px 0 #fff;
+  }
+  .folha-titulo {
+    margin: -6px 52px 10px;
+    text-align: center;
+    font-size: 22px;
+    line-height: 26px;
+    color: var(--color-texto);
+  }
+  .folha-fechar {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 2;
+  }
+  @media (min-width: 640px) {
+    .folha-fundo {
+      align-items: center;
+    }
+    .painel.folha {
+      border-radius: 28px;
+      border-bottom-width: 3px;
+    }
+  }
+
+  /* ---------------------------------------------------------------- toasts e avisos */
+  .toast,
+  .aviso {
+    --toast-cor: #ffc93c;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-color: var(--toast-cor);
+    border-width: 2.5px;
+    border-radius: 18px;
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.2),
+      0 0 0 2px #1c1008,
+      0 5px 0 2px rgb(43 26 15 / 0.28);
+  }
+  .toast {
+    pointer-events: auto;
+    cursor: pointer;
+    width: max-content;
+    max-width: min(26rem, 100%);
+    min-height: 54px;
+    padding: 7px 14px 7px 8px;
+    font-size: 15px;
+    line-height: 1.25;
+  }
+  .aviso {
+    padding: 8px 12px 8px 8px;
+    font-size: 14px;
+    line-height: 1.25;
+  }
+  :is(.toast, .aviso)[data-tipo='sucesso'] {
+    --toast-cor: #5cc93b;
+  }
+  :is(.toast, .aviso)[data-tipo='erro'] {
+    --toast-cor: #ff5a48;
+  }
+  .toast-icone {
+    --ti-claro: #fff1a8;
+    --ti-base: #ffc93c;
+    --ti-escuro: #e08a00;
+    --ti-contorno: #6a4300;
+    --b-texto-contorno: var(--ti-contorno);
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 999px;
+    border: 2px solid #1c1008;
+    background: linear-gradient(180deg, var(--ti-claro) 0%, var(--ti-base) 60%, var(--ti-escuro) 100%);
+    box-shadow:
+      inset 0 2px 0 rgb(255 255 255 / 0.55),
+      inset 0 -3px 0 rgb(0 0 0 / 0.2);
+    color: #fff;
+  }
+  :is(.toast, .aviso)[data-tipo='sucesso'] .toast-icone {
+    --ti-claro: #b8f27a;
+    --ti-base: #6fd13f;
+    --ti-escuro: #2f9a1c;
+    --ti-contorno: #174d0b;
+  }
+  :is(.toast, .aviso)[data-tipo='erro'] .toast-icone {
+    --ti-claro: #ff9a8a;
+    --ti-base: #ff5a48;
+    --ti-escuro: #c4241a;
+    --ti-contorno: #5c0a05;
+  }
+  /* ganho de moedas: borda dourada e a moeda do jogo no lugar do medalhão (ela já tem aro próprio) */
+  .toast[data-icone='moeda'] {
+    --toast-cor: #f5b301;
+  }
+  .toast[data-icone='moeda'] .toast-icone {
+    width: 42px;
+    height: 42px;
+    margin-block: -2px;
+    border: 0;
+    background: none;
+    box-shadow: none;
+  }
+  /* "+N ovos": o ovo num medalhão creme, como um ninho */
+  .toast[data-icone='ovo'] .toast-icone {
+    --ti-claro: #fffdf5;
+    --ti-base: #ffeec4;
+    --ti-escuro: #f0c46a;
+  }
+  .toast-icone .icone-contorno > svg {
+    width: 22px;
+    height: 22px;
+  }
+  .toast-texto {
+    flex: 1;
+    min-width: 0;
+    text-wrap: pretty;
+  }
+
+  /* ---------------------------------------------------------------- tutorial (Seu Juca) */
+  .tut-veu {
+    background: rgb(20 12 30 / 0.62);
+  }
+  .tut-anel {
+    border-radius: 20px;
+    border: 4px solid #ffd84d;
+    box-shadow:
+      0 0 0 2px #6a4300,
+      inset 0 0 0 2px #6a4300,
+      0 0 0 10px rgb(255 216 77 / 0.25),
+      0 0 0 18px rgb(255 216 77 / 0.1);
+    animation: gi-tut-anel 1.2s var(--ease-senoide) infinite;
+  }
+  /* seta dourada quicando em direção ao alvo */
+  .tut-seta {
+    position: fixed;
+    width: 40px;
+    height: 46px;
+    margin-left: -20px;
+    animation: gi-tut-seta 0.75s var(--ease-senoide) infinite alternate;
+  }
+  .tut-seta > svg {
+    width: 100%;
+    height: 100%;
+  }
+  .tut-seta[data-lado='baixo'] > svg {
+    rotate: 180deg;
+  }
+  .balao-juca {
+    display: flex;
+    align-items: flex-end;
+  }
+  .balao-juca-figura {
+    position: relative;
+    isolation: isolate;
+    flex: none;
+    width: 92px;
+    height: 96px;
+    margin-right: 4px;
+  }
+  .balao-juca-figura > svg {
+    width: 100%;
+    height: 100%;
+  }
+  /* sombra no chão (sem filter), ancorada na base dos pés: no viewBox 120 do Juca os pés pisam em
+     y≈114 (95%); a figura 92×96 desenha o SVG em 92×92 centrado, então o chão fica a ~7% da base. */
+  .balao-juca-figura::after {
+    content: '';
+    position: absolute;
+    left: 22px;
+    right: 22px;
+    bottom: calc(7% - 5px);
+    height: 10px;
+    border-radius: 50%;
+    background: rgb(0 0 0 / 0.35);
+    z-index: -1;
+  }
+  .balao {
+    position: relative;
+    flex: 1;
+    min-width: 0;
+    margin-bottom: 12px;
+    padding: 20px 16px 10px;
+  }
+  /* cauda do balão apontando para o Juca (dois triângulos: contorno e preenchimento) */
+  .balao::before,
+  .balao::after {
+    content: '';
+    position: absolute;
+    width: 0;
+    height: 0;
+    border-style: solid;
+  }
+  .balao::before {
+    left: -22px;
+    bottom: 16px;
+    border-width: 11px 21px 11px 0;
+    border-color: transparent #6b4a26 transparent transparent;
+  }
+  .balao::after {
+    left: -13px;
+    bottom: 19.5px;
+    border-width: 7.5px 16px 7.5px 0;
+    border-color: transparent #fcf0d2 transparent transparent;
+  }
+  .balao-nome {
+    position: absolute;
+    top: -13px;
+    left: 14px;
+    height: 26px;
+    padding: 0 12px;
+    font-size: 14px;
+  }
+  .balao-texto {
+    font-size: 16px;
+    line-height: 22px;
+    font-weight: 800;
+    color: var(--color-texto);
+    text-wrap: pretty;
+  }
+  .balao .botao {
+    white-space: nowrap;
+  }
+  /* "Pular" à esquerda, botão à direita; se não couberem (celular estreito), o botão sobe para a
+     linha de cima (wrap-reverse) em vez de vazar do balão */
+  .balao-acoes {
+    display: flex;
+    flex-wrap: wrap-reverse;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 2px 6px;
+    margin-top: 6px;
+  }
+  .balao-acoes > .balao-pular {
+    margin-right: auto;
+  }
+  /* celular estreito: Juca um pouco menor para "Pular" e o botão caberem na mesma linha */
+  @media (max-width: 379px) {
+    .balao-juca-figura {
+      width: 76px;
+      height: 80px;
+      margin-right: 2px;
+    }
+    .balao {
+      padding-inline: 14px 12px;
+    }
+    .balao-pular {
+      font-size: 13px;
+    }
+  }
+  .balao-pular {
+    white-space: nowrap;
+    min-height: 44px;
+    padding: 0 2px;
+    font-size: 14px;
+    font-weight: 800;
+    color: var(--color-texto-suave);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  /* ---------------------------------------------------------------- carregamento */
+  .carregando {
+    position: relative;
+    display: grid;
+    place-items: center;
+    min-height: 100dvh;
+    padding: 24px;
+    overflow: hidden;
+  }
+  /* raios de sol girando atrás do Juca */
+  .carregando-raios {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 760px;
+    height: 760px;
+    margin: -380px 0 0 -380px;
+    border-radius: 50%;
+    background: repeating-conic-gradient(rgb(255 255 255 / 0.24) 0 10deg, transparent 10deg 20deg);
+    -webkit-mask: radial-gradient(closest-side, #000 12%, transparent 74%);
+    mask: radial-gradient(closest-side, #000 12%, transparent 74%);
+    animation: gi-gira 40s linear infinite;
+    pointer-events: none;
+  }
+  .carregando-logo {
+    position: relative;
+    isolation: isolate;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    rotate: -3deg;
+  }
+  .carregando-titulo {
+    --contorno-cor: #6b2c00;
+    font-size: 46px;
+    line-height: 1;
+    color: #ffe066;
+  }
+  .faixa.carregando-idle {
+    position: relative;
+    top: auto;
+    margin-top: 8px;
+    height: 36px;
+    font-size: 20px;
+    letter-spacing: 0.14em;
+    rotate: 3deg;
+  }
+  .carregando-juca {
+    position: relative;
+    width: 112px;
+    height: 112px;
+    transform-origin: 50% 100%;
+    animation: gi-pulo 0.9s var(--ease-senoide) infinite;
+  }
+  .carregando-juca > svg {
+    width: 100%;
+    height: 100%;
+  }
+  /* a sombra é nossa (fica no chão enquanto o Juca pula): a elipse embutida no desenho some aqui */
+  :is(.carregando-juca, .balao-juca-figura) > svg > ellipse:first-of-type {
+    display: none;
+  }
+  /* centro da sombra no chão dos pés (95% da altura de 112 px) */
+  .carregando-sombra {
+    width: 76px;
+    height: 12px;
+    margin-top: -12px;
+    border-radius: 50%;
+    background: rgb(16 70 140 / 0.28);
+    animation: gi-pulo-sombra 0.9s var(--ease-senoide) infinite;
+  }
+  .carregando-ovos {
+    display: flex;
+    gap: 10px;
+    height: 36px;
+    align-items: flex-end;
+  }
+  .carregando-ovos > svg {
+    width: 22px;
+    height: 26px;
+    transform-origin: 50% 100%;
+    animation: gi-ovo-pula 1.2s var(--ease-senoide) infinite;
+  }
+  .carregando-ovos > svg:nth-child(2) {
+    animation-delay: 0.15s;
+  }
+  .carregando-ovos > svg:nth-child(3) {
+    animation-delay: 0.3s;
+  }
+  .carregando-texto {
+    font-size: 20px;
+    line-height: 24px;
+  }
+}
+
+/* ---------------------------------------------------------------- animações da moldura */
+@keyframes gi-tut-seta {
+  from {
+    translate: 0 0;
+  }
+  to {
+    translate: 0 10px;
+  }
+}
+@keyframes gi-botao-brilho {
+  0% {
+    translate: -110% 0;
+  }
+  32%,
+  100% {
+    translate: 110% 0;
+  }
+}
+@keyframes gi-tut-anel {
+  0%,
+  100% {
+    scale: 1;
+  }
+  50% {
+    scale: 1.04;
+  }
+}
+@keyframes gi-gira {
+  to {
+    rotate: 360deg;
+  }
+}
+@keyframes gi-pulo {
+  0%,
+  100% {
+    translate: 0 0;
+    scale: 1.06 0.94;
+  }
+  15% {
+    translate: 0 0;
+    scale: 0.97 1.04;
+  }
+  50% {
+    translate: 0 -16px;
+    scale: 1 1;
+  }
+  85% {
+    translate: 0 0;
+    scale: 1 1;
+  }
+}
+@keyframes gi-pulo-sombra {
+  0%,
+  85%,
+  100% {
+    scale: 1;
+    opacity: 1;
+  }
+  50% {
+    scale: 0.7;
+    opacity: 0.6;
+  }
+}
+@keyframes gi-ovo-pula {
+  0%,
+  60%,
+  100% {
+    translate: 0 0;
+    rotate: 0deg;
+  }
+  25% {
+    translate: 0 -12px;
+    rotate: -10deg;
+  }
+  45% {
+    translate: 0 0;
+    rotate: 6deg;
+  }
+}
+
+
+@keyframes gi-cabeca-pop {
+  0% {
+    scale: 0.4;
+    opacity: 0;
+  }
+  100% {
+    scale: 1;
+    opacity: 1;
+  }
+}
+
+@keyframes gi-badge-pulsa {
+  0%,
+  100% {
+    scale: 1;
+  }
+  50% {
+    scale: 1.15;
+  }
+}
+
+/* Reserva para navegador sem paint-order em texto HTML: 4 sombras de 2 px fazem o contorno */
+@supports not (paint-order: stroke fill) {
+  .texto-contorno,
+  .texto-contorno-fino,
+  .titulo-tela,
+  .numero-jogo,
+  .chip,
+  .pilula,
+  .badge,
+  .faixa,
+  .barra-texto {
+    -webkit-text-stroke: 0;
+    text-shadow:
+      2px 0 0 var(--contorno-cor, var(--color-contorno)),
+      -2px 0 0 var(--contorno-cor, var(--color-contorno)),
+      0 2px 0 var(--contorno-cor, var(--color-contorno)),
+      0 -2px 0 var(--contorno-cor, var(--color-contorno)),
+      0 0.12em 0 var(--contorno-cor, var(--color-contorno));
+  }
+}
+
+/* ---------------------------------------------------------------- utilitários globais (fora de @layer) */
+/* Reduzir movimento: nenhuma animação contínua. .so-opacidade continua (só anima opacity). */
+html.reduzir-movimento *:not(.so-opacidade),
+html.reduzir-movimento *:not(.so-opacidade)::before,
+html.reduzir-movimento *:not(.so-opacidade)::after {
+  animation-iteration-count: 1 !important;
+  animation-duration: 1ms !important;
+  transition-duration: 1ms !important;
+}
+
+/* Ninho fora da tela: tudo dentro pausa */
+.pausado,
+.pausado::before,
+.pausado::after,
+.pausado *,
+.pausado *::before,
+.pausado *::after {
+  animation-play-state: paused !important;
+}
+
+/* Camada única de partículas e voos */
+.fx-camada {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  contain: strict;
+  z-index: 55;
+}

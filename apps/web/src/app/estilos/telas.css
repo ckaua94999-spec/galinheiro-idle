@@ -1,0 +1,2877 @@
+/* Estilos: telas secundárias (loja, ajustes, extrato, entrar) e modais de ação (vender, aposentadorias).
+   Importado por globals.css. Usa o contrato de ui.css (botões, painéis, faixa, barra, interruptor…);
+   aqui ficam só as peças próprias destas telas. Animações contínuas só em transform/opacity e todas
+   desligam com html.reduzir-movimento (regra global de ui.css). */
+
+@layer components {
+  /* ================================================================ moldura comum das telas */
+  .tela {
+    width: 100%;
+    max-width: 28rem;
+    margin-inline: auto;
+    padding: 4px 16px 28px;
+  }
+  /* o cabeçalho (.tela-cabeca, .tela-cabeca-icone) é contrato de ui.css */
+
+  /* placa de madeira pregada: cabeçalho de seção sobre o céu */
+  .placa-secao {
+    --contorno-cor: #3b200c;
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 36px;
+    margin: 0 0 12px 4px;
+    padding: 0 22px 2px 8px;
+    border-radius: 10px;
+    border: 2px solid #3b200c;
+    background:
+      linear-gradient(180deg, rgb(255 255 255 / 0.22) 0 3px, transparent 3px),
+      repeating-linear-gradient(180deg, transparent 0 15px, rgb(59 32 12 / 0.2) 15px 17px),
+      linear-gradient(180deg, #e6ab6c 0%, #c4844a 55%, #9a5f2e 100%);
+    box-shadow:
+      inset 0 -3px 0 rgb(59 32 12 / 0.25),
+      0 3px 0 #3b200c,
+      0 6px 0 rgb(43 26 15 / 0.18);
+    font-family: var(--font-titulo);
+    font-size: 18px;
+    line-height: 1;
+    color: #fff;
+    -webkit-text-stroke: max(0.18em, 3.5px) var(--contorno-cor);
+    paint-order: stroke fill;
+    text-shadow: 0 2px 0 var(--contorno-cor);
+    rotate: -1.5deg;
+  }
+  /* dois pregos de metal na ponta direita (cabeça clara com brilho e aro escuro) */
+  .placa-secao::after {
+    --prego: radial-gradient(circle at 38% 36%, #fff 0 14%, #c9d3e2 30%, #7d8ea6 56%, #3b200c 60% 74%, transparent 78%);
+    content: '';
+    position: absolute;
+    right: 5px;
+    top: 5px;
+    bottom: 7px;
+    width: 8px;
+    background:
+      var(--prego) top / 8px 8px no-repeat,
+      var(--prego) bottom / 8px 8px no-repeat;
+  }
+  .placa-secao svg {
+    paint-order: normal;
+    -webkit-text-stroke: 0;
+  }
+  .placa-secao .tile-icone {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    margin-left: -18px;
+    rotate: -8deg;
+  }
+  .placa-secao .tile-icone svg {
+    width: 17px;
+    height: 17px;
+  }
+
+  /* azulejo colorido com ícone branco contornado (linhas de ajustes, extrato) */
+  .tile-icone {
+    --t-claro: #ffd36b;
+    --t-base: #ff9d1e;
+    --t-escuro: #e06a00;
+    --t-contorno: #6b2c00;
+    --b-texto-contorno: var(--t-contorno);
+    position: relative;
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 42px;
+    height: 42px;
+    border-radius: 13px;
+    border: 2px solid var(--t-contorno);
+    background: linear-gradient(180deg, var(--t-claro) 0%, var(--t-base) 52%, var(--t-escuro) 100%);
+    box-shadow:
+      inset 0 2px 0 rgb(255 255 255 / 0.55),
+      inset 0 -3px 0 rgb(0 0 0 / 0.16),
+      0 2px 0 var(--t-contorno);
+    color: #fff;
+  }
+  .tile-icone::before {
+    content: '';
+    position: absolute;
+    inset: 3px 5px auto;
+    height: 38%;
+    border-radius: 9px 9px 5px 5px;
+    background: linear-gradient(180deg, rgb(255 255 255 / 0.5), rgb(255 255 255 / 0.04));
+    pointer-events: none;
+  }
+  .tile-icone .icone-contorno {
+    position: relative;
+  }
+  .tile-icone .icone-contorno > svg {
+    width: 22px;
+    height: 22px;
+  }
+  .tile-icone .icone-contorno > svg:first-child {
+    stroke-width: 6;
+  }
+  .tile-icone .icone-contorno > svg:last-child {
+    stroke-width: 2.9;
+  }
+  .tile-icone > svg:not(.lucide) {
+    position: relative;
+    width: 30px;
+    height: 30px;
+  }
+  .tile-icone[data-cor='verde'] {
+    --t-claro: #b8f27a;
+    --t-base: #6fd13f;
+    --t-escuro: #2f9a1c;
+    --t-contorno: #174d0b;
+  }
+  .tile-icone[data-cor='azul'] {
+    --t-claro: #a8dcff;
+    --t-base: #46a8ff;
+    --t-escuro: #1868d0;
+    --t-contorno: #0b2d66;
+  }
+  .tile-icone[data-cor='roxo'] {
+    --t-claro: #d9c6ff;
+    --t-base: #9b6cff;
+    --t-escuro: #5b2fc9;
+    --t-contorno: #2a0f5e;
+  }
+  .tile-icone[data-cor='rosa'] {
+    --t-claro: #ffc0dc;
+    --t-base: #ff7ab0;
+    --t-escuro: #d6408a;
+    --t-contorno: #7a1a4a;
+  }
+  .tile-icone[data-cor='vermelho'] {
+    --t-claro: #ff9a8a;
+    --t-base: #ff5a48;
+    --t-escuro: #c4241a;
+    --t-contorno: #5c0a05;
+  }
+  .tile-icone[data-cor='ouro'] {
+    --t-claro: #fff1a8;
+    --t-base: #ffc93c;
+    --t-escuro: #d08a00;
+    --t-contorno: #5a3a00;
+  }
+  .tile-icone[data-cor='madeira'] {
+    --t-claro: #f0bb7a;
+    --t-base: #c4844a;
+    --t-escuro: #8a5226;
+    --t-contorno: #3b200c;
+  }
+  .tile-icone[data-cor='cinza'] {
+    --t-claro: #eef1f5;
+    --t-base: #aab3bf;
+    --t-escuro: #6b7480;
+    --t-contorno: #2e3642;
+  }
+  .tile-icone[data-cor='creme'] {
+    --t-claro: #fffdf6;
+    --t-base: #fbefd2;
+    --t-escuro: #ecd6a6;
+    --t-contorno: #6b4a26;
+  }
+
+  /* lista dentro de painel: divisórias tracejadas de palha */
+  .lista-painel > * + * {
+    border-top: 2px dashed rgb(201 154 85 / 0.45);
+  }
+
+  /* link de texto do jogo (Voltar, Esqueci a senha): alvo de 44 px */
+  .link-jogo {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    min-height: 44px;
+    padding: 0 6px;
+    border-radius: 10px;
+    font-family: var(--font-texto);
+    font-size: 15px;
+    font-weight: 800;
+    color: var(--color-compra-escura);
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 4px;
+  }
+  .link-jogo:active {
+    translate: 0 1px;
+  }
+
+  /* campo com ícone à esquerda */
+  .campo-icone {
+    position: relative;
+    display: block;
+  }
+  .campo-icone > svg {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    width: 20px;
+    height: 20px;
+    margin-top: -10px;
+    color: #a0794a;
+    pointer-events: none;
+  }
+  .campo-icone > .campo {
+    padding-left: 44px;
+  }
+  .campo-icone:focus-within > svg {
+    color: var(--color-compra-escura);
+  }
+  /* botão de mostrar/esconder a senha (no lugar de "repita a senha") */
+  .campo-icone:has(> .campo-olho) > .campo {
+    padding-right: 48px;
+  }
+  .campo-icone > .campo-olho {
+    position: absolute;
+    right: 2px;
+    top: 50%;
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    margin-top: -22px;
+    border-radius: 12px;
+    color: #a0794a;
+  }
+  .campo-icone > .campo-olho > svg {
+    width: 20px;
+    height: 20px;
+  }
+  .campo-icone > .campo-olho:hover,
+  .campo-icone > .campo-olho:focus-visible {
+    color: var(--color-compra-escura);
+  }
+  /* campo apontado pela validação (a borda vermelha vem de .campo[aria-invalid] em ui.css) */
+  .campo-icone:has(> .campo[aria-invalid='true']) > svg {
+    color: var(--color-perigo);
+  }
+  /* "Ainda não tem conta? Criar conta" no rodapé do formulário de entrar */
+  .entrar-troca {
+    margin: -6px 0 0;
+    text-align: center;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--color-texto-suave);
+  }
+  .entrar-troca .link-jogo {
+    min-height: 36px;
+    font-size: 14px;
+  }
+
+  /* bilhete do código de recuperação */
+  .bilhete-codigo {
+    position: relative;
+    margin: 14px 0;
+    padding: 16px 12px 14px;
+    border-radius: 16px;
+    border: 3px dashed #c98e34;
+    background:
+      radial-gradient(circle at 0 50%, transparent 0 10px, transparent 10px),
+      linear-gradient(180deg, #fffbe8, #fff1c4);
+    box-shadow:
+      0 0 0 2px #6b4416,
+      inset 0 2px 0 #fff;
+    text-align: center;
+    font-family: var(--font-titulo);
+    font-size: 26px;
+    line-height: 1.1;
+    letter-spacing: 0.12em;
+    color: #5a3a00;
+    word-break: break-all;
+  }
+  .bilhete-codigo::before,
+  .bilhete-codigo::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    width: 18px;
+    height: 18px;
+    margin-top: -9px;
+    border-radius: 50%;
+    background: #fbedcc;
+    box-shadow: inset 0 0 0 2px #6b4416;
+  }
+  .bilhete-codigo::before {
+    left: -12px;
+    clip-path: inset(0 0 0 50%);
+  }
+  .bilhete-codigo::after {
+    right: -12px;
+    clip-path: inset(0 50% 0 0);
+  }
+
+  /* passos numerados (instruções de instalação) */
+  .passos {
+    display: grid;
+    gap: 10px;
+    counter-reset: passo;
+  }
+  .passos > li {
+    counter-increment: passo;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 15px;
+  }
+  .passos > li::before {
+    --contorno-cor: #0d3a80;
+    content: counter(passo);
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 2px solid #0b2d66;
+    background: linear-gradient(180deg, #a8dcff, #46a8ff 55%, #1f7ae6);
+    box-shadow: inset 0 2px 0 rgb(255 255 255 / 0.5), 0 2px 0 #0b2d66;
+    font-family: var(--font-titulo);
+    font-size: 17px;
+    color: #fff;
+    -webkit-text-stroke: 3.5px var(--contorno-cor);
+    paint-order: stroke fill;
+  }
+
+  /* ================================================================ loja */
+  /* minmax(0, 1fr): sem template, a coluna implícita "auto" cresce até o min-content dos filhos
+     (pílulas nowrap, a grade "Em breve") e a vitrine estoura a tela abaixo de ~348 px */
+  .loja-tela {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 28px;
+  }
+  .loja-tela > .tela-cabeca {
+    margin-bottom: 0;
+  }
+  .loja-vitrine {
+    margin-top: 14px;
+    padding: 34px 14px 18px;
+  }
+  /* palco do diorama: céu, raios, colina, galinheiro (SVG) e peças por cima */
+  .loja-palco {
+    position: relative;
+    height: 196px;
+    overflow: hidden;
+    border-radius: 16px;
+    border: 3px solid #6b4a26;
+    background: linear-gradient(180deg, #49b8ff 0%, #8fd6ff 45%, #c4ecff 70%);
+    box-shadow:
+      inset 0 3px 0 rgb(255 255 255 / 0.35),
+      0 3px 0 rgb(107 74 38 / 0.35);
+    isolation: isolate;
+  }
+  .loja-raios {
+    position: absolute;
+    left: 50%;
+    top: 46%;
+    width: 520px;
+    height: 520px;
+    margin: -260px 0 0 -260px;
+    border-radius: 50%;
+    background: repeating-conic-gradient(rgb(255 255 255 / 0.26) 0 9deg, transparent 9deg 18deg);
+    -webkit-mask: radial-gradient(closest-side, #000 8%, transparent 70%);
+    mask: radial-gradient(closest-side, #000 8%, transparent 70%);
+    animation: gi-tela-gira 50s linear infinite;
+    pointer-events: none;
+  }
+  .loja-cena {
+    position: absolute;
+    left: 50%;
+    bottom: 0;
+    width: 320px;
+    height: 196px;
+    margin-left: -160px;
+  }
+  .loja-cena > svg.loja-galinheiro {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 320px;
+    height: 196px;
+    overflow: visible;
+  }
+  .loja-figurante {
+    position: absolute;
+    width: 58px;
+    height: 58px;
+  }
+  /* fileira de ninhos novos: um pouco acima da moldura, com grama embaixo */
+  .loja-novos {
+    position: absolute;
+    left: 50%;
+    bottom: 8px;
+    display: flex;
+    gap: 0;
+    translate: -50% 0;
+  }
+  .loja-novos > span {
+    position: relative;
+    width: 58px;
+    height: 58px;
+    margin-inline: -3px;
+    transform-origin: 50% 90%;
+    animation: gi-tela-surge 520ms var(--ease-elastico) both;
+  }
+  .loja-novos > span:nth-child(2) {
+    animation-delay: 90ms;
+  }
+  .loja-novos > span:nth-child(3) {
+    animation-delay: 180ms;
+  }
+  .loja-novos > span:nth-child(4) {
+    animation-delay: 270ms;
+  }
+  .loja-novos svg {
+    width: 100%;
+    height: 100%;
+  }
+  .loja-novos > span:last-child > svg {
+    transform-origin: 50% 92%;
+    animation: gi-tela-amassa 1.6s var(--ease-senoide) infinite;
+  }
+  /* brilho de "novo" sobre cada ninho */
+  .loja-novos > span::after {
+    content: '';
+    position: absolute;
+    right: 2px;
+    top: 4px;
+    width: 14px;
+    height: 14px;
+    background: #fff;
+    clip-path: polygon(50% 0, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0 50%, 38% 38%);
+    animation: gi-tela-cintila 1.8s var(--ease-senoide) infinite;
+  }
+  .loja-novos > span:nth-child(2)::after {
+    animation-delay: -0.6s;
+  }
+  .loja-novos > span:nth-child(3)::after {
+    animation-delay: -1.1s;
+  }
+  .loja-novos > span:nth-child(4)::after {
+    animation-delay: -0.3s;
+  }
+  .loja-mais {
+    position: absolute;
+    left: 50%;
+    top: 12px;
+    margin-left: -140px;
+    rotate: -5deg;
+    animation: gi-tela-flutua 2.2s var(--ease-senoide) infinite;
+  }
+  .loja-mais .pilula {
+    height: 28px;
+    padding: 0 12px;
+    font-size: 15px;
+    --p-claro: #7cf04a;
+    --p-base: #2f9a1c;
+    --p-contorno: #174d0b;
+  }
+  .loja-mais .pilula svg {
+    width: 16px;
+    height: 16px;
+  }
+  /* martelo batendo (obra) */
+  .loja-martelo {
+    position: absolute;
+    width: 44px;
+    height: 44px;
+    transform-origin: 80% 85%;
+    animation: gi-tela-martelo 1.6s var(--ease-senoide) infinite;
+  }
+  .loja-poeira {
+    position: absolute;
+    z-index: 1;
+    width: 30px;
+    height: 16px;
+    animation: gi-tela-poeira 1.6s linear infinite;
+  }
+  .loja-poeira > i {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 40% 35%, #fff 0 45%, #f1e6d0);
+    box-shadow: 0 0 0 2px #8a6238;
+  }
+  .loja-poeira > i:nth-child(1) {
+    left: -6px;
+    top: 4px;
+  }
+  .loja-poeira > i:nth-child(2) {
+    left: 8px;
+    top: -4px;
+    width: 15px;
+    height: 15px;
+  }
+  .loja-poeira > i:nth-child(3) {
+    left: 24px;
+    top: 3px;
+  }
+  /* selo dourado do nível máximo, no canto do céu */
+  .loja-selo-max {
+    position: absolute;
+    left: 24px;
+    top: 8px;
+    width: 64px;
+    height: 64px;
+    rotate: -10deg;
+    animation: gi-tela-respira 1.8s var(--ease-senoide) infinite;
+  }
+
+  /* níveis: medalha atual → próxima */
+  .loja-niveis {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 14px;
+  }
+  .medalha-nivel {
+    position: relative;
+    display: grid;
+    justify-items: center;
+    width: 76px;
+  }
+  .medalha-nivel > svg {
+    width: 66px;
+    height: 74px;
+    overflow: visible;
+  }
+  .medalha-numero {
+    position: absolute;
+    top: 18px;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-size: 30px;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+  .medalha-rotulo {
+    margin-top: -6px;
+    font-size: 13px;
+  }
+  .medalha-nivel[data-proximo] > svg {
+    animation: gi-tela-respira 2s var(--ease-senoide) infinite;
+  }
+  .medalha-nivel[data-maximo] {
+    width: 88px;
+  }
+  .medalha-nivel[data-maximo] > svg {
+    width: 84px;
+    height: 94px;
+  }
+  .medalha-nivel[data-maximo] .medalha-numero {
+    top: 24px;
+    font-size: 38px;
+  }
+  .loja-seta {
+    display: flex;
+    align-items: center;
+    margin-top: -16px;
+  }
+  .loja-seta > svg {
+    width: 22px;
+    height: 28px;
+    margin-inline: -5px;
+    animation: gi-tela-seta 1.2s var(--ease-senoide) infinite;
+  }
+  .loja-seta > svg:nth-child(2) {
+    animation-delay: 0.15s;
+  }
+  .loja-seta > svg:nth-child(3) {
+    animation-delay: 0.3s;
+  }
+  .loja-ninhos {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 10px;
+    font-family: var(--font-titulo);
+    font-size: 19px;
+    color: var(--color-texto);
+  }
+  .loja-ninhos svg.icone-ninho {
+    width: 34px;
+    height: 28px;
+  }
+  .loja-ninhos .loja-ninhos-novo {
+    --contorno-cor: #174d0b;
+    color: #b8f27a;
+    font-size: 22px;
+  }
+  .loja-ninhos .loja-ninhos-seta {
+    width: 20px;
+    height: 20px;
+    color: #6b4a26;
+  }
+  /* trilha de nível 1–32 */
+  .loja-trilha {
+    margin-top: 12px;
+    padding: 10px 12px 8px;
+    border-radius: 14px;
+    background: rgb(201 154 85 / 0.16);
+    box-shadow: inset 0 2px 0 rgb(107 74 38 / 0.12);
+  }
+  .loja-trilha .barra {
+    --barra-h: 22px;
+  }
+  .loja-trilha .barra-texto {
+    font-size: 13px;
+  }
+  .loja-trilha-marcas {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 6px;
+    font-family: var(--font-titulo);
+    font-size: 13px;
+    color: var(--color-texto-suave);
+  }
+  .loja-trilha-marcas b {
+    font-weight: 400;
+    color: #5a3a00;
+  }
+  /* marquinhas de 4 em 4 níveis por cima da barra */
+  .loja-trilha .barra::after {
+    content: '';
+    position: absolute;
+    inset: 4px 0;
+    border-radius: inherit;
+    background: repeating-linear-gradient(90deg, transparent 0 calc(12.5% - 1px), rgb(0 0 0 / 0.22) calc(12.5% - 1px) 12.5%);
+    pointer-events: none;
+  }
+  .loja-acao {
+    margin-top: 14px;
+  }
+  /* quanto já foi juntado: preenchimento dourado atrás do rótulo do botão desabilitado */
+  .loja-acao-poupanca {
+    position: absolute;
+    z-index: -1;
+    left: 3px;
+    top: 3px;
+    bottom: calc(var(--b-li) + 1px);
+    width: calc((100% - 6px) * var(--p, 0) / 100);
+    min-width: 14px;
+    border-radius: calc(var(--b-raio) - 5px);
+    background:
+      linear-gradient(180deg, rgb(255 255 255 / 0.5) 0 4px, transparent 4px),
+      linear-gradient(180deg, #ffe58a, #ffc93c 55%, #e9a400);
+    box-shadow: inset -2px 0 0 #c27c00;
+    transition: width 600ms var(--ease-suave);
+  }
+  .loja-acao .botao-preco svg {
+    width: 1.2em;
+    height: 1.2em;
+  }
+  .loja-maximo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 18px;
+  }
+  .loja-maximo-texto {
+    display: grid;
+    gap: 4px;
+  }
+  .loja-maximo-texto .texto-contorno {
+    --contorno-cor: #5a3a00;
+    font-size: clamp(18px, 5.6vw, 22px);
+    line-height: 1;
+    color: #ffe066;
+    white-space: nowrap;
+  }
+  .loja-maximo-ninhos {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--font-titulo);
+    font-size: 16px;
+    color: var(--color-texto);
+    white-space: nowrap;
+  }
+  .loja-maximo-ninhos svg.icone-ninho {
+    width: 30px;
+    height: 24px;
+  }
+
+  /* telas médias (375×812, 390×844): diorama um pouco menor para o botão não encostar na barra */
+  @media (min-height: 821px) and (max-height: 880px) {
+    .loja-palco {
+      height: 160px;
+    }
+    .loja-cena {
+      scale: 0.82;
+      transform-origin: 50% 100%;
+    }
+  }
+  /* desktop baixo (1280×800): sobra largura, então o título ganha mais respiro sobre a fita */
+  @media (max-height: 820px) and (min-width: 1024px) {
+    /* (classe repetida: vence a regra compacta logo abaixo) */
+    .loja-tela > .tela-cabeca.tela-cabeca {
+      margin-bottom: 16px;
+    }
+    /* o CTA sobra ~200 px acima das abas: o diorama não precisa da versão de celular baixo (112 px,
+       cena a 0,57× ilhada num palco de 380 px) — vai a 180 px com a cena a 0,9× (ocupa ~3/4 da
+       largura; o gramado estendido do SVG cobre o resto até as bordas) */
+    .loja-palco.loja-palco {
+      height: 180px;
+    }
+    .loja-cena.loja-cena {
+      scale: 0.9;
+    }
+  }
+  /* telas baixas (360×640 até 412×800): o botão "Ampliar" aparece sem rolar */
+  @media (max-height: 820px) {
+    .loja-tela {
+      gap: 12px;
+    }
+    /* respiro entre o título e a fita da vitrine (a fita sobe 22 px acima do painel) */
+    .loja-tela > .tela-cabeca {
+      margin-top: 0;
+      margin-bottom: 6px;
+    }
+    .loja-tela .tela-cabeca-icone {
+      width: 36px;
+      height: 36px;
+    }
+    /* folga embaixo: o lábio do botão e a sombra do painel não encostam na barra de abas */
+    .loja-vitrine {
+      margin-top: 4px;
+      padding-top: 30px;
+      padding-bottom: 14px;
+    }
+    .loja-palco {
+      height: 112px;
+    }
+    .loja-cena {
+      scale: 0.57;
+      transform-origin: 50% 100%;
+    }
+    .loja-niveis {
+      margin-top: 4px;
+    }
+    .medalha-nivel {
+      width: 62px;
+    }
+    .medalha-nivel > svg {
+      width: 54px;
+      height: 60px;
+    }
+    .medalha-numero {
+      top: 14px;
+      font-size: 25px;
+    }
+    /* a barra já diz o nível: os rótulos dos escudos saem */
+    .loja-niveis .medalha-rotulo {
+      display: none;
+    }
+    .loja-seta {
+      margin-top: 0;
+    }
+    .medalha-nivel[data-maximo] {
+      width: 80px;
+    }
+    .medalha-nivel[data-maximo] > svg {
+      width: 70px;
+      height: 78px;
+    }
+    .medalha-nivel[data-maximo] .medalha-numero {
+      top: 20px;
+      font-size: 32px;
+    }
+    .loja-ninhos {
+      margin-top: 4px;
+    }
+    .loja-trilha {
+      margin-top: 6px;
+      padding: 6px 8px;
+    }
+    .loja-trilha-marcas {
+      display: none;
+    }
+    .loja-acao {
+      margin-top: 8px;
+    }
+  }
+  /* telas muito baixas (320×568, SE 1ª geração): o CTA "Ampliar" precisa caber acima da barra de abas
+     sem rolar. Cada peça perde um pouco (diorama −16, escudos −9, ninhos −8, trilha −8, cabeçalho −8)
+     e o botão termina ~14 px acima das abas. O respiro título↔fita continua o mesmo. */
+  @media (max-height: 600px) {
+    .loja-tela {
+      padding-top: 0;
+    }
+    .loja-tela .tela-cabeca-icone {
+      width: 32px;
+      height: 32px;
+    }
+    .loja-vitrine {
+      padding-top: 28px;
+      padding-bottom: 12px;
+    }
+    .loja-palco {
+      height: 96px;
+    }
+    .loja-cena {
+      scale: 0.49;
+    }
+    .loja-niveis {
+      margin-top: 2px;
+    }
+    .medalha-nivel {
+      width: 54px;
+    }
+    .medalha-nivel > svg {
+      width: 46px;
+      height: 51px;
+    }
+    .medalha-numero {
+      top: 12px;
+      font-size: 21px;
+    }
+    .medalha-nivel[data-maximo] {
+      width: 68px;
+    }
+    .medalha-nivel[data-maximo] > svg {
+      width: 60px;
+      height: 67px;
+    }
+    .medalha-nivel[data-maximo] .medalha-numero {
+      top: 17px;
+      font-size: 28px;
+    }
+    .loja-seta > svg {
+      width: 18px;
+      height: 23px;
+    }
+    .loja-ninhos {
+      gap: 6px;
+      margin-top: 0;
+      font-size: 17px;
+    }
+    .loja-ninhos svg.icone-ninho {
+      width: 28px;
+      height: 23px;
+    }
+    .loja-ninhos .loja-ninhos-novo {
+      font-size: 19px;
+    }
+    .loja-trilha {
+      margin-top: 4px;
+      padding: 4px 6px;
+    }
+    .loja-trilha .barra {
+      --barra-h: 18px;
+    }
+    .loja-trilha .barra-texto {
+      font-size: 12px;
+    }
+    .loja-acao {
+      margin-top: 6px;
+    }
+  }
+
+  /* em breve: itens bloqueados */
+  .breve-grade {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+  }
+  .breve-carta {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    padding: 8px 8px 12px;
+    text-align: center;
+  }
+  .breve-arte {
+    position: relative;
+    display: grid;
+    place-items: center;
+    height: 112px;
+    border-radius: 14px;
+    border: 2px solid #4e4458;
+    background:
+      repeating-linear-gradient(135deg, rgb(255 255 255 / 0.07) 0 10px, transparent 10px 20px),
+      radial-gradient(120% 90% at 50% 30%, #8a86a6, #4f4a68);
+    box-shadow: inset 0 2px 0 rgb(255 255 255 / 0.25), inset 0 -10px 18px rgb(0 0 0 / 0.25);
+    overflow: hidden;
+  }
+  .breve-arte > svg.breve-ilustracao {
+    width: 92px;
+    height: 92px;
+  }
+  .breve-veu {
+    position: absolute;
+    inset: 0;
+    background: rgb(43 26 15 / 0.32);
+    pointer-events: none;
+  }
+  .breve-cadeado {
+    position: absolute;
+    z-index: 1;
+    right: 8px;
+    bottom: 6px;
+    width: 34px;
+    height: 40px;
+    animation: gi-tela-cadeado 3.2s var(--ease-senoide) infinite;
+    transform-origin: 50% 10%;
+  }
+  .breve-carta .pilula {
+    position: absolute;
+    top: -9px;
+    right: -6px;
+    rotate: 6deg;
+    --p-claro: #ffb84a;
+    --p-base: #e46a00;
+    --p-contorno: #6b2c00;
+  }
+  .breve-titulo {
+    margin-top: 10px;
+    font-family: var(--font-titulo);
+    font-size: 18px;
+    line-height: 1.1;
+    color: var(--color-texto);
+  }
+  .breve-texto {
+    margin-top: 2px;
+    font-size: 13px;
+    line-height: 1.3;
+    color: var(--color-texto-suave);
+  }
+
+  /* ================================================================ ajustes */
+  .ajustes-secoes {
+    display: grid;
+    gap: 22px;
+  }
+  .ajustes-painel {
+    padding: 2px 0;
+  }
+  .linha-ajuste {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 64px;
+    padding: 10px 14px;
+  }
+  .linha-ajuste-texto {
+    min-width: 0;
+    flex: 1;
+  }
+  .linha-ajuste-titulo {
+    font-size: 16px;
+    font-weight: 800;
+    line-height: 1.2;
+    color: var(--color-texto);
+    text-wrap: pretty;
+  }
+  .linha-ajuste-desc {
+    text-wrap: pretty;
+  }
+  /* aviso no lugar do botão (navegador sem "instalar") */
+  .linha-ajuste-nota {
+    flex: none;
+    max-width: 7.5rem;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.3;
+    text-align: right;
+    color: var(--color-texto-suave);
+  }
+  /* abaixo de 360 px a linha com botão (Instalar, Como instalar) quebra: texto em cima com a
+     largura toda e o botão numa linha própria, alinhado ao texto (sem espremer "Instalar o / app") */
+  @media (max-width: 359px) {
+    .linha-ajuste:has(> .botao, > .linha-ajuste-nota) {
+      flex-wrap: wrap;
+      row-gap: 8px;
+    }
+    .linha-ajuste:has(> .botao, > .linha-ajuste-nota) > .linha-ajuste-texto {
+      flex-basis: calc(100% - 54px);
+    }
+    /* 54 px = azulejo (42) + gap (12): o botão alinha com o texto */
+    .linha-ajuste > .botao,
+    .linha-ajuste > .linha-ajuste-nota {
+      flex: 1 1 calc(100% - 54px);
+      max-width: none;
+      margin-left: 54px;
+      text-align: left;
+    }
+  }
+  .linha-ajuste-desc {
+    margin-top: 2px;
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.3;
+    color: var(--color-texto-suave);
+  }
+  .linha-ajuste-bloco {
+    padding: 12px 14px 14px;
+  }
+  .linha-ajuste-bloco.ajustes-volume {
+    padding-bottom: 2px;
+  }
+  a.linha-ajuste,
+  button.linha-ajuste {
+    width: 100%;
+    text-align: left;
+    cursor: pointer;
+  }
+  a.linha-ajuste:active,
+  button.linha-ajuste:active {
+    background: rgb(201 154 85 / 0.14);
+  }
+  .linha-ajuste-seta {
+    flex: none;
+    width: 28px;
+    height: 28px;
+    color: #a0794a;
+  }
+  .valor-volume {
+    min-width: 3.2ch;
+    font-family: var(--font-titulo);
+    font-size: 17px;
+    text-align: right;
+    color: #c25500;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* controle deslizante (volume): trilho escuro, preenchimento laranja, botão de moeda */
+  .deslizador {
+    --p: 50;
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 44px;
+    margin: 0;
+    background: transparent;
+    cursor: pointer;
+  }
+  .deslizador:focus {
+    outline: none;
+  }
+  .deslizador::-webkit-slider-runnable-track {
+    height: 16px;
+    border-radius: 999px;
+    background:
+      linear-gradient(180deg, rgb(255 255 255 / 0.45) 0 3px, transparent 3px) 0 0 / calc(var(--p) * 1%) 100% no-repeat,
+      linear-gradient(180deg, #ffd36b, #ff9d1e 55%, #e06a00) 0 0 / calc(var(--p) * 1%) 100% no-repeat,
+      var(--color-trilho);
+    box-shadow:
+      inset 0 2px 0 rgb(0 0 0 / 0.35),
+      0 0 0 2px var(--color-contorno);
+  }
+  .deslizador::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 30px;
+    height: 30px;
+    margin-top: -7px;
+    border-radius: 50%;
+    border: 2.5px solid #5a3a00;
+    background:
+      radial-gradient(circle at 50% 50%, transparent 0 34%, rgb(194 124 0 / 0.55) 36% 42%, transparent 44%),
+      radial-gradient(circle at 38% 32%, #fff1a8, #ffc93c 55%, #c27c00);
+    box-shadow:
+      inset 0 0 0 3px #e6a400,
+      inset 0 0 0 4.5px rgb(255 241 168 / 0.7),
+      0 3px 0 #5a3a00;
+    transition: scale 160ms var(--ease-elastico);
+  }
+  .deslizador:active::-webkit-slider-thumb {
+    scale: 1.15;
+  }
+  .deslizador:focus-visible::-webkit-slider-thumb {
+    box-shadow:
+      inset 0 0 0 3px #e6a400,
+      inset 0 0 0 4.5px rgb(255 241 168 / 0.7),
+      0 3px 0 #5a3a00,
+      0 0 0 5px rgb(70 168 255 / 0.55);
+  }
+  .deslizador::-moz-range-track {
+    height: 16px;
+    border-radius: 999px;
+    background: var(--color-trilho);
+    box-shadow:
+      inset 0 2px 0 rgb(0 0 0 / 0.35),
+      0 0 0 2px var(--color-contorno);
+  }
+  .deslizador::-moz-range-progress {
+    height: 16px;
+    border-radius: 999px;
+    background: linear-gradient(180deg, #ffd36b, #ff9d1e 55%, #e06a00);
+  }
+  .deslizador::-moz-range-thumb {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    border: 2.5px solid #5a3a00;
+    background:
+      radial-gradient(circle at 50% 50%, transparent 0 34%, rgb(194 124 0 / 0.55) 36% 42%, transparent 44%),
+      radial-gradient(circle at 38% 32%, #fff1a8, #ffc93c 55%, #c27c00);
+    box-shadow:
+      inset 0 0 0 3px #e6a400,
+      0 3px 0 #5a3a00;
+  }
+
+  /* seletor segmentado (Reduzir animações) */
+  .segmentado {
+    position: relative;
+    display: flex;
+    gap: 4px;
+    padding: 4px;
+    border-radius: 16px;
+    background: linear-gradient(180deg, #4a3422, #3a2a1c);
+    box-shadow:
+      inset 0 3px 0 rgb(0 0 0 / 0.35),
+      0 0 0 2px var(--color-contorno),
+      0 2px 0 2px rgb(255 255 255 / 0.5);
+  }
+  .segmentado > button {
+    position: relative;
+    flex: 1;
+    min-width: 0;
+    min-height: 44px;
+    padding: 4px 4px 6px;
+    border-radius: 12px;
+    font-family: var(--font-titulo);
+    font-size: 15px;
+    line-height: 1.05;
+    color: #e9d6b4;
+    white-space: nowrap;
+    /* mesmo respiro entre palavras do texto contornado (ui.css): o traço de 3,5 px come o espaço */
+    word-spacing: 0.16em;
+    isolation: isolate;
+    cursor: pointer;
+  }
+  /* "Como o sistema" é o rótulo mais longo: ganha mais espaço */
+  .segmentado > button:first-of-type {
+    flex: 1.35;
+  }
+  .segmentado-curto {
+    display: none;
+  }
+  /* celular estreito: "Como o sistema" não cabe numa linha; vira "Sistema" (rótulo curto do componente,
+     o aria-label continua completo) e as três opções ficam numa linha só, com a mesma altura */
+  @media (max-width: 379px) {
+    .segmentado > button {
+      font-size: 14.5px;
+    }
+    .segmentado > button:first-of-type {
+      flex: 1.1;
+    }
+    .segmentado-longo {
+      display: none;
+    }
+    .segmentado-curto {
+      display: inline;
+    }
+  }
+  .segmentado > button[aria-checked='true'] {
+    --contorno-cor: #0d3a80;
+    color: #fff;
+    -webkit-text-stroke: 3.5px var(--contorno-cor);
+    paint-order: stroke fill;
+    text-shadow: 0 2px 0 var(--contorno-cor);
+  }
+  .segmentado > button:focus-visible {
+    outline: 3px solid #fff;
+    outline-offset: -3px;
+  }
+  .segmentado-indicador {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: 12px;
+    border: 2px solid #0b2d66;
+    background: linear-gradient(180deg, #a8dcff 0%, #46a8ff 50%, #1f7ae6 100%);
+    box-shadow:
+      inset 0 2px 0 rgb(255 255 255 / 0.55),
+      inset 0 -3px 0 #1559b8;
+  }
+
+  .ajustes-rodape {
+    margin-top: 6px;
+    padding: 10px 14px;
+    border-radius: 14px;
+    background: rgb(255 252 243 / 0.72);
+    text-align: center;
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--color-texto-suave);
+  }
+  .ajustes-dev-grade {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+    margin-top: 10px;
+  }
+
+  /* ================================================================ extrato */
+  .extrato-saldo {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    margin-bottom: 20px;
+    overflow: hidden;
+  }
+  .extrato-saldo::before {
+    content: '';
+    position: absolute;
+    right: -40px;
+    top: -60px;
+    width: 180px;
+    height: 180px;
+    border-radius: 50%;
+    background: repeating-conic-gradient(rgb(255 255 255 / 0.18) 0 10deg, transparent 10deg 20deg);
+    -webkit-mask: radial-gradient(closest-side, #000 20%, transparent 75%);
+    mask: radial-gradient(closest-side, #000 20%, transparent 75%);
+    animation: gi-tela-gira 40s linear infinite;
+    pointer-events: none;
+  }
+  .extrato-saldo-moeda {
+    position: relative;
+    flex: none;
+    width: 58px;
+    height: 58px;
+    animation: gi-tela-moeda 3.6s var(--ease-senoide) infinite;
+  }
+  .extrato-saldo-rotulo {
+    font-size: 13px;
+    font-weight: 900;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #ffe9c4;
+    text-shadow: 0 1px 0 #3b200c;
+  }
+  .extrato-sacar {
+    margin: -8px 0 20px;
+  }
+  .extrato-taxa {
+    margin: 10px 0 0;
+    text-align: center;
+    font-size: 13px;
+    font-weight: 800;
+    line-height: 1.35;
+    color: var(--color-texto-suave);
+  }
+  .saque-regras {
+    margin-top: 8px;
+  }
+  .saque-regras .saque-rotulo {
+    margin-top: 0;
+  }
+  .saque-form {
+    display: grid;
+    gap: 8px;
+    padding: 16px;
+  }
+  .saque-rotulo {
+    margin-top: 6px;
+    font-size: 13px;
+    font-weight: 900;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--color-texto-suave);
+  }
+  .saque-valor-linha {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+  .saque-valor-linha .campo {
+    flex: 1;
+    min-width: 0;
+  }
+  .saque-taxa {
+    display: grid;
+    gap: 4px;
+    margin: 4px 0 8px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    background: color-mix(in srgb, var(--color-creme-escuro) 55%, transparent);
+  }
+  .saque-taxa-linha {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: 14px;
+    font-weight: 800;
+    color: var(--color-texto-suave);
+  }
+  .saque-taxa-linha dd {
+    margin: 0;
+    text-align: right;
+    color: var(--color-texto);
+  }
+  .saque-taxa-linha[data-total] {
+    margin-top: 2px;
+    padding-top: 6px;
+    border-top: 2px dashed var(--color-creme-escuro);
+    font-weight: 900;
+    color: var(--color-texto);
+  }
+  .saque-ajuda {
+    margin: 0 0 8px;
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.4;
+    color: var(--color-texto-suave);
+  }
+  .saque-lista {
+    margin-top: 22px;
+  }
+  .saque-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 14px;
+  }
+  .saque-item + .saque-item {
+    border-top: 2px dashed var(--color-creme-escuro);
+  }
+  .saque-item-valor {
+    font-family: var(--font-titulo);
+    font-size: 20px;
+    line-height: 1.1;
+    color: var(--color-texto);
+  }
+  .saque-item-meta {
+    margin-top: 2px;
+    font-size: 13px;
+    font-weight: 800;
+    color: var(--color-texto-suave);
+  }
+  .saque-status {
+    flex: none;
+    font-size: 13px;
+    font-weight: 900;
+    color: #8a5a12;
+  }
+  .saque-status[data-status='pago'] {
+    color: #1d7a14;
+  }
+  .saque-status[data-status='falhou'] {
+    color: #b42318;
+  }
+  .extrato-saldo-valor {
+    --contorno-cor: #5a3a00;
+    font-size: 32px;
+    line-height: 1.05;
+    color: #ffe066;
+    font-variant-numeric: tabular-nums;
+  }
+  .extrato-grupos {
+    display: grid;
+    gap: 18px;
+  }
+  .extrato-dia {
+    --contorno-cor: #0d3a80;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 28px;
+    margin: 0 0 8px 6px;
+    padding: 0 12px;
+    border-radius: 999px;
+    border: 2px solid #0b2d66;
+    background: linear-gradient(180deg, #7cc4ff, #2f8ff0 60%, #1868d0);
+    box-shadow: inset 0 2px 0 rgb(255 255 255 / 0.45), 0 2px 0 #0b2d66;
+    font-family: var(--font-titulo);
+    font-size: 15px;
+    color: #fff;
+    -webkit-text-stroke: 3px var(--contorno-cor);
+    paint-order: stroke fill;
+    text-shadow: 0 1.5px 0 var(--contorno-cor);
+  }
+  .extrato-dia svg {
+    width: 14px;
+    height: 14px;
+    paint-order: normal;
+    -webkit-text-stroke: 0;
+  }
+  .extrato-linha {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+  }
+  .extrato-desc {
+    min-width: 0;
+    flex: 1;
+  }
+  .extrato-desc p:first-child {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 16px;
+    font-weight: 800;
+    color: var(--color-texto);
+  }
+  .extrato-desc p + p {
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--color-texto-suave);
+  }
+  /* meta "07:55 · saldo 1.284,00": o "·" anda junto com o saldo (nunca fica pendurado no fim da
+     linha); abaixo de 360 px o saldo desce para a própria linha, sem o ponto */
+  .extrato-meta-saldo {
+    white-space: nowrap;
+  }
+  .extrato-valor {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-family: var(--font-titulo);
+    font-size: 19px;
+    line-height: 1;
+    color: #fff;
+    -webkit-text-stroke: max(0.18em, 3.5px) var(--contorno-cor);
+    paint-order: stroke fill;
+    text-shadow: 0 2px 0 var(--contorno-cor);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  .extrato-valor[data-sinal='mais'] {
+    --contorno-cor: #174d0b;
+    color: #9ef36a;
+  }
+  .extrato-valor[data-sinal='menos'] {
+    --contorno-cor: #5c0a05;
+    color: var(--color-perigo, #ff5a48);
+  }
+  .extrato-valor svg {
+    width: 20px;
+    height: 20px;
+    paint-order: normal;
+    -webkit-text-stroke: 0;
+  }
+  /* 320 px: azulejo e valor um pouco menores para a descrição respirar */
+  @media (max-width: 359px) {
+    .extrato-meta-saldo {
+      display: block;
+    }
+    .extrato-meta-sep {
+      display: none;
+    }
+    .extrato-linha {
+      gap: 10px;
+      padding: 10px 12px;
+    }
+    .extrato-linha .tile-icone {
+      width: 38px;
+      height: 38px;
+      border-radius: 12px;
+    }
+    .extrato-valor {
+      font-size: 17px;
+    }
+    .extrato-valor svg {
+      width: 18px;
+      height: 18px;
+    }
+    .extrato-saldo-valor {
+      font-size: 28px;
+    }
+  }
+  .extrato-vazio {
+    display: grid;
+    justify-items: center;
+    gap: 8px;
+    padding: 24px 16px;
+    text-align: center;
+    color: var(--color-texto-suave);
+  }
+  .extrato-esqueleto {
+    height: 64px;
+    margin: 8px 14px;
+    border-radius: 14px;
+    background: linear-gradient(90deg, rgb(201 154 85 / 0.14), rgb(201 154 85 / 0.28), rgb(201 154 85 / 0.14));
+    animation: gi-tela-pisca 1.2s var(--ease-senoide) infinite alternate;
+  }
+
+  /* ================================================================ vender */
+  /* grade de 1 coluna com minmax(0, 1fr): sem isso o item da grade cresce até o texto "nowrap" e a
+     ficha vaza do painel em 320 px (o "+" ficava cortado) */
+  /* o corpo do modal é um contêiner: a ficha compacta pela largura real do painel (vale também na
+     galeria e em telas largas com o modal estreito), não pela largura da janela */
+  .venda-corpo,
+  .venda-rodape {
+    container: venda / inline-size;
+  }
+  /* rodapé fixo do modal (Modal rodape=…): Total + "Vender tudo" + "Vender selecionados" ficam fora
+     da rolagem; só as fichas rolam (o CTA verde sempre visível, até em 320×568) */
+  .venda-rodape {
+    display: grid;
+    gap: 12px;
+  }
+  .venda-rodape > .venda-total,
+  .venda-rodape > .venda-acoes {
+    margin-top: 0;
+  }
+  .venda-lista {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+  }
+  .venda-linha {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+    padding: 8px 10px 8px 8px;
+    border-radius: 18px;
+  }
+  .venda-linha[data-vazio] {
+    background: linear-gradient(180deg, #f4efe6, #fff);
+    border-color: #cfc6b6;
+    box-shadow: 0 0 0 2px #8a8070, inset 0 2px 0 #fff;
+  }
+  .venda-ovo {
+    position: relative;
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 54px;
+    height: 54px;
+    border-radius: 50%;
+    border: 2px solid var(--rar-contorno, #6b4a26);
+    background: radial-gradient(circle at 40% 35%, #fff 0 20%, var(--rar-clara, #fff6e0) 50%, var(--rar, #ecd5a4) 100%);
+    box-shadow: inset 0 -4px 0 rgb(0 0 0 / 0.12), 0 2px 0 var(--rar-contorno, #6b4a26);
+  }
+  .venda-ovo > svg {
+    width: 34px;
+    height: 41px;
+    margin-top: -2px;
+  }
+  .venda-linha[data-vazio] .venda-ovo > svg {
+    opacity: 0.45;
+  }
+  .venda-ovo .badge {
+    top: -6px;
+    right: -8px;
+    left: auto;
+    background: linear-gradient(180deg, #5a3d24, #2b1a0f);
+    box-shadow: 0 0 0 1.5px #1c1008, 0 2px 0 rgb(0 0 0 / 0.25);
+    --contorno-cor: #1c1008;
+  }
+  /* coluna do meio: encolhe primeiro (reticências) para o seletor nunca sair do painel */
+  .venda-info {
+    flex: 1;
+    min-width: 0;
+  }
+  .venda-nome {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-family: var(--font-titulo);
+    font-size: 18px;
+    line-height: 1.1;
+    color: var(--color-texto);
+  }
+  .venda-preco {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    min-width: 0;
+    margin-top: 2px;
+    font-size: 13px;
+    font-weight: 800;
+    color: var(--color-texto-suave);
+    white-space: nowrap;
+  }
+  .venda-preco-texto {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .venda-preco svg {
+    flex: none;
+    width: 15px;
+    height: 15px;
+  }
+  .venda-preco.venda-sub {
+    color: #237a14;
+  }
+  .venda-passo {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .venda-passo .botao-icone {
+    --b-raio: 999px;
+  }
+  .venda-qtd {
+    min-width: 40px;
+    height: 34px;
+    display: grid;
+    place-items: center;
+    padding: 0 6px;
+    border-radius: 10px;
+    background: linear-gradient(180deg, #4a3422, #2b1a0f);
+    box-shadow: inset 0 2px 0 rgb(0 0 0 / 0.3), 0 0 0 2px #1c1008;
+    font-size: 19px;
+    font-variant-numeric: tabular-nums;
+  }
+  .venda-total {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 16px;
+    padding: 10px 14px;
+    border-radius: 18px;
+    border: 2px solid #5a3a00;
+    background:
+      repeating-conic-gradient(from 0deg at 18% 50%, rgb(255 255 255 / 0.16) 0 12deg, transparent 12deg 24deg),
+      linear-gradient(180deg, #fff1a8 0%, #ffc93c 55%, #e9a400 100%);
+    box-shadow:
+      inset 0 2px 0 rgb(255 255 255 / 0.6),
+      inset 0 -4px 0 rgb(160 100 0 / 0.35),
+      0 3px 0 #5a3a00;
+    overflow: hidden;
+  }
+  .venda-total-moeda {
+    flex: none;
+    width: 46px;
+    height: 46px;
+    animation: gi-tela-moeda 3s var(--ease-senoide) infinite;
+  }
+  /* o rótulo cede espaço ao número (nunca passa por baixo dele) */
+  .venda-total-rotulo {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 14px;
+    font-weight: 900;
+    line-height: 1.15;
+    color: #5a3a00;
+    white-space: nowrap;
+  }
+  .venda-total-valor {
+    --contorno-cor: #5a3a00;
+    flex: none;
+    font-size: 30px;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+  .venda-acoes {
+    display: grid;
+    gap: 12px;
+    margin-top: 18px;
+  }
+  /* "Vender tudo" nunca quebra: é o botão mais usado do jogo */
+  .venda-tudo {
+    white-space: nowrap;
+  }
+  .venda-tudo .botao-preco svg {
+    width: 1.2em;
+    height: 1.2em;
+  }
+  /* painel estreito (390 px e menos): ficha mais enxuta, botão um pouco menor */
+  @container venda (max-width: 330px) {
+    .venda-linha {
+      gap: 6px;
+      padding: 6px 8px 6px 6px;
+    }
+    .venda-ovo {
+      width: 44px;
+      height: 44px;
+    }
+    .venda-ovo > svg {
+      width: 28px;
+      height: 34px;
+    }
+    .venda-nome {
+      font-size: 17px;
+    }
+    .venda-passo {
+      gap: 2px;
+    }
+    .venda-qtd {
+      min-width: 32px;
+      padding: 0 4px;
+      font-size: 17px;
+    }
+    .venda-total {
+      gap: 8px;
+      padding: 8px 12px;
+    }
+    .venda-total-moeda {
+      width: 38px;
+      height: 38px;
+    }
+    .venda-total-valor {
+      font-size: 26px;
+    }
+    .venda-tudo.botao-g {
+      font-size: 19px;
+      padding-inline: 0.8em;
+    }
+    .venda-tudo .botao-preco svg {
+      width: 1.05em;
+      height: 1.05em;
+    }
+  }
+  /* 320 px: seletor menor (desenho de 34 px, alvo de toque de 44 px), ovo menor e "Total" sozinho */
+  @container venda (max-width: 270px) {
+    .venda-linha {
+      gap: 4px;
+      padding: 6px 6px 6px 5px;
+      border-radius: 16px;
+    }
+    .venda-ovo {
+      width: 34px;
+      height: 34px;
+    }
+    .venda-ovo > svg {
+      width: 22px;
+      height: 26px;
+    }
+    .venda-nome {
+      font-size: 16px;
+    }
+    .venda-preco {
+      font-size: 12px;
+    }
+    .venda-preco svg {
+      width: 13px;
+      height: 13px;
+    }
+    .venda-passo .botao-icone {
+      width: 34px;
+      height: 34px;
+      min-height: 34px;
+      --b-li: 3px;
+      --b-chao: 4px;
+    }
+    .venda-passo .botao-icone svg {
+      width: 18px;
+      height: 18px;
+    }
+    .venda-passo .botao-icone::after {
+      content: '';
+      position: absolute;
+      inset: -5px -2px;
+    }
+    .venda-qtd {
+      min-width: 28px;
+      height: 30px;
+      padding: 0 3px;
+      font-size: 16px;
+    }
+    .venda-total-sel {
+      display: none;
+    }
+    .venda-total {
+      padding-inline: 10px;
+    }
+    .venda-tudo.botao-g {
+      font-size: 18px;
+      padding-inline: 0.6em;
+    }
+  }
+  /* telas baixas (320×568, 360×640): rodapé mais enxuto para sobrarem ~3 fichas visíveis */
+  @media (max-height: 700px) {
+    .venda-rodape {
+      gap: 8px;
+      padding-top: 8px;
+      padding-bottom: 16px;
+    }
+    .venda-rodape .venda-acoes {
+      gap: 8px;
+    }
+    .venda-rodape .venda-total {
+      padding-block: 5px;
+    }
+    .venda-rodape .venda-total-moeda {
+      width: 32px;
+      height: 32px;
+    }
+    .venda-rodape .venda-total-valor {
+      font-size: 24px;
+    }
+    .venda-rodape .venda-tudo.botao-g {
+      min-height: 52px;
+      padding-block: 0.3em 0.45em;
+    }
+    .venda-rodape .venda-acoes > .botao-secundario {
+      min-height: 44px;
+      padding-block: 0.25em 0.4em;
+      font-size: 16px;
+    }
+  }
+  /* bem baixas (320×568): fichas de ~60 px para as 4 espécies (até o Avestruz) caberem sem rolar.
+     Vem depois das regras @container para valer por cima delas. */
+  @media (max-height: 600px) {
+    .venda-lista {
+      gap: 6px;
+    }
+    .venda-linha {
+      padding-block: 4px;
+      border-radius: 15px;
+    }
+    .venda-nome {
+      font-size: 15px;
+      line-height: 1.05;
+    }
+    .venda-preco {
+      margin-top: 1px;
+      font-size: 11.5px;
+      line-height: 1.2;
+    }
+    .venda-preco svg {
+      width: 12px;
+      height: 12px;
+    }
+    .venda-ovo {
+      width: 36px;
+      height: 36px;
+    }
+    .venda-ovo > svg {
+      width: 23px;
+      height: 28px;
+    }
+    .venda-rodape .venda-total-moeda {
+      width: 28px;
+      height: 28px;
+    }
+    .venda-rodape .venda-total-valor {
+      font-size: 22px;
+    }
+    .venda-rodape .venda-tudo.botao-g {
+      min-height: 48px;
+    }
+  }
+  .venda-vazio {
+    display: grid;
+    justify-items: center;
+    gap: 6px;
+    padding: 6px 4px 4px;
+    text-align: center;
+  }
+  .venda-vazio > svg {
+    width: 96px;
+    height: 96px;
+  }
+
+  /* bordas da rolagem (modais): esmaecem só do lado em que ainda há conteúdo.
+     data-borda-topo/-fim vêm do JS; máscara não é filtro e não pesa no orçamento */
+  .rolagem-esmaecida {
+    --esm-topo: 0px;
+    --esm-fim: 0px;
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 var(--esm-topo), #000 calc(100% - var(--esm-fim)), transparent 100%);
+    mask-image: linear-gradient(to bottom, transparent 0, #000 var(--esm-topo), #000 calc(100% - var(--esm-fim)), transparent 100%);
+  }
+  .rolagem-esmaecida[data-borda-topo] {
+    --esm-topo: 20px;
+  }
+  .rolagem-esmaecida[data-borda-fim] {
+    --esm-fim: 16px;
+  }
+
+  /* ================================================================ aposentadorias */
+  .adeus-cena {
+    position: relative;
+    height: 142px;
+    margin: 0 -4px 14px;
+    overflow: hidden;
+    border-radius: 18px;
+    border: 3px solid #4a2a5e;
+    background: linear-gradient(180deg, #5b4aa8 0%, #b56aa8 38%, #ff9a6a 70%, #ffd27a 100%);
+    box-shadow: inset 0 3px 0 rgb(255 255 255 / 0.25), 0 3px 0 rgb(74 42 94 / 0.35);
+    isolation: isolate;
+  }
+  .adeus-cena > svg.adeus-fundo {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+  .adeus-estrela {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    background: #fff6c0;
+    clip-path: polygon(50% 0, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0 50%, 38% 38%);
+    animation: gi-tela-cintila 2.4s var(--ease-senoide) infinite;
+  }
+  /* os aposentados espalhados pela cena; o do meio (mais raro) fica na frente do sol */
+  .adeus-dorminhocos {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -6px;
+    display: flex;
+    justify-content: space-evenly;
+    align-items: flex-end;
+    gap: 6px;
+    padding-inline: 4px;
+  }
+  .adeus-dorminhocos > span {
+    width: 30%;
+    max-width: 96px;
+    aspect-ratio: 1;
+    transform-origin: 50% 100%;
+    animation: gi-tela-ronco 4.5s var(--ease-senoide) infinite;
+  }
+  .adeus-dorminhocos > span:nth-child(2) {
+    animation-delay: -1.5s;
+  }
+  .adeus-dorminhocos > span:nth-child(3) {
+    animation-delay: -3s;
+  }
+  .adeus-dorminhocos svg {
+    width: 100%;
+    height: 100%;
+  }
+  .adeus-texto {
+    margin-bottom: 12px;
+    font-size: 15px;
+    line-height: 1.4;
+    text-align: center;
+    color: var(--color-texto-suave);
+  }
+  .adeus-lista {
+    display: grid;
+    gap: 10px;
+    max-height: 40dvh;
+    overflow-y: auto;
+    padding: 4px 4px 6px;
+    margin: 0 -4px;
+    overscroll-behavior: contain;
+  }
+  /* ficha de cada aposentado: fundo ardósia do entardecer, borda e anel na cor da raridade */
+  .adeus-linha {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 10px 10px 8px;
+    border-radius: 18px;
+    background: linear-gradient(180deg, #eceef3 0%, #fff 100%);
+  }
+  .adeus-retrato {
+    position: relative;
+    flex: none;
+    width: 64px;
+    height: 64px;
+    margin-bottom: 6px;
+  }
+  .adeus-retrato-moldura {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    border-radius: 14px;
+    border: 3px solid var(--rar, #9aa1ab);
+    background: radial-gradient(120% 90% at 50% 30%, #e6ebf3, #9aa6b8);
+    box-shadow:
+      0 0 0 2px var(--rar-contorno, #2f333a),
+      inset 0 2px 0 rgb(255 255 255 / 0.55),
+      inset 0 -8px 12px rgb(0 0 0 / 0.18),
+      0 3px 0 1px var(--rar-contorno, #2f333a);
+  }
+  /* lendário: brilho dourado atrás do retrato (gradiente, sem filtro) */
+  .adeus-linha[data-raridade='lendario'] .adeus-retrato-moldura {
+    background:
+      radial-gradient(closest-side at 50% 55%, rgb(255 246 184 / 0.95), rgb(255 201 60 / 0.55) 55%, transparent 100%),
+      radial-gradient(120% 90% at 50% 30%, #fff3c4, #e2b44a);
+  }
+  .adeus-linha[data-raridade='epico'] .adeus-retrato-moldura {
+    background: radial-gradient(120% 90% at 50% 30%, #f1eaff, #b7a2e6);
+  }
+  .adeus-linha[data-raridade='raro'] .adeus-retrato-moldura {
+    background: radial-gradient(120% 90% at 50% 30%, #eaf4ff, #9cc2f0);
+  }
+  .adeus-retrato-moldura > svg {
+    position: absolute;
+    left: -6px;
+    top: -1px;
+    width: 70px;
+    height: 70px;
+  }
+  .adeus-gemas {
+    position: absolute;
+    left: 50%;
+    bottom: -9px;
+    z-index: 1;
+    display: flex;
+    padding: 2px 5px 3px;
+    border-radius: 999px;
+    background: linear-gradient(180deg, #4a3422, #2b1a0f);
+    box-shadow:
+      0 0 0 1.5px #1c1008,
+      inset 0 1px 0 rgb(255 255 255 / 0.2),
+      0 2px 0 rgb(0 0 0 / 0.25);
+    translate: -50% 0;
+  }
+  /* nome + selo da raridade à direita, na mesma linha */
+  .adeus-nome-linha {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+  }
+  .adeus-nome-linha > .adeus-nome {
+    flex: 1;
+    min-width: 0;
+  }
+  .adeus-raridade {
+    flex: none;
+    padding: 2px 8px 3px;
+    border-radius: 999px;
+    font-family: var(--font-titulo);
+    font-size: 11.5px;
+    line-height: 1.1;
+    letter-spacing: 0.02em;
+    color: #fff;
+    background:
+      linear-gradient(180deg, rgb(255 255 255 / 0.4) 0 3px, transparent 3px),
+      linear-gradient(180deg, var(--rar, #9aa3af), var(--rar-escura, #6b7480));
+    box-shadow:
+      0 0 0 1.5px var(--rar-contorno, #2f333a),
+      0 2px 0 var(--rar-contorno, #2f333a);
+    text-shadow:
+      1.2px 0 0 var(--rar-contorno, #2f333a),
+      -1.2px 0 0 var(--rar-contorno, #2f333a),
+      0 1.2px 0 var(--rar-contorno, #2f333a),
+      0 -1.2px 0 var(--rar-contorno, #2f333a),
+      0 1.8px 0 var(--rar-contorno, #2f333a);
+  }
+  .adeus-nome {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-family: var(--font-titulo);
+    font-size: 19px;
+    line-height: 1.1;
+    color: var(--color-texto);
+  }
+  .adeus-info {
+    font-size: 12.5px;
+    font-weight: 800;
+    color: var(--color-texto-suave);
+  }
+  /* presente: linha própria, de ponta a ponta da ficha (caixa + ovos + texto) */
+  .adeus-presente {
+    flex-basis: 100%;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    padding: 3px 10px 3px 4px;
+    border-radius: 999px;
+    background: linear-gradient(180deg, #ffe0ef, #ffc0dc);
+    box-shadow: inset 0 0 0 2px #e27aa8;
+    font-size: 13px;
+    font-weight: 800;
+    line-height: 1.25;
+    color: #7a1a4a;
+    white-space: nowrap;
+  }
+  .adeus-presente-texto {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .adeus-presente > svg.adeus-caixa {
+    flex: none;
+    width: 26px;
+    height: 26px;
+    margin-top: -4px;
+    transform-origin: 50% 90%;
+    animation: gi-tela-presente 2.8s var(--ease-senoide) infinite;
+  }
+  .adeus-presente .adeus-ovos {
+    display: inline-flex;
+    align-items: flex-end;
+  }
+  .adeus-presente .adeus-ovos {
+    flex: none;
+    padding-left: 3px;
+  }
+  .adeus-presente .adeus-ovos > svg {
+    width: 14px;
+    height: 17px;
+    margin-left: -3px;
+  }
+  @media (max-width: 380px) {
+    .adeus-presente {
+      gap: 4px;
+      font-size: 12px;
+    }
+    .adeus-presente .adeus-ovos > svg {
+      width: 12px;
+      height: 15px;
+    }
+  }
+  .adeus-acoes {
+    display: flex;
+    gap: 10px;
+    margin-top: 16px;
+  }
+
+  /* ================================================================ entrar (abertura) */
+  .entrar {
+    /* base do título (= topo da fita IDLE − 6 px): respiro de cima + margem do logo + 60 px de fonte.
+       As nuvens se posicionam por ela; cada estado (tela baixa, formulário, desktop) redefine abaixo */
+    --fita-y: calc(88px + var(--seguro-topo) + clamp(4px, 6dvh, 64px));
+    /* meia largura da fita com as pontas, mais respiro: as nuvens ficam fora dela */
+    --fita-meia: 96px;
+    position: relative;
+    min-height: 100dvh;
+    overflow: hidden;
+    isolation: isolate;
+  }
+  .entrar-raios {
+    position: absolute;
+    left: 50%;
+    top: 18%;
+    z-index: -3;
+    width: 900px;
+    height: 900px;
+    margin: -450px 0 0 -450px;
+    border-radius: 50%;
+    background: repeating-conic-gradient(rgb(255 255 255 / 0.22) 0 8deg, transparent 8deg 16deg);
+    -webkit-mask: radial-gradient(closest-side, #000 10%, transparent 72%);
+    mask: radial-gradient(closest-side, #000 10%, transparent 72%);
+    animation: gi-tela-gira 60s linear infinite;
+    pointer-events: none;
+  }
+  /* nuvens em raias laterais: nunca atrás do logo (uma tira entre o título e a fita parecia sujeira).
+     Vaivém lento para FORA (--deriva), então a distância mínima até a fita é a da posição de repouso */
+  .entrar-nuvem {
+    position: absolute;
+    z-index: -2;
+    width: 120px;
+    height: 46px;
+    pointer-events: none;
+    animation: gi-tela-nuvem var(--dur, 10s) var(--ease-senoide) infinite alternate;
+    animation-delay: var(--atraso, 0s);
+  }
+  .entrar-nuvem svg {
+    width: 100%;
+    height: 100%;
+  }
+  /* à esquerda da fita, um pouco abaixo da base do título (o título gira −3°: a ponta esquerda desce) */
+  .entrar-nuvem-1 {
+    top: calc(var(--fita-y) + 18px);
+    left: calc(50% - var(--fita-meia) - 120px);
+    scale: 0.9;
+    --deriva: -16px;
+  }
+  /* à direita da fita, mais alta (a ponta direita do título sobe) */
+  .entrar-nuvem-2 {
+    top: calc(var(--fita-y) + 2px);
+    left: calc(50% + var(--fita-meia) - 18px);
+    scale: 0.7;
+    --deriva: 14px;
+  }
+  /* a 3ª só existe no desktop, onde sobra céu dos lados */
+  .entrar-nuvem-3 {
+    display: none;
+  }
+  .entrar-colinas {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: -1;
+    height: 70%;
+    pointer-events: none;
+  }
+  .entrar-colinas > svg {
+    position: absolute;
+    left: 50%;
+    bottom: 0;
+    width: max(100%, 760px);
+    height: 100%;
+    translate: -50% 0;
+  }
+  .entrar-conteudo {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    max-width: 24rem;
+    min-height: 100dvh;
+    margin-inline: auto;
+    padding: calc(28px + var(--seguro-topo)) 16px calc(20px + var(--seguro-base));
+  }
+  .entrar-logo {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: clamp(4px, 6dvh, 64px);
+    rotate: -3deg;
+  }
+  .entrar-logo-titulo {
+    --contorno-cor: #6b2c00;
+    --contorno-largura: 0.17em;
+    font-size: 60px;
+    line-height: 1;
+    color: #ffe066;
+    text-shadow:
+      0 4px 0 var(--contorno-cor),
+      0 8px 0 rgb(43 26 15 / 0.2);
+  }
+  /* camada de cima: o mesmo texto só com o degradê dourado (o traço fica na camada de baixo) */
+  .entrar-logo-brilho {
+    position: absolute;
+    inset: 0;
+    font-family: var(--font-titulo);
+    font-size: 60px;
+    line-height: 1;
+    white-space: nowrap;
+    background: linear-gradient(180deg, #fffbe0 0%, #ffe066 42%, #ffb21f 78%, #ff9500 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: 0.01em;
+    -webkit-text-stroke: 0;
+    paint-order: normal;
+    text-shadow: none;
+    pointer-events: none;
+  }
+  .entrar-logo-titulo,
+  .entrar-logo-texto {
+    position: relative;
+    white-space: nowrap;
+  }
+  .faixa.entrar-logo-idle {
+    position: relative;
+    top: auto;
+    margin-top: 6px;
+    height: 40px;
+    padding: 0 34px;
+    font-size: 24px;
+    letter-spacing: 0.16em;
+    rotate: 3deg;
+  }
+  /* lema numa pílula escura translúcida: legível sobre céu, raios e nuvens. As pontas da fita "IDLE"
+     descem 16–18 px abaixo da caixa dela: 32 px de margem deixam ~14 px de céu entre a ponta e a pílula */
+  .entrar-lema {
+    width: fit-content;
+    max-width: 300px;
+    margin-top: 32px;
+    padding: 5px 16px 6px;
+    border-radius: 999px;
+    background: rgb(11 45 102 / 0.55);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.2),
+      0 2px 0 rgb(11 45 102 / 0.25);
+    font-family: var(--font-texto);
+    font-size: 15px;
+    font-weight: 800;
+    line-height: 1.3;
+    text-align: center;
+    color: #fff6e0;
+  }
+  .entrar-elenco {
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    width: 100%;
+    height: 204px;
+    margin-bottom: 10px; /* as sombras dos pés ficam acima da borda do painel */
+  }
+  .entrar-juca {
+    position: relative;
+    z-index: 2;
+    width: 188px;
+    height: 188px;
+    margin-inline: -18px;
+  }
+  .entrar-juca > svg {
+    width: 100%;
+    height: 100%;
+  }
+  .entrar-ave {
+    position: relative;
+    width: 86px;
+    height: 86px;
+    margin-inline: -11px;
+    margin-bottom: 4px;
+  }
+  .entrar-ave-pula {
+    position: absolute;
+    inset: 0;
+    transform-origin: 50% 100%;
+    animation: gi-tela-saltita 1.6s var(--ease-senoide) infinite;
+    animation-delay: var(--atraso, 0s);
+  }
+  .entrar-ave-pula > svg {
+    width: 100%;
+    height: 100%;
+  }
+  .entrar-ave-sombra {
+    position: absolute;
+    left: 18%;
+    right: 18%;
+    bottom: 2px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgb(30 90 20 / 0.3);
+    animation: gi-tela-saltita-sombra 1.6s var(--ease-senoide) infinite;
+    animation-delay: var(--atraso, 0s);
+  }
+  .entrar-painel {
+    width: 100%;
+    margin-top: 6px;
+    padding: 16px;
+  }
+  .entrar-painel.painel-com-faixa {
+    margin-top: 30px;
+    padding-top: 34px;
+  }
+  .entrar-legal {
+    margin-top: 14px;
+    padding: 8px 12px;
+    border-radius: 14px;
+    background: rgb(255 252 243 / 0.85);
+    box-shadow: 0 0 0 2px rgb(107 74 38 / 0.35);
+    font-size: 12px;
+    line-height: 1.45;
+    text-align: center;
+    color: var(--color-texto-suave);
+  }
+  .entrar-espaco {
+    flex: 1;
+    min-height: 8px;
+  }
+  /* formulário aberto (e-mail/recuperação): cena compacta, sem a cerca atrás do elenco */
+  .entrar-cerca {
+    transition: opacity 200ms var(--ease-suave);
+  }
+  .entrar--formulario .entrar-cerca {
+    opacity: 0;
+  }
+  /* celeiro, silo e a árvore do meio também saem: com o elenco mais alto, ficariam atrás do avestruz
+     e da galinha, colados neles (o desenho parecia recortado e colado sobre o fundo) */
+  .entrar-celeiro,
+  .entrar-arvore-meio {
+    transition: opacity 200ms var(--ease-suave);
+  }
+  .entrar--formulario :is(.entrar-celeiro, .entrar-arvore-meio) {
+    opacity: 0;
+  }
+  .entrar.entrar--formulario {
+    --fita-y: calc(74px + var(--seguro-topo));
+  }
+  .entrar--formulario .entrar-conteudo {
+    padding-top: calc(14px + var(--seguro-topo));
+  }
+  .entrar--formulario .entrar-logo {
+    margin-top: 0;
+  }
+  .entrar--formulario .entrar-painel.painel-com-faixa {
+    margin-top: 24px;
+  }
+  /* as pontas da fita "IDLE" descem 18 px abaixo da caixa: com 36 px de margem sobram ~18 px de céu
+     entre a ponta da fita e o topo da pílula do lema (medido da ponta, não da caixa da fita) */
+  .entrar--formulario .entrar-lema {
+    margin-top: 36px;
+  }
+  /* a recuperação tem 3 campos: o lema sai para tudo caber sem rolar */
+  .entrar--recuperar .entrar-lema {
+    display: none;
+  }
+  /* o elenco sobe junto: as colinas sobem para ele continuar pisando na grama */
+  .entrar--recuperar .entrar-colinas {
+    height: 78%;
+  }
+  .entrar--formulario .entrar-elenco {
+    height: 168px;
+  }
+  .entrar--formulario .entrar-juca {
+    width: 156px;
+    height: 156px;
+    margin-inline: -14px;
+  }
+  .entrar--formulario .entrar-ave {
+    width: 72px;
+    height: 72px;
+    margin-inline: -9px;
+  }
+  /* telas baixas (iPhone SE): elenco um pouco menor para o painel caber */
+  @media (max-height: 700px) {
+    .entrar {
+      --fita-y: calc(88px + var(--seguro-topo));
+    }
+    .entrar.entrar--formulario {
+      --fita-y: calc(64px + var(--seguro-topo));
+      --fita-meia: 82px;
+    }
+    .entrar-logo {
+      margin-top: 0;
+    }
+    .entrar-elenco {
+      height: 168px;
+    }
+    .entrar-juca {
+      width: 156px;
+      height: 156px;
+      margin-inline: -14px;
+    }
+    .entrar-ave {
+      width: 72px;
+      height: 72px;
+      margin-inline: -9px;
+    }
+    /* formulário em tela baixa (360×640, 320×568): o painel inteiro (campos + "Entrar") aparece sem
+       rolar. O lema sai (como na recuperação), o logo encolhe e o elenco fica num tamanho de
+       "plateia". As colinas sobem mais que o elenco: as aves pisam na grama do morro do meio, abaixo
+       do horizonte, e não na linha dele. O Juca fica 0,9× (108 px de caixa) dentro da
+       mesma altura de elenco: o chapéu desce e sobram ≥ 12 px até as pontas da fita IDLE */
+    .entrar--formulario .entrar-lema {
+      display: none;
+    }
+    .entrar--formulario .entrar-logo-titulo,
+    .entrar--formulario .entrar-logo-brilho {
+      font-size: 50px;
+    }
+    .entrar--formulario .faixa.entrar-logo-idle {
+      height: 34px;
+      margin-top: 4px;
+      padding: 0 28px;
+      font-size: 20px;
+    }
+    .entrar--formulario .entrar-colinas {
+      height: 83%;
+    }
+    .entrar--formulario .entrar-elenco {
+      height: 128px;
+      margin-bottom: 6px;
+    }
+    .entrar--formulario .entrar-juca {
+      width: 108px;
+      height: 108px;
+      margin-inline: -8px;
+    }
+    .entrar--formulario .entrar-ave {
+      width: 58px;
+      height: 58px;
+      margin-inline: -7px;
+      margin-bottom: 2px;
+    }
+  }
+  @media (max-height: 600px) {
+    .entrar.entrar--formulario {
+      --fita-y: calc(60px + var(--seguro-topo));
+    }
+    /* 320×568 na abertura: a pílula do lema volta a 26 px (8 px até a ponta da fita) para o painel
+       "Jogar agora / Já tenho conta" continuar inteiro na primeira dobra */
+    .entrar-lema {
+      margin-top: 26px;
+    }
+    .entrar--formulario .entrar-logo-titulo,
+    .entrar--formulario .entrar-logo-brilho {
+      font-size: 46px;
+    }
+    /* 4 px a mais de elenco que de Juca encolhido: o chapéu fica ≥ 12 px abaixo das pontas da fita */
+    .entrar--formulario .entrar-elenco {
+      height: 112px;
+    }
+    .entrar--formulario .entrar-juca {
+      width: 88px;
+      height: 88px;
+      margin-inline: -6px;
+    }
+    .entrar--formulario .entrar-ave {
+      width: 50px;
+      height: 50px;
+      margin-inline: -6px;
+    }
+    .entrar--formulario .entrar-painel.painel-com-faixa {
+      margin-top: 22px;
+    }
+  }
+  /* desktop (≥ 1024 × 720): a abertura não fica perdida num gramado vazio. Coluna mais larga, logo
+     e elenco ~1,3× (Juca com ~240 px de caixa, ~200 px de desenho) e o painel um pouco mais largo,
+     mas não esticado. O espaço vem do respiro de cima (6dvh → 12 px) e do vão flexível. */
+  @media (min-width: 1024px) and (min-height: 720px) {
+    .entrar {
+      --fita-y: calc(110px + var(--seguro-topo));
+    }
+    .entrar.entrar--formulario {
+      --fita-y: calc(76px + var(--seguro-topo));
+    }
+    /* desktop: céu de sobra dos lados. Nuvens maiores, bem longe do título (que tem ~360 px), em três
+       alturas, e com vaivém mais largo */
+    .entrar-nuvem-1 {
+      top: calc(var(--fita-y) - 64px);
+      left: calc(50% - 540px);
+      scale: 1.25;
+      --deriva: -40px;
+    }
+    .entrar-nuvem-2 {
+      top: max(12px, calc(var(--fita-y) - 82px));
+      left: calc(50% + 300px);
+      scale: 0.9;
+      --deriva: 36px;
+    }
+    .entrar-nuvem-3 {
+      display: block;
+      top: calc(var(--fita-y) + 46px);
+      left: calc(50% + 400px);
+      scale: 1.1;
+      --deriva: 30px;
+    }
+    .entrar-conteudo {
+      max-width: 40rem;
+      padding-top: calc(20px + var(--seguro-topo));
+    }
+    .entrar-logo {
+      margin-top: 12px;
+    }
+    .entrar-logo-titulo,
+    .entrar-logo-brilho {
+      font-size: 78px;
+    }
+    .faixa.entrar-logo-idle {
+      height: 46px;
+      margin-top: 8px;
+      padding: 0 40px;
+      font-size: 28px;
+    }
+    .entrar-lema {
+      max-width: 340px;
+      margin-top: 26px;
+      padding: 6px 20px 7px;
+      font-size: 17px;
+    }
+    .entrar-elenco {
+      height: 262px;
+      margin-bottom: 12px;
+    }
+    .entrar-juca {
+      width: 244px;
+      height: 244px;
+      margin-inline: -24px;
+    }
+    .entrar-ave {
+      width: 112px;
+      height: 112px;
+      margin-inline: -14px;
+      margin-bottom: 6px;
+    }
+    .entrar-ave-sombra {
+      height: 10px;
+    }
+    .entrar-painel,
+    .entrar-legal {
+      max-width: 26rem;
+    }
+    .entrar-painel {
+      padding: 20px;
+    }
+    /* formulário aberto: o painel tem ~300 px, então logo e elenco voltam quase ao tamanho do celular
+       (Juca 164) para tudo, até o aviso legal, caber em 1280×800 sem rolar */
+    .entrar--formulario .entrar-logo-titulo,
+    .entrar--formulario .entrar-logo-brilho {
+      font-size: 62px;
+    }
+    .entrar--formulario .faixa.entrar-logo-idle {
+      height: 40px;
+      margin-top: 6px;
+      font-size: 24px;
+    }
+    .entrar--formulario .entrar-lema {
+      font-size: 15px;
+    }
+    .entrar--formulario .entrar-elenco {
+      height: 172px;
+      margin-bottom: 8px;
+    }
+    .entrar--formulario .entrar-juca {
+      width: 164px;
+      height: 164px;
+      margin-inline: -15px;
+    }
+    .entrar--formulario .entrar-ave {
+      width: 76px;
+      height: 76px;
+      margin-inline: -9px;
+    }
+    .entrar--formulario .entrar-painel {
+      padding-bottom: 16px;
+    }
+    /* o elenco sobe com o painel: as colinas sobem junto para ele pisar na grama, não no horizonte */
+    .entrar--formulario .entrar-colinas {
+      height: 76%;
+    }
+  }
+}
+
+/* ---------------------------------------------------------------- animações das telas */
+@keyframes gi-tela-gira {
+  to {
+    rotate: 360deg;
+  }
+}
+@keyframes gi-tela-pop {
+  0% {
+    scale: 0.4;
+    opacity: 0;
+  }
+  100% {
+    scale: 1;
+    opacity: 1;
+  }
+}
+@keyframes gi-tela-surge {
+  0% {
+    scale: 0;
+    opacity: 0;
+  }
+  70% {
+    scale: 1.12;
+    opacity: 1;
+  }
+  100% {
+    scale: 1;
+    opacity: 1;
+  }
+}
+@keyframes gi-tela-cintila {
+  0%,
+  100% {
+    scale: 0.3;
+    opacity: 0;
+  }
+  45% {
+    scale: 1;
+    opacity: 1;
+  }
+  70% {
+    scale: 0.6;
+    opacity: 0.6;
+  }
+}
+@keyframes gi-tela-flutua {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+  50% {
+    translate: 0 -5px;
+  }
+}
+/* martelo: descansa, ergue (+), desce de uma vez na borda do ninho (52%), quica e volta */
+@keyframes gi-tela-martelo {
+  0%,
+  28% {
+    rotate: 0deg;
+  }
+  44% {
+    rotate: 30deg;
+  }
+  52% {
+    rotate: -38deg;
+  }
+  57% {
+    rotate: -30deg;
+  }
+  62% {
+    rotate: -38deg;
+  }
+  76%,
+  100% {
+    rotate: 0deg;
+  }
+}
+@keyframes gi-tela-poeira {
+  0%,
+  51% {
+    scale: 0.3;
+    opacity: 0;
+  }
+  55% {
+    scale: 0.8;
+    opacity: 1;
+  }
+  66% {
+    scale: 1.15;
+    opacity: 1;
+  }
+  80% {
+    scale: 1.35;
+    opacity: 0;
+  }
+  100% {
+    scale: 1.3;
+    opacity: 0;
+  }
+}
+@keyframes gi-tela-amassa {
+  0%,
+  50% {
+    scale: 1 1;
+  }
+  55% {
+    scale: 1.07 0.86;
+  }
+  63% {
+    scale: 0.97 1.04;
+  }
+  72%,
+  100% {
+    scale: 1 1;
+  }
+}
+@keyframes gi-tela-respira {
+  0%,
+  100% {
+    scale: 1;
+  }
+  50% {
+    scale: 1.06;
+  }
+}
+@keyframes gi-tela-seta {
+  0%,
+  100% {
+    opacity: 0.25;
+    translate: 0 0;
+  }
+  40% {
+    opacity: 1;
+    translate: 3px 0;
+  }
+}
+@keyframes gi-tela-cadeado {
+  0%,
+  70%,
+  100% {
+    rotate: 0deg;
+  }
+  76% {
+    rotate: -9deg;
+  }
+  82% {
+    rotate: 7deg;
+  }
+  88% {
+    rotate: -4deg;
+  }
+  94% {
+    rotate: 2deg;
+  }
+}
+@keyframes gi-tela-moeda {
+  0%,
+  70%,
+  100% {
+    scale: 1 1;
+  }
+  78% {
+    scale: 0.15 1;
+  }
+  86% {
+    scale: 1 1;
+  }
+}
+@keyframes gi-tela-pisca {
+  from {
+    opacity: 0.55;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes gi-tela-ronco {
+  0%,
+  100% {
+    scale: 1 1;
+  }
+  50% {
+    scale: 1.03 0.97;
+  }
+}
+@keyframes gi-tela-presente {
+  0%,
+  78%,
+  100% {
+    rotate: 0deg;
+    scale: 1;
+  }
+  84% {
+    rotate: -10deg;
+    scale: 1.12;
+  }
+  90% {
+    rotate: 8deg;
+    scale: 1.05;
+  }
+  95% {
+    rotate: -3deg;
+    scale: 1;
+  }
+}
+@keyframes gi-tela-nuvem {
+  from {
+    translate: 0 0;
+  }
+  to {
+    translate: var(--deriva, 12px) 0;
+  }
+}
+@keyframes gi-tela-saltita {
+  0%,
+  100% {
+    translate: 0 0;
+    scale: 1.06 0.94;
+  }
+  14% {
+    translate: 0 0;
+    scale: 0.96 1.05;
+  }
+  40% {
+    translate: 0 -18px;
+    scale: 1 1;
+    rotate: -4deg;
+  }
+  62% {
+    translate: 0 0;
+    scale: 1.08 0.92;
+    rotate: 0deg;
+  }
+  74% {
+    translate: 0 0;
+    scale: 1 1;
+  }
+}
+@keyframes gi-tela-saltita-sombra {
+  0%,
+  14%,
+  62%,
+  100% {
+    scale: 1;
+    opacity: 1;
+  }
+  40% {
+    scale: 0.65;
+    opacity: 0.55;
+  }
+}
+
+/* reduzir movimento: nuvens ficam paradas num lugar bonito (a regra global já corta a duração) */
+html.reduzir-movimento .entrar-nuvem {
+  animation: none;
+}

@@ -1,0 +1,51 @@
+/* Estilos: galinha (modelo para as outras espécies: só variáveis + keyframes próprios). Importado por globals.css.
+ * Ritmo (DIRECAO_DE_ARTE 9): respiração 2,6 s, piscar 4,7 s, ação 7,1 s.
+ * Ação: olha para os lados e BICA o chão duas vezes; a cauda dá um tranco no mesmo instante (contrapeso).
+ * Feliz: ciclo mais curto e bate a asa da frente em vez da cauda. */
+
+.especie-galinha {
+  --br-base: 2.6s;
+  --pisca-base: 4.7s;
+  --acao-base: 7.1s;
+  --anim-cabeca: gal-bicar;
+  --anim-cauda: gal-cauda;
+  --pivo-cauda: 5% 95%;
+  --pivo-asa-e: 5% 8%;
+}
+.especie-galinha.humor-feliz {
+  --anim-cauda: none;
+  --anim-asa-e: gal-bate-asa;
+}
+
+@keyframes gal-bicar {
+  0%, 46% { rotate: 0deg; translate: 0 0; animation-timing-function: var(--ease-senoide, ease-in-out); }
+  /* olha para a direita… */
+  51%, 58% { rotate: 7deg; translate: 1px -0.4px; animation-timing-function: var(--ease-senoide, ease-in-out); }
+  /* …e para a esquerda */
+  63%, 70% { rotate: -5deg; translate: -0.8px 0; animation-timing-function: var(--ease-senoide, ease-in-out); }
+  75% { rotate: 0deg; translate: 0 0; animation-timing-function: ease-out; }
+  /* antecipação: recolhe */
+  80% { rotate: 3deg; translate: 0.6px -1.6px; animation-timing-function: cubic-bezier(0.5, 0, 0.9, 0.4); }
+  /* bicada 1 */
+  83% { rotate: -16deg; translate: -3px 7px; animation-timing-function: ease-out; }
+  85.5% { rotate: -6deg; translate: -1px 2px; animation-timing-function: cubic-bezier(0.5, 0, 0.9, 0.4); }
+  /* bicada 2 */
+  88% { rotate: -15deg; translate: -2.8px 6.6px; animation-timing-function: var(--ease-suave, ease-out); }
+  94%, 100% { rotate: 0deg; translate: 0 0; }
+}
+@keyframes gal-cauda {
+  0%, 79% { rotate: 0deg; }
+  83% { rotate: -14deg; animation-timing-function: ease-out; }
+  86% { rotate: 4deg; }
+  88.5% { rotate: -10deg; }
+  92% { rotate: 3deg; }
+  95%, 100% { rotate: 0deg; }
+}
+@keyframes gal-bate-asa {
+  0%, 78% { rotate: 0deg; }
+  81% { rotate: -24deg; animation-timing-function: ease-out; }
+  83.5% { rotate: -4deg; }
+  86% { rotate: -22deg; }
+  88.5% { rotate: -2deg; }
+  91%, 100% { rotate: 0deg; }
+}

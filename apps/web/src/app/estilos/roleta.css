@@ -1,0 +1,774 @@
+/* Estilos da roleta (DIRECAO_DE_ARTE 7.1 e 7.2). Dono: roleta. Importado por globals.css.
+   A roda (Roda.tsx) escreve o giro direto no DOM; aqui ficam lâmpadas, destaque, confete e o palco.
+   Tudo anima só transform/opacity. Em html.reduzir-movimento a regra global encerra as animações em 1 ms:
+   o estado BASE de cada elemento é o estado final desejado (lâmpadas acesas, véu e brilho parados). */
+
+/* ---------------------------------------------------------------- palco */
+.roleta-palco {
+  position: relative;
+  isolation: isolate;
+  -webkit-tap-highlight-color: transparent;
+}
+/* a tela ocupa a altura útil: a roda centraliza na sobra e o botão desce para perto do polegar */
+.roleta-tela {
+  min-height: calc(100dvh - var(--altura-hud) - var(--seguro-topo) - var(--altura-abas) - var(--seguro-base) - 28px);
+}
+/* rede de segurança contra rolagem lateral no celular, onde a tela ocupa a largura toda e o corte cai na borda
+   (os modais são position: fixed e não são cortados). Em telas largas a janela dos raios cabe sem corte. */
+@media (max-width: 28rem) {
+  .roleta-tela {
+    overflow-x: clip;
+  }
+}
+.roleta-tela > .roleta-caixa {
+  margin-block: auto;
+}
+
+/* a roda encolhe com a altura da tela; em 600 px ainda cabe com o botão acima das abas */
+.roleta-caixa {
+  width: calc(100% + 20px);
+  max-width: clamp(196px, calc((100dvh - 352px) / 1.125), 372px);
+}
+/* cabeçalho: contrato .tela-cabeca de ui.css (ícone da aba + título contornado; botão Chances no encaixe da
+   direita), igual à Loja/Ajustes. Aqui só a largura (a tela da roleta centraliza os filhos) e o aperto vertical. */
+.roleta-cabeca {
+  width: 100%;
+  margin-bottom: 4px;
+}
+.roleta-botao-chances {
+  flex: none;
+}
+@media (max-height: 700px) {
+  .roleta-caixa {
+    max-width: clamp(196px, calc((100dvh - 332px) / 1.125), 372px);
+  }
+  .roleta-cabeca {
+    margin-block: 0 2px;
+  }
+  .roleta-cabeca .tela-cabeca-icone {
+    width: 38px;
+    height: 38px;
+  }
+  /* telas baixas: a pílula de saldo/ninhos sai (o HUD logo acima já mostra o saldo, o botão Girar avisa
+     "Faltam…" / "Galinheiro cheio" e leva o selo compacto "N vagas"); a roda ganha a altura */
+  .roleta-info-baixo {
+    display: none;
+  }
+}
+/* celular estreito (< 360 px): Chances vira botão-ícone redondo de 44 px */
+@media (max-width: 359px) {
+  .roleta-botao-chances {
+    width: 44px;
+    height: 44px;
+    min-height: 44px;
+    padding: 0;
+    border-radius: 999px;
+  }
+  .roleta-botao-chances .lucide {
+    width: 22px;
+    height: 22px;
+  }
+  .roleta-botao-chances-texto {
+    display: none;
+  }
+}
+
+/* raios de sol atrás da roda (centro do disco = 48% da altura do SVG). A JANELA fica parada, corta e leva a
+   máscara (elipse que some nas bordas); só o quadrado de dentro gira. Girado, ele seria √2× maior: fora de uma
+   janela que corta, alargaria a página e criaria rolagem lateral. A janela nunca passa de 100vw de largura e
+   é mais alta que larga (165% da largura da roda), então os raios aparecem mesmo no celular estreito. */
+.roleta-raios-janela {
+  position: absolute;
+  left: 50%;
+  top: 48%;
+  width: min(165%, 100vw);
+  height: 147%; /* = 165% da largura (a altura do palco é 1,125 × a largura) */
+  translate: -50% -50%;
+  z-index: -2;
+  overflow: hidden;
+  pointer-events: none;
+  -webkit-mask-image: radial-gradient(closest-side, #000 42%, rgb(0 0 0 / 0.55) 72%, transparent 100%);
+  mask-image: radial-gradient(closest-side, #000 42%, rgb(0 0 0 / 0.55) 72%, transparent 100%);
+}
+.roleta-raios {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  /* lado = 142% da altura da janela: cobre a diagonal (a janela nunca é mais larga que alta) */
+  height: 142%;
+  aspect-ratio: 1;
+  translate: -50% -50%;
+  pointer-events: none;
+  background: repeating-conic-gradient(from 0deg, rgb(255 255 255 / 0.38) 0deg 9deg, rgb(255 255 255 / 0) 9deg 20deg);
+  animation: roleta-raios-gira 60s linear infinite;
+}
+/* vitória: raios na cor da raridade, girando mais rápido */
+.roleta-raios[data-raridade] {
+  background: repeating-conic-gradient(
+    from 0deg,
+    color-mix(in srgb, var(--rar-brilho) 80%, transparent) 0deg 9deg,
+    rgb(255 255 255 / 0) 9deg 20deg
+  );
+  animation: roleta-raios-gira 14s linear infinite, roleta-raios-entra 420ms var(--ease-explosao) both;
+}
+.roleta-halo {
+  position: absolute;
+  left: 50%;
+  top: 48%;
+  width: 104%;
+  aspect-ratio: 1;
+  translate: -50% -50%;
+  z-index: -1;
+  border-radius: 50%;
+  pointer-events: none;
+  background: radial-gradient(closest-side, rgb(255 255 255 / 0.75), rgb(255 255 255 / 0.3) 70%, rgb(255 255 255 / 0));
+}
+@keyframes roleta-raios-gira {
+  to {
+    rotate: 360deg;
+  }
+}
+@keyframes roleta-raios-entra {
+  from {
+    opacity: 0;
+    scale: 0.6;
+  }
+}
+
+/* plaquinha com a chance do gomo estreito, pregada na base de madeira */
+.roleta-legenda {
+  position: absolute;
+  left: 50%;
+  bottom: calc(4.55% - 11px);
+  translate: -50% 0;
+  display: flex;
+  gap: 6px;
+  pointer-events: none;
+}
+
+/* dica "toque para pular": vira a placa da base enquanto a roda desacelera */
+.roleta-dica {
+  position: absolute;
+  left: 50%;
+  bottom: calc(4.55% - 13px);
+  z-index: 1;
+  translate: -50% 0;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+/* retrato do animal dentro do gomo: ocupa todo o <svg> aninhado que dá o tamanho */
+.roda-retrato {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+/* ---------------------------------------------------------------- lâmpadas */
+/* repouso: dois "cometas" de luz correndo no sentido do giro (1,6 s por volta de meia roda); a cauda apaga
+   de vez (opacidade 0), então acesa × apagada fica óbvia num quadro parado */
+.roda-lampada-acesa {
+  animation: roda-cometa 1.6s linear infinite;
+  animation-delay: calc(var(--i) * 0.1333s - 3.2s);
+}
+/* girando: alternadas, piscando rápido */
+.roda-girando .roda-lampada-acesa {
+  animation: roda-pisca 0.5s steps(1) infinite;
+  animation-delay: calc(var(--par) * -0.25s);
+}
+/* vitória: todas juntas (lendário: frenético) */
+.roda-vitoria .roda-lampada-acesa {
+  animation: roda-pisca 0.32s steps(1) infinite;
+  animation-delay: 0s;
+}
+.roda-vitoria[data-raridade='lendario'] .roda-lampada-acesa {
+  animation: roda-pisca 0.16s steps(1) infinite;
+  animation-delay: calc(var(--par) * -0.08s);
+}
+@keyframes roda-cometa {
+  0% {
+    opacity: 1;
+  }
+  18% {
+    opacity: 0.9;
+  }
+  38% {
+    opacity: 0.45;
+  }
+  52%,
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes roda-pisca {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+
+/* ---------------------------------------------------------------- destaque do gomo vencedor */
+/* pisca 3× (240 ms por piscada) e depois pulsa entre 0,35 e 0,7 (o gomo fica MAIS saturado, nunca lavado).
+   O épico pulsa mais fundo (0,45 a 0,8): precisa parecer mais raro que o raro. */
+.roda-vencedor {
+  --pulsa-min: 0.35;
+  --pulsa-max: 0.7;
+  opacity: var(--pulsa-max);
+  animation:
+    roda-vence-pisca 720ms steps(1) both,
+    roda-vence-pulsa 1.2s var(--ease-senoide) 720ms infinite;
+}
+.roda-vitoria[data-raridade='epico'] .roda-vencedor {
+  --pulsa-min: 0.45;
+  --pulsa-max: 0.8;
+}
+.roda-vencedor-borda {
+  opacity: 1;
+  animation:
+    roda-borda-pisca 720ms steps(1) both,
+    roda-borda-pulsa 1.2s var(--ease-senoide) 720ms infinite;
+}
+/* véu azul-noite nos perdedores: "holofote" no vencedor */
+.roda-veu {
+  opacity: 0.42;
+  animation: roda-veu 360ms var(--ease-suave) both;
+}
+/* a chance escrita do vencedor some (fica sob o ponteiro): o medalhão já comunica o resultado */
+.roda-rotulo {
+  transition: opacity 300ms var(--ease-suave);
+}
+.roda-rotulo-apagado {
+  opacity: 0;
+}
+@keyframes roda-vence-pisca {
+  0%,
+  33.3%,
+  66.6% {
+    opacity: 1;
+  }
+  16.6%,
+  50%,
+  83.3% {
+    opacity: 0;
+  }
+  100% {
+    opacity: var(--pulsa-max);
+  }
+}
+@keyframes roda-borda-pisca {
+  0%,
+  33.3%,
+  66.6% {
+    opacity: 1;
+  }
+  16.6%,
+  50%,
+  83.3% {
+    opacity: 0.2;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+@keyframes roda-vence-pulsa {
+  0%,
+  100% {
+    opacity: var(--pulsa-max);
+  }
+  50% {
+    opacity: var(--pulsa-min);
+  }
+}
+@keyframes roda-borda-pulsa {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+@keyframes roda-veu {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 0.42;
+  }
+}
+
+/* CÓPIA do retrato principal do gomo vencedor: SALTA no lugar (1 → 1,3, de frente para a câmera) e VOA para o
+   cubo encolhendo, onde vira o medalhão (que estoura quando ela chega). --vx/--vy = caminho até o cubo no
+   referencial da tela (Roda.tsx). Estado base = fim (sumida): reduzir movimento cai direto nele. */
+.roda-retrato-voa {
+  transform-box: fill-box;
+  transform-origin: center;
+  translate: var(--vx) var(--vy);
+  scale: 0.4;
+  opacity: 0;
+  animation: roda-retrato-voa 440ms both;
+}
+@keyframes roda-retrato-voa {
+  0% {
+    translate: 0 0;
+    scale: 1;
+    opacity: 1;
+    animation-timing-function: cubic-bezier(0.2, 0.9, 0.4, 1);
+  }
+  32% {
+    translate: 0 0;
+    scale: 1.32;
+    opacity: 1;
+    animation-timing-function: cubic-bezier(0.55, 0, 0.85, 0.4);
+  }
+  88% {
+    opacity: 1;
+  }
+  100% {
+    translate: var(--vx) var(--vy);
+    scale: 0.4;
+    opacity: 0;
+  }
+}
+
+/* o retrato que FICA no gomo vencedor (a cópia acima é que voa). Ele NUNCA some: está no lugar desde o primeiro
+   quadro, por baixo da cópia que salta (1,32× cobre ele todo), e quando ela decola (32% de 440 ms ≈ 140 ms) desliza
+   com um leve overshoot até o lugar livre (--fx/--fy/--fs = lugarDoVencedor em Roda.tsx), assentado em ~520 ms.
+   Atrás dele a luz acende, a estrela de raios estoura e um anel branco se abre; dali em diante ele dá pulinhos no
+   compasso da borda (1,2 s, a partir de 720 ms). Estado base = fim (no lugar novo): reduzir movimento cai direto
+   nele. Origem 0 0 = centro do retrato. */
+.roda-retrato-fica {
+  translate: var(--fx) var(--fy);
+  scale: var(--fs);
+  animation: roda-retrato-assenta 380ms cubic-bezier(0.34, 1.32, 0.64, 1) 140ms both;
+}
+.roda-retrato-luz {
+  animation: roda-retrato-luz 320ms var(--ease-suave) 180ms both;
+}
+.roda-retrato-anel {
+  opacity: 0;
+  animation: roda-retrato-anel 560ms var(--ease-explosao) 440ms both;
+}
+.roda-retrato-pula {
+  animation: roda-retrato-pula 1.2s var(--ease-senoide) 720ms infinite;
+}
+/* estrela de raios atrás do vencedor: estoura com overshoot e gira devagar, como a explosão do ponteiro */
+.roda-retrato-raios {
+  animation:
+    roda-retrato-raios-entra 420ms var(--ease-elastico) 260ms both,
+    roda-explosao-gira 8s linear infinite;
+}
+/* reduzir movimento: a regra global encurta a duração mas não o atraso; o vencedor já aparece no lugar */
+html.reduzir-movimento .roda-retrato-fica,
+html.reduzir-movimento .roda-retrato-luz,
+html.reduzir-movimento .roda-retrato-anel,
+html.reduzir-movimento .roda-retrato-raios {
+  animation-delay: 0s;
+}
+@keyframes roda-retrato-assenta {
+  from {
+    translate: 0 0;
+    scale: 1;
+  }
+}
+@keyframes roda-retrato-luz {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes roda-retrato-raios-entra {
+  from {
+    scale: 0;
+    opacity: 0;
+  }
+}
+@keyframes roda-retrato-anel {
+  from {
+    scale: 0.5;
+    opacity: 1;
+  }
+  to {
+    scale: 1.5;
+    opacity: 0;
+  }
+}
+@keyframes roda-retrato-pula {
+  0%,
+  100% {
+    translate: 0 0;
+    scale: 1;
+  }
+  50% {
+    translate: 0 -4px;
+    scale: 1.04 0.98;
+  }
+}
+
+/* figurantes do gomo premiado (os dois retratos menores da galinha): não ficam sob o véu, mas encolhem e esmaecem
+   para o vencedor ser o único bicho em destaque. Origem 0 0 = centro do retrato. */
+.roda-figurante {
+  opacity: 0.5;
+  scale: 0.84;
+  animation: roda-figurante 360ms var(--ease-suave) both;
+}
+@keyframes roda-figurante {
+  from {
+    opacity: 1;
+    scale: 1;
+  }
+}
+
+/* rastro do retrato que voou: os raios entram quando a moeda estoura (380 ms) e depois pulsam no mesmo
+   compasso da borda; as cintilações entram juntas e piscam em tempos diferentes. Estado base = visível. */
+.roda-rastro,
+.roda-rastro-cintilas {
+  opacity: 1;
+  animation: roda-rastro-entra 360ms var(--ease-suave) 380ms both;
+}
+.roda-rastro {
+  animation:
+    roda-rastro-entra 360ms var(--ease-suave) 380ms both,
+    roda-rastro-pulsa 1.2s var(--ease-senoide) 740ms infinite;
+}
+.roda-cintila {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: roda-cintila 1.1s var(--ease-senoide) infinite;
+}
+@keyframes roda-rastro-entra {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes roda-rastro-pulsa {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+@keyframes roda-cintila {
+  0%,
+  100% {
+    scale: 0.45;
+    rotate: 0deg;
+    opacity: 0.5;
+  }
+  50% {
+    scale: 1.1;
+    rotate: 45deg;
+    opacity: 1;
+  }
+}
+
+/* medalhão do vencedor: salta do cubo com overshoot */
+.roda-medalhao {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: roda-medalhao-pop 520ms var(--ease-elastico) 320ms both;
+}
+@keyframes roda-medalhao-pop {
+  from {
+    scale: 0;
+    opacity: 0;
+  }
+  to {
+    scale: 1;
+    opacity: 1;
+  }
+}
+/* onda de choque do medalhão (lendário: duas) */
+.roda-onda {
+  transform-box: fill-box;
+  transform-origin: center;
+  opacity: 0;
+  animation: roda-onda 450ms var(--ease-explosao) both;
+}
+@keyframes roda-onda {
+  from {
+    scale: 1;
+    opacity: 1;
+  }
+  to {
+    scale: 1.8;
+    opacity: 0;
+  }
+}
+
+/* explosão de raios atrás do ponteiro: pop 0 → 1,15 → 1 e depois gira devagar */
+.roda-explosao {
+  transform-box: fill-box;
+  transform-origin: center;
+  opacity: 0.95;
+  animation:
+    roda-explosao-pop 460ms both,
+    roda-explosao-gira 7s linear 460ms infinite;
+}
+/* lendário: segunda camada maior, girando ao contrário */
+.roda-explosao-2 {
+  opacity: 0.7;
+  animation:
+    roda-explosao-pop-2 560ms both,
+    roda-explosao-gira 9s linear 560ms infinite reverse;
+}
+@keyframes roda-explosao-pop {
+  0% {
+    scale: 0;
+    opacity: 0;
+    animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  60% {
+    scale: 1.15;
+    opacity: 1;
+    animation-timing-function: cubic-bezier(0.37, 0, 0.63, 1);
+  }
+  100% {
+    scale: 1;
+    opacity: 0.95;
+  }
+}
+@keyframes roda-explosao-pop-2 {
+  0% {
+    scale: 0;
+    opacity: 0;
+    animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  60% {
+    scale: 1.5;
+    opacity: 0.8;
+    animation-timing-function: cubic-bezier(0.37, 0, 0.63, 1);
+  }
+  100% {
+    scale: 1.3;
+    opacity: 0.7;
+  }
+}
+@keyframes roda-explosao-gira {
+  to {
+    rotate: 360deg;
+  }
+}
+
+/* confete: sai em leque (out-expo), para no ar e cai (in-cubic) */
+.roda-confete > g {
+  transform-box: fill-box;
+  transform-origin: center;
+  opacity: 0;
+  animation: roda-confete 1.4s both;
+}
+@keyframes roda-confete {
+  0% {
+    transform: translate(0, 0) rotate(0deg) scale(0.2);
+    opacity: 1;
+    animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  50% {
+    transform: translate(var(--dx), var(--dy)) rotate(var(--rot)) scale(1);
+    opacity: 1;
+    animation-timing-function: cubic-bezier(0.32, 0, 0.67, 0);
+  }
+  85% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(calc(var(--dx) * 1.2), calc(var(--dy) + 110px)) rotate(calc(var(--rot) * 1.8)) scale(0.85);
+    opacity: 0;
+  }
+}
+html.reduzir-movimento .roda-confete,
+html.reduzir-movimento .roda-onda {
+  display: none;
+}
+
+/* ---------------------------------------------------------------- botão Girar */
+.roleta-botao {
+  width: 100%;
+  font-size: 26px;
+  letter-spacing: 0.02em;
+}
+.roleta-botao .botao-preco {
+  font-size: 22px;
+}
+/* selo "N vagas" no canto de cima-direita do Girar: é a versão compacta da pílula de ninhos livres, que sai em
+   telas baixas. Não ocupa altura: fica pendurado na borda do botão. Creme (como a pílula) com folga; vermelho de
+   alerta com 1 ou 2 ninhos livres. */
+.roleta-botao {
+  position: relative;
+}
+.roleta-botao-vagas {
+  display: none;
+  top: -11px;
+  right: 10px;
+  height: 24px;
+  gap: 3px;
+  grid-auto-flow: column;
+  padding: 0 9px 0 4px;
+  border: 2px solid #6b4a26;
+  background: linear-gradient(180deg, #fffcf3, #f3e2b8);
+  box-shadow:
+    inset 0 1.5px 0 #fff,
+    0 2px 0 rgb(43 26 15 / 0.3);
+  font-size: 14px;
+  color: var(--color-texto);
+  -webkit-text-stroke: 0;
+  text-shadow: none;
+  rotate: 4deg;
+  pointer-events: none;
+}
+.roleta-botao-vagas[data-alerta] {
+  border-color: #fff;
+  background: linear-gradient(180deg, #ff7a6a, #e0241a);
+  box-shadow:
+    0 0 0 1.5px #7a0e08,
+    0 2px 0 rgb(0 0 0 / 0.25);
+  color: #fff;
+  -webkit-text-stroke: max(0.14em, 2.5px) var(--contorno-cor);
+  text-shadow: 0 max(0.09em, 1.5px) 0 var(--contorno-cor);
+}
+.roleta-botao-vagas-icone {
+  width: 20px;
+  height: 16px;
+  translate: 0 -1px;
+}
+@media (max-height: 700px) {
+  .roleta-botao-vagas {
+    display: inline-grid;
+  }
+}
+.roleta-pix-qr {
+  display: block;
+  width: min(240px, 70vw);
+  height: auto;
+  margin: 12px auto 0;
+  background: #fff;
+  border-radius: 12px;
+  padding: 8px;
+}
+.roleta-pix-codigo {
+  margin-top: 10px;
+  max-height: 4.5em;
+  overflow: auto;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.06);
+  font-size: 12px;
+  line-height: 1.35;
+  word-break: break-all;
+  cursor: text;
+  user-select: text;
+  -webkit-user-select: text;
+}
+.roleta-botao[aria-busy='true'] {
+  cursor: progress;
+}
+.roleta-botao .lucide {
+  width: 26px;
+  height: 26px;
+}
+
+/* saldo e ninhos livres: uma pílula creme com dois contadores */
+.roleta-info {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 34px;
+  padding: 2px 14px 2px 6px;
+  border-radius: 999px;
+  border: 2px solid #6b4a26;
+  background: linear-gradient(180deg, #fffcf3, #f3e2b8);
+  box-shadow:
+    inset 0 2px 0 #fff,
+    0 2px 0 rgb(43 26 15 / 0.2);
+  font-family: var(--font-titulo);
+  font-size: 16px;
+  line-height: 1;
+  color: var(--color-texto);
+  white-space: nowrap;
+}
+.roleta-info > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.roleta-info-sep {
+  width: 2px;
+  height: 18px;
+  border-radius: 2px;
+  background: #d9bf8a;
+}
+.roleta-info small {
+  font-family: var(--font-texto);
+  font-weight: 800;
+  font-size: 13px;
+  color: var(--color-texto-suave);
+}
+.roleta-info [data-alerta] {
+  color: var(--color-perigo-escura);
+}
+
+/* ---------------------------------------------------------------- tabela de chances (ModalChances) */
+.roleta-chances {
+  display: grid;
+  gap: 10px;
+}
+.roleta-chance {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px 8px 8px;
+  border-radius: 18px;
+  border: 2px solid color-mix(in srgb, var(--rar) 55%, #e6c88e);
+  background: linear-gradient(180deg, #fff, color-mix(in srgb, var(--rar-clara) 55%, #fff6e0));
+  box-shadow:
+    inset 0 2px 0 #fff,
+    0 3px 0 rgb(43 26 15 / 0.14);
+}
+.roleta-chance-retrato {
+  position: relative;
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 58px;
+  height: 58px;
+  border-radius: 999px;
+  border: 3px solid var(--rar-contorno);
+  background: radial-gradient(circle at 40% 32%, #fff 0%, var(--rar-clara) 38%, var(--rar) 100%);
+  box-shadow:
+    inset 0 -4px 0 rgb(0 0 0 / 0.18),
+    inset 0 2px 0 rgb(255 255 255 / 0.7),
+    0 3px 0 var(--rar-contorno);
+}
+.roleta-chance-retrato > svg {
+  width: 50px;
+  height: 50px;
+  translate: 0 2px;
+}
+.roleta-chance-nome {
+  font-family: var(--font-titulo);
+  font-size: 19px;
+  line-height: 1.1;
+  color: var(--color-texto);
+}
+.roleta-chance-pct {
+  flex: none;
+  min-width: 3.2ch;
+  text-align: right;
+  font-size: 28px;
+  line-height: 1;
+  --contorno-cor: var(--rar-contorno);
+}
+.roleta-chance .barra-preenchimento {
+  --barra-clara: var(--rar-brilho);
+  --barra-base: var(--rar);
+}
+.roleta-chance[data-raridade='comum'] .barra-preenchimento {
+  --barra-clara: #eef1f5;
+  --barra-base: #9aa3af;
+}

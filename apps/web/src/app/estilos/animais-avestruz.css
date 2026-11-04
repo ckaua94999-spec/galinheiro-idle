@@ -1,0 +1,172 @@
+/* Estilos: avestruz (lendário). Importado por globals.css. Segue o molde de animais-galinha.css: só variáveis
+ * e @keyframes próprios; as camadas e o ritmo por humor vêm de animais.css.
+ * Ritmo (DIRECAO_DE_ARTE 9): respiração 3,2 s, piscar 3,7 s (DUPLO, com "flutter"), ação 6,7 s.
+ * Piscada: a do kit (<Piscada cilios>, Avestruz.tsx) com keyframe próprio: desce, entreabre (30%), fecha de
+ *   novo e abre — o charme de diva. Os cílios abertos (.ani-cilios do kit) somem durante as duas descidas pelo
+ *   --anim-cilios: ave-cilios-piscar, e os cílios fechados descem pendurados na linha de fechamento.
+ * Ação: o pescoço balança devagar o tempo todo e, no fim do ciclo, faz "periscópio" (agacha, estica e olha
+ *   para um lado e para o outro, ±8°), girando em volta da BASE do pescoço (sob o colar); a estrela de
+ *   vaidade (.ave-vaidade) pisca ao lado da tiara no mesmo instante. A cabeça está DENTRO do pescoço, então vai
+ *   junto (--anim-cabeca: none; cansado/triste/aposentado usam as ações comuns da cabeça e o pescoço para).
+ * Plumas: a cauda balança suave e dá uma "sacudida de diva" quando o pescoço volta do periscópio.
+ * Fx de raridade: aura dourada atrás (só opacidade), 2 estrelas cintilando (feliz/neutro), defasadas, e o
+ *   glitter dourado das plumas da cauda tremeluzindo (estrelas e glitter somem no lod-p).
+ * Contornos: a cabeça/pescoço (.ave-sil-pele, 2,4) e as plumas da cauda (.ave-sil-pluma, 2,5/2,4) são mais
+ *   finos que o 3,5 do kit no lod-m/g (cabecinha sem "capuz", pena sem cara de adesivo); no lod-p (ícones)
+ *   engrossam para segurar a silhueta.
+ * Grupos animados: corpo, pálpebras, pescoço, cauda (+ fx do lendário: só opacidade/escala). */
+
+.especie-avestruz {
+  --br-base: 3.2s;
+  --pisca-base: 3.7s;
+  --acao-base: 6.7s;
+  --anim-cabeca: none;
+  --anim-pescoco: ave-periscopio;
+  --anim-cauda: ave-plumas;
+  --pivo-cauda: 0% 100%;
+  --anim-cilios: ave-cilios-piscar;
+}
+
+/* O pescoço gira em volta da BASE dele (escondida sob o colar, P_BASE 53,68.4 em Avestruz.tsx, nas coordenadas
+ * do grupo do corpo, que sobe CORPO_DY = 3,5), não do meio da caixa do grupo (que inclui o bico e o colar): a emenda
+ * com o corpo nunca escorrega. No periscópio (±8°) a tiara e a pluma do topo guardam ≥ 2 de margem no alto. */
+.gi-animal.especie-avestruz .ani-pescoco {
+  transform-box: view-box;
+  transform-origin: 53px 68.4px;
+}
+
+/* lod-p: a cabecinha, o pescoço e as plumas da cauda engrossam (a silhueta a ≤ 56 px é deles também). */
+.lod-p.especie-avestruz .ave-sil-pele {
+  stroke-width: 6;
+}
+.lod-p.especie-avestruz .ave-sil-pluma {
+  stroke-width: 7;
+}
+
+/* Piscar duplo com flutter (a pálpebra é a do kit; só o keyframe muda). */
+.gi-animal.especie-avestruz .ani-palpebras {
+  animation-name: ave-piscar;
+}
+
+/* ------------------------------------------------------------------------------- fx de raridade */
+.especie-avestruz :is(.ave-brilho, .ave-vaidade, .ave-aura) {
+  transform-box: fill-box;
+  transform-origin: 50% 50%;
+}
+.especie-avestruz .ave-aura {
+  animation: ave-aura 2.4s var(--ease-senoide, ease-in-out) infinite alternate;
+  animation-delay: var(--atraso);
+}
+.especie-avestruz .ave-brilho {
+  animation: ave-cintilar 2.6s var(--ease-senoide, ease-in-out) infinite;
+  animation-delay: calc(var(--atraso) * 1.3);
+}
+.especie-avestruz .ave-brilho:nth-child(2) {
+  animation-duration: 3.1s;
+  animation-delay: calc(var(--atraso) * 1.3 - 1.1s);
+}
+/* Glitter das plumas: tremeluz (só opacidade), fora de fase com as estrelas. */
+.especie-avestruz .ave-glitter {
+  animation: ave-glitter 1.9s var(--ease-senoide, ease-in-out) infinite alternate;
+  animation-delay: calc(var(--atraso) * 1.3 - 0.6s);
+}
+/* Estrela de vaidade: escondida; aparece junto com o periscópio (mesmo ciclo e atraso do pescoço). */
+.especie-avestruz .ave-vaidade {
+  opacity: 0;
+  animation: ave-vaidade var(--acao) linear infinite;
+  animation-delay: calc(var(--atraso) * 2.3);
+}
+/* lod-p (ícones ≤ 56 px): sem estrelinhas (viram pontos soltos); a aura fica, mais fraca. Os cílios ficam:
+ * são a marca dela. */
+.lod-p.especie-avestruz :is(.ave-brilho, .ave-vaidade, .ave-glitter) {
+  display: none;
+}
+.lod-p.especie-avestruz .ave-aura {
+  opacity: 0.7;
+}
+
+/* Teste de silhueta da galeria: a aura e os brilhos não fazem parte da silhueta. */
+.gi-silhueta .especie-avestruz :is(.ave-aura, .ave-brilho, .ave-vaidade, .ave-glitter) {
+  display: none;
+}
+
+/* Menos movimento: tudo parado (animais.css já tira as animações); a aura fica estática e a vaidade some. */
+html.reduzir-movimento .especie-avestruz .ave-vaidade {
+  opacity: 0;
+}
+
+/* ------------------------------------------------------------------------------------- keyframes */
+/* Desce (93,8%), entreabre a 30% (95%), fecha de novo (96,2%) e abre (97,6%). */
+@keyframes ave-piscar {
+  0%, 92.6% { scale: 1 0; }
+  93.8% { scale: 1 1; }
+  95% { scale: 1 0.3; }
+  96.2% { scale: 1 1; }
+  97.6%, 100% { scale: 1 0; }
+}
+
+/* Cílios abertos + delineado do kit: somem logo que a pálpebra começa a descer e voltam quando ela abre. */
+@keyframes ave-cilios-piscar {
+  0%, 92.8% { opacity: 1; }
+  93.2%, 97.3% { opacity: 0; }
+  97.7%, 100% { opacity: 1; }
+}
+
+/* Pescoço: balanço lento (0–56%), periscópio (58–90%): agacha (squash) e olha à esquerda e à direita, volta.
+ * Nunca translate para cima nem escala vertical > 1: a tiara e a pluma do topo guardam ≥ 2 de margem no alto da
+ * caixa 120×120 (carta e chip recortam). */
+@keyframes ave-periscopio {
+  0% { rotate: 0deg; scale: 1 1; animation-timing-function: var(--ease-senoide, ease-in-out); }
+  18% { rotate: 2.6deg; scale: 1 1; animation-timing-function: var(--ease-senoide, ease-in-out); }
+  38% { rotate: -2.2deg; scale: 1 1; animation-timing-function: var(--ease-senoide, ease-in-out); }
+  56% { rotate: 0deg; scale: 1 1; animation-timing-function: var(--ease-senoide, ease-in-out); }
+  /* antecipa (agacha) e estica olhando para a esquerda */
+  60% { rotate: 1.5deg; scale: 1.03 0.94; animation-timing-function: var(--ease-suave, ease-out); }
+  64% { rotate: -8deg; scale: 1 1; animation-timing-function: var(--ease-senoide, ease-in-out); }
+  68% { rotate: -7.2deg; scale: 1 1; animation-timing-function: var(--ease-senoide, ease-in-out); }
+  74% { rotate: -7.2deg; scale: 1 1; animation-timing-function: var(--ease-senoide, ease-in-out); }
+  79% { rotate: 8deg; scale: 1 1; animation-timing-function: var(--ease-senoide, ease-in-out); }
+  85% { rotate: 7.2deg; scale: 1 1; animation-timing-function: var(--ease-suave, ease-out); }
+  90% { rotate: -2deg; scale: 1 1; animation-timing-function: var(--ease-senoide, ease-in-out); }
+  94%, 100% { rotate: 0deg; scale: 1 1; }
+}
+
+/* Plumas da cauda: balanço macio e a "sacudida de diva" quando o pescoço volta (90–97%). */
+@keyframes ave-plumas {
+  0% { rotate: 0deg; animation-timing-function: var(--ease-senoide, ease-in-out); }
+  25% { rotate: -3deg; animation-timing-function: var(--ease-senoide, ease-in-out); }
+  50% { rotate: 1.5deg; animation-timing-function: var(--ease-senoide, ease-in-out); }
+  75% { rotate: -2deg; animation-timing-function: var(--ease-senoide, ease-in-out); }
+  88% { rotate: 0deg; animation-timing-function: ease-out; }
+  90.5% { rotate: -12deg; animation-timing-function: ease-in-out; }
+  92.5% { rotate: 7deg; animation-timing-function: ease-in-out; }
+  94.5% { rotate: -5deg; animation-timing-function: ease-in-out; }
+  96.5% { rotate: 2deg; animation-timing-function: var(--ease-senoide, ease-in-out); }
+  100% { rotate: 0deg; }
+}
+
+@keyframes ave-aura {
+  from { opacity: 0.7; }
+  to { opacity: 1; }
+}
+
+@keyframes ave-glitter {
+  from { opacity: 0.35; }
+  to { opacity: 1; }
+}
+
+/* Cintilar: a estrela vive pequena, cresce girando e some (brilho de joia). */
+@keyframes ave-cintilar {
+  0%, 100% { scale: 0.35; rotate: 0deg; opacity: 0.5; }
+  40% { scale: 1.1; rotate: 45deg; opacity: 1; }
+  55% { scale: 0.9; rotate: 60deg; opacity: 1; }
+  80% { scale: 0.35; rotate: 90deg; opacity: 0.5; }
+}
+
+/* Vaidade: some até 64%, pisca no auge do periscópio (64–72%) e some. */
+@keyframes ave-vaidade {
+  0%, 63% { scale: 0; rotate: 0deg; opacity: 0; }
+  66% { scale: 1.2; rotate: 45deg; opacity: 1; animation-timing-function: var(--ease-senoide, ease-in-out); }
+  69% { scale: 0.9; rotate: 70deg; opacity: 1; }
+  72%, 100% { scale: 0; rotate: 90deg; opacity: 0; }
+}

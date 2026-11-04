@@ -1,0 +1,19 @@
+{
+  "name": "galinheiro-idle",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Galinheiro Idle — jogo idle/colecionável em PWA (Next.js + PostgreSQL)",
+  "packageManager": "pnpm@9.15.0",
+  "engines": {
+    "node": ">=20.9"
+  },
+  "scripts": {
+    "dev": "pnpm --filter @galinheiro/web dev",
+    "build": "pnpm --filter @galinheiro/web build",
+    "start": "pnpm --filter @galinheiro/web start",
+    "start:local": "pnpm --filter @galinheiro/web start:local",
+    "test": "pnpm -r --workspace-concurrency=1 test",
+    "typecheck": "pnpm -r typecheck",
+    "simular": "python tools/balance_sim.py 300"
+  }
+}

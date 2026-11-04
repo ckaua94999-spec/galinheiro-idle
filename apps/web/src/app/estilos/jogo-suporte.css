@@ -1,0 +1,595 @@
+/* chat de suporte e popups no jogo (cliente/avisos, telas/TelaSuporte). Escopo próprio; importado por globals.css. */
+
+/* ---------------------------------------------------------------- popup (aviso da equipe) */
+.popup-aviso {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.popup-aviso-imagem {
+  display: block;
+  width: 100%;
+  max-height: 220px;
+  object-fit: cover;
+  border-radius: 14px;
+  box-shadow: 0 0 0 2px var(--color-creme-escuro, #f3e6c8);
+}
+.popup-aviso-mensagem {
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.45;
+  white-space: pre-line;
+  text-align: center;
+}
+.popup-aviso-destino {
+  margin-top: -6px;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+  color: var(--color-texto-suave);
+}
+
+/* Peças do atendimento dentro de @layer components (os utilitários do Tailwind continuam sobrescrevendo, como
+   em ui.css). Só transform/opacity animam; tudo desliga com html.reduzir-movimento (regra global de ui.css). */
+@layer components {
+  /* ---------------------------------------------------------------- avisos fora da tela de atendimento */
+  /* badge de mensagens novas do suporte na engrenagem do HUD (Hud.tsx) */
+  .badge.hud-ajustes-badge {
+    top: -7px;
+    right: -6px;
+    z-index: 1;
+  }
+  /* contador na linha "Falar com o suporte" (TelaAjustes): badge no fluxo da linha, antes da seta */
+  .badge.suporte-badge-linha {
+    position: static;
+    flex: none;
+    min-width: 24px;
+    height: 24px;
+    font-size: 13px;
+  }
+
+  /* ---------------------------------------------------------------- atendimento (TelaSuporte) */
+  /* apresentação do Seu Juca (conversa vazia): o balão do tutorial + atalhos */
+  .suporte-apresentacao {
+    margin-top: 10px;
+  }
+  .suporte-sugestoes-titulo {
+    --contorno-cor: #3b200c;
+    margin: 14px 0 10px;
+    font-size: 17px;
+    line-height: 1.1;
+    text-align: center;
+  }
+  .suporte-sugestoes {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px 8px;
+  }
+
+  /* topo da conversa: quem atende */
+  .suporte-topo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: fit-content;
+    max-width: 100%;
+    margin: 0 auto 6px;
+    padding: 5px 16px 5px 5px;
+    border-radius: 999px;
+    background: rgb(255 252 243 / 0.84);
+    box-shadow:
+      0 0 0 2px rgb(107 74 38 / 0.3),
+      0 3px 0 rgb(43 26 15 / 0.12);
+  }
+  .suporte-topo-juca {
+    flex: none;
+    width: 44px;
+    height: 44px;
+    overflow: hidden;
+    border-radius: 50%;
+    background: radial-gradient(circle at 50% 30%, #fffbe0 0%, #ffe58a 45%, #f2b33c 100%);
+    box-shadow:
+      0 0 0 2px #6a4300,
+      inset 0 -3px 0 rgb(106 67 0 / 0.25);
+  }
+  /* só o rosto e o chapéu do Juca aparecem no medalhão */
+  .suporte-topo-juca > svg {
+    display: block;
+    width: 194%;
+    height: 194%;
+    margin: -24% 0 0 -46%;
+  }
+  .suporte-topo-titulo {
+    display: block;
+    font-family: var(--font-titulo);
+    font-size: 16px;
+    line-height: 1.1;
+    color: var(--color-texto);
+  }
+  .suporte-topo-texto {
+    display: block;
+    margin-top: 1px;
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.25;
+    color: var(--color-texto-suave);
+  }
+
+  /* lista (rola com a página) */
+  .suporte-lista {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  /* separador de dia: pílula azul contornada no meio */
+  .suporte-dia {
+    --contorno-cor: #0d3a80;
+    align-self: center;
+    display: inline-flex;
+    align-items: center;
+    height: 26px;
+    margin: 12px 0 2px;
+    padding: 0 12px;
+    border-radius: 999px;
+    border: 2px solid #0b2d66;
+    background: linear-gradient(180deg, #7cc4ff, #2f8ff0 60%, #1868d0);
+    box-shadow:
+      inset 0 2px 0 rgb(255 255 255 / 0.45),
+      0 2px 0 #0b2d66;
+    font-family: var(--font-titulo);
+    font-size: 14px;
+    line-height: 1;
+    color: #fff;
+    -webkit-text-stroke: 3px var(--contorno-cor);
+    paint-order: stroke fill;
+    text-shadow: 0 1.5px 0 var(--contorno-cor);
+    white-space: nowrap;
+  }
+
+  /* linha de mensagem: jogador à direita; equipe à esquerda com avatar */
+  .suporte-linha {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    max-width: 90%;
+  }
+  .suporte-linha[data-inicio] {
+    margin-top: 10px;
+  }
+  .suporte-linha[data-autor='jogador'] {
+    align-self: flex-end;
+    max-width: 84%;
+  }
+  .suporte-linha[data-autor='admin'] {
+    align-self: flex-start;
+  }
+  .suporte-coluna {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+  .suporte-linha[data-autor='jogador'] .suporte-coluna {
+    align-items: flex-end;
+  }
+  .suporte-linha[data-autor='admin'] .suporte-coluna {
+    align-items: flex-start;
+  }
+
+  /* avatar do atendente: medalhão verde com a inicial contornada */
+  .suporte-avatar {
+    --contorno-cor: #1d5410;
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    border: 2px solid #174d0b;
+    background: linear-gradient(180deg, #b8f27a 0%, #6fd13f 55%, #2f9a1c 100%);
+    box-shadow:
+      inset 0 2px 0 rgb(255 255 255 / 0.55),
+      inset 0 -3px 0 rgb(0 0 0 / 0.15),
+      0 2px 0 #174d0b;
+    font-family: var(--font-titulo);
+    font-size: 18px;
+    line-height: 1;
+    color: #fff;
+    -webkit-text-stroke: 3.5px var(--contorno-cor);
+    paint-order: stroke fill;
+    text-shadow: 0 2px 0 var(--contorno-cor);
+  }
+  .suporte-avatar-vao {
+    flex: none;
+    width: 34px;
+  }
+  /* nome do atendente (sobre o céu) + selo "Equipe" */
+  .suporte-autor {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 22px;
+    margin: 0 0 5px 2px;
+  }
+  .suporte-autor-nome {
+    --contorno-cor: #3b200c;
+    font-size: 15px;
+    line-height: 1;
+  }
+  .pilula.suporte-selo {
+    --p-claro: #8ff05a;
+    --p-base: #2f9a1c;
+    --p-contorno: #174d0b;
+    padding: 0 8px 0 5px;
+  }
+
+  /* bolha: pergaminho (equipe) ou azul-céu (jogador), contorno colorido de 2 px, filete branco e sombra chapada */
+  .suporte-bolha {
+    --bolha-clara: #fffdf7;
+    --bolha-base: #fff0cf;
+    --bolha-borda: #e6c88e;
+    --bolha-contorno: #6b4a26;
+    --bolha-sombra: rgb(43 26 15 / 0.2);
+    --bolha-texto: var(--color-texto);
+    --bolha-meta: #9a7448;
+    position: relative;
+    min-width: 84px;
+    max-width: 100%;
+    padding: 8px 12px 7px 13px;
+    border-radius: 18px;
+    border: 2px solid var(--bolha-borda);
+    background: linear-gradient(180deg, var(--bolha-clara) 0%, var(--bolha-base) 100%);
+    box-shadow:
+      0 0 0 2px var(--bolha-contorno),
+      inset 0 2px 0 rgb(255 255 255 / 0.85),
+      0 4px 0 1px var(--bolha-sombra);
+    color: var(--bolha-texto);
+  }
+  .suporte-linha[data-autor='jogador'] .suporte-bolha {
+    --bolha-clara: #f1f9ff;
+    --bolha-base: #cde8ff;
+    --bolha-borda: #8ccaff;
+    --bolha-contorno: #1559b8;
+    --bolha-sombra: rgb(11 45 102 / 0.24);
+    --bolha-texto: #0f2a52;
+    --bolha-meta: #3d6ba8;
+  }
+  /* o canto do lado de quem fala fecha na última bolha do grupo (a "cauda") */
+  .suporte-linha[data-autor='jogador'][data-fim] .suporte-bolha {
+    border-bottom-right-radius: 6px;
+  }
+  .suporte-linha[data-autor='admin'][data-fim] .suporte-bolha {
+    border-bottom-left-radius: 6px;
+  }
+  .suporte-texto {
+    font-size: 15px;
+    font-weight: 700;
+    line-height: 1.4;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+  /* reserva na última linha para a hora (no canto, como nos apps de conversa) */
+  .suporte-meta-reserva {
+    display: inline-block;
+    width: 44px;
+    height: 1px;
+  }
+  .suporte-linha[data-autor='jogador'] .suporte-meta-reserva {
+    width: 62px;
+  }
+  .suporte-meta {
+    position: absolute;
+    right: 10px;
+    bottom: 6px;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 12px;
+    font-weight: 800;
+    line-height: 1;
+    color: var(--bolha-meta);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  .suporte-meta svg {
+    width: 15px;
+    height: 15px;
+    stroke-width: 3;
+  }
+  .suporte-link {
+    color: #1559b8;
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 2px;
+  }
+  /* otimista: enviando fica mais clara; falhou ganha contorno vermelho */
+  .suporte-linha[data-estado='enviando'] .suporte-bolha {
+    opacity: 0.78;
+  }
+  .suporte-linha[data-estado='erro'] .suporte-bolha {
+    --bolha-borda: #ff9a8a;
+    --bolha-contorno: #c4241a;
+    --bolha-meta: #c4241a;
+  }
+  /* "Não enviada" no lugar da hora: reserva maior na última linha */
+  .suporte-linha[data-estado='erro'] .suporte-meta-reserva {
+    width: 104px;
+  }
+  .suporte-falhou {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    margin-top: 8px;
+    padding: 0 2px 0 6px;
+    border-radius: 999px;
+    background: rgb(255 252 243 / 0.92);
+    box-shadow: 0 0 0 2px rgb(196 36 26 / 0.35);
+    font-size: 13px;
+    font-weight: 800;
+    white-space: nowrap;
+  }
+  .suporte-falhou-acao,
+  .suporte-falhou-descartar {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    min-height: 40px;
+    padding: 0 8px;
+    border-radius: 999px;
+    font-weight: 900;
+    cursor: pointer;
+  }
+  .suporte-falhou-acao {
+    color: var(--color-compra-escura);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+  .suporte-falhou-descartar {
+    min-width: 40px;
+    justify-content: center;
+    color: var(--color-texto-suave);
+  }
+  .suporte-falhou svg {
+    width: 15px;
+    height: 15px;
+    stroke-width: 3;
+  }
+
+  /* mensagem do sistema (resposta automática, atendimento concluído): centralizada e discreta */
+  .suporte-sistema {
+    align-self: center;
+    display: flex;
+    align-items: flex-start;
+    gap: 7px;
+    max-width: min(94%, 24rem);
+    margin: 12px 0 2px;
+    padding: 7px 12px 7px 9px;
+    border-radius: 14px;
+    background: rgb(255 252 243 / 0.74);
+    box-shadow: inset 0 0 0 1.5px rgb(201 154 85 / 0.45);
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.35;
+    color: var(--color-texto-suave);
+  }
+  .suporte-sistema > svg {
+    flex: none;
+    width: 16px;
+    height: 16px;
+    margin-top: 1px;
+    stroke-width: 2.6;
+    color: #b07a3c;
+  }
+  .suporte-sistema[data-tipo='resolvida'] > svg {
+    color: var(--color-sucesso);
+  }
+  .suporte-sistema time {
+    margin-left: 6px;
+    font-size: 12px;
+    font-weight: 800;
+    color: #a68a62;
+    white-space: nowrap;
+  }
+
+  /* carregando: bolhas-fantasma alternadas */
+  .suporte-esqueleto {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 14px;
+  }
+  .suporte-esqueleto > span[aria-hidden] {
+    display: block;
+    height: 46px;
+    border-radius: 18px;
+    background: rgb(255 252 243 / 0.75);
+    animation: gi-suporte-pulsa 1.1s var(--ease-senoide) infinite alternate;
+  }
+  .suporte-esqueleto > span[aria-hidden]:nth-child(odd) {
+    align-self: flex-end;
+    width: 52%;
+    background: rgb(205 232 255 / 0.85);
+  }
+  .suporte-esqueleto > span[aria-hidden]:nth-child(even) {
+    align-self: flex-start;
+    width: 66%;
+  }
+
+  /* erro sem conversa */
+  .suporte-erro {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    margin-top: 16px;
+    padding: 16px 18px 22px;
+    text-align: center;
+  }
+  .suporte-erro-juca {
+    width: 96px;
+    height: 96px;
+  }
+  .suporte-erro-titulo {
+    font-family: var(--font-titulo);
+    font-size: 20px;
+    line-height: 1.15;
+    color: var(--color-texto);
+  }
+  .suporte-erro-texto {
+    font-size: 14px;
+    color: var(--color-texto-suave);
+  }
+
+  /* caixa de mensagem: faixa de pergaminho presa acima das abas (ou do teclado: --teclado) */
+  .suporte-caixa {
+    --teclado: 0px;
+    position: fixed;
+    inset-inline: 0;
+    bottom: max(calc(var(--altura-abas) + var(--seguro-base)), var(--teclado));
+    z-index: 39;
+    padding: 8px 12px 5px;
+    background: linear-gradient(180deg, #fffcf3 0%, #f7e4bb 100%);
+    border-top: 3px solid #e6c88e;
+    box-shadow:
+      0 -2px 0 #6b4a26,
+      0 -7px 0 rgb(43 26 15 / 0.1);
+  }
+  .suporte-caixa-miolo {
+    position: relative;
+    max-width: 28rem;
+    margin-inline: auto;
+  }
+  /* tela larga: em vez de uma faixa de ponta a ponta, um painel encaixado sobre as abas, na coluna da conversa */
+  @media (min-width: 560px) {
+    .suporte-caixa {
+      width: calc(28rem + 40px);
+      margin-inline: auto;
+      padding: 10px 20px 6px;
+      border: 3px solid #e6c88e;
+      border-bottom: 0;
+      border-radius: 20px 20px 0 0;
+      box-shadow:
+        0 0 0 2px #6b4a26,
+        0 -6px 0 2px rgb(43 26 15 / 0.1);
+    }
+  }
+  .suporte-form {
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+  }
+  .campo.suporte-campo {
+    flex: 1;
+    min-width: 0;
+    height: 48px;
+    max-height: 132px;
+    padding: 0.66rem 0.9rem;
+    line-height: 1.35;
+    resize: none;
+    overflow-y: auto;
+    scrollbar-width: thin;
+  }
+  .botao.suporte-enviar {
+    width: 48px;
+    height: 48px;
+    min-height: 48px;
+    margin-bottom: 3px;
+  }
+  .suporte-caixa-rodape {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 18px;
+    margin-top: 2px;
+    padding-inline: 6px 62px;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.2;
+    color: var(--color-texto-suave);
+  }
+  .suporte-dica {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    min-width: 0;
+  }
+  .suporte-dica[data-tipo='erro'] {
+    color: var(--color-perigo-escura);
+  }
+  .suporte-dica svg {
+    flex: none;
+    width: 14px;
+    height: 14px;
+    stroke-width: 2.8;
+  }
+  /* a dica do teclado só faz sentido com teclado físico */
+  .suporte-dica-teclado {
+    display: none;
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .suporte-dica-teclado {
+      display: inline-flex;
+    }
+  }
+  .suporte-contador {
+    margin-left: auto;
+    white-space: nowrap;
+  }
+  .suporte-contador[data-perto] {
+    color: #c25500;
+  }
+  .suporte-contador[data-limite] {
+    color: var(--color-perigo-escura);
+    font-weight: 900;
+  }
+
+  /* "Nova mensagem": pílula azul-noite (a do HUD) acima da caixa */
+  .suporte-novas {
+    --contorno-cor: #0a1430;
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: calc(100% + 16px);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    width: max-content;
+    height: 36px;
+    margin-inline: auto;
+    padding: 0 14px 0 10px;
+    border-radius: 999px;
+    border: 2px solid rgb(6 18 44 / 0.55);
+    background: linear-gradient(180deg, rgb(18 34 70 / 0.88) 0%, rgb(8 18 42 / 0.94) 100%);
+    box-shadow:
+      inset 0 2px 0 rgb(255 255 255 / 0.2),
+      0 3px 0 rgb(10 50 110 / 0.3);
+    font-family: var(--font-titulo);
+    font-size: 15px;
+    line-height: 1;
+    color: #fff;
+    -webkit-text-stroke: 3px var(--contorno-cor);
+    paint-order: stroke fill;
+    cursor: pointer;
+  }
+  .suporte-novas::after {
+    content: '';
+    position: absolute;
+    inset: -4px;
+  }
+  .suporte-novas svg {
+    width: 16px;
+    height: 16px;
+    stroke-width: 3;
+    paint-order: normal;
+    -webkit-text-stroke: 0;
+  }
+}
+
+@keyframes gi-suporte-pulsa {
+  from {
+    opacity: 0.5;
+  }
+  to {
+    opacity: 1;
+  }
+}

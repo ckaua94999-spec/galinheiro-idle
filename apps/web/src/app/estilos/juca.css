@@ -1,0 +1,395 @@
+/* Estilos: Seu Juca (mascote). Importado por globals.css. Dono: arte do Juca (cliente/arte/Juca.tsx).
+ *
+ * Animação ociosa só com transform (rotate/translate/scale individuais) e opacity, sem filter.
+ * Pivôs em coordenadas do DESENHO (espaço local de cada grupo; transform-box: view-box com o viewBox
+ * começando em 0 0): o grupo raiz encolhe a prancheta para caber em 0 0 120 120, mas os pivôs continuam
+ * nas coordenadas em que as formas foram desenhadas. Não dependem do tamanho na tela.
+ * Ritmos primos entre si (3,0 / 3,4 / 1,8 / 5,3 / 6,4 / 9,7 s) para as camadas nunca "baterem" juntas.
+ * Respiração e cabeça usam as propriedades individuais (scale/translate/rotate); o "momento" (estufar o
+ * peito a cada 9,7 s) usa `transform`, que se compõe por cima delas.
+ * Amplitudes medidas para a arte ficar DENTRO do viewBox mesmo com o chapéu "ajeitando" e o peito
+ * estufando (a crista em repouso fica a ~4,5 do topo; no pico do chapéu, a ~2). O overflow visível abaixo é só
+ * rede de segurança para arredondamentos.
+ * html.reduzir-movimento e .juca-parado: pose parada. .pausado (ancestral): pausa (regra global).
+ */
+
+.juca {
+  overflow: visible;
+}
+.juca :is(.juca-corpo, .juca-cabeca, .juca-cauda, .juca-asa, .juca-aceno, .juca-barbela, .juca-capim, .juca-chapeu,
+  .juca-sobrancelhas, .juca-bico-baixo, .juca-brilho) {
+  transform-box: view-box;
+}
+
+/* respiração com peso (pequeno squash), pivô nos pés + "momento" de orgulho: estufa o peito */
+.juca .juca-corpo {
+  transform-origin: 63px 113px;
+  animation:
+    juca-respira 3s var(--ease-senoide) infinite,
+    juca-momento-corpo 9.7s var(--ease-senoide) 2.4s infinite;
+}
+/* cabeça acompanha a respiração um pouco atrasada; no momento, ergue o queixo. Pivô no pescoço. */
+.juca .juca-cabeca {
+  transform-origin: 64px 68px;
+  animation:
+    juca-cabeca 3s var(--ease-senoide) -2.88s infinite,
+    juca-momento-cabeca 9.7s var(--ease-senoide) 2.4s infinite;
+}
+/* cauda em foice ondulando (pivô no sobre) */
+.juca .juca-cauda {
+  transform-origin: 41px 80px;
+  animation: juca-cauda 3.4s var(--ease-senoide) infinite alternate;
+}
+/* barbela segue a cabeça com ~120 ms de atraso */
+.juca .juca-barbela {
+  transform-origin: 81px 62px;
+  animation: juca-barbela 3s var(--ease-senoide) -2.76s infinite;
+}
+/* raminho de trigo na fita do chapéu: balança ±4° no pé do talo (coordenadas do chapéu) */
+.juca .juca-capim {
+  transform-origin: 60.4px 26px;
+  rotate: -4deg;
+  animation: juca-capim 1.8s var(--ease-senoide) infinite alternate;
+}
+/* chapéu: de vez em quando ele "ajeita" o chapéu (levanta, inclina e assenta com elástico) */
+.juca .juca-chapeu {
+  transform-origin: 63px 31px;
+  animation: juca-chapeu 6.4s var(--ease-senoide) 1.2s infinite;
+}
+/* piscar (piscada dupla de vez em quando) */
+.juca .juca-palpebra {
+  transform-box: fill-box;
+  transform-origin: 50% 0;
+  scale: 1 0;
+  animation: juca-pisca 5.3s linear 0.6s infinite;
+}
+.juca .juca-asa {
+  transform-origin: 62px 73px;
+}
+
+/* ------------------------------------------------------------------- falando: bico, gesto e corpo */
+/* o bico de baixo gira na dobradiça (78.6, 59): até 42° = ~7 px de boca aberta a 80 px */
+.juca-falando .juca-bico-baixo {
+  transform-origin: 78.6px 59px;
+  animation: juca-fala 0.96s linear infinite;
+}
+.juca-falando .juca-sobrancelhas {
+  transform-origin: 65px 38px;
+  animation: juca-sobrancelha 1.92s var(--ease-senoide) infinite;
+}
+.juca-falando .juca-asa {
+  animation: juca-gesto 1.92s var(--ease-senoide) infinite;
+}
+.juca-falando .juca-capim {
+  animation-duration: 0.96s;
+}
+/* cabeça acompanha as sílabas */
+.juca-falando .juca-cabeca {
+  animation:
+    juca-cabeca-fala 0.96s var(--ease-senoide) infinite,
+    juca-momento-cabeca 9.7s var(--ease-senoide) 2.4s infinite;
+}
+
+/* ------------------------------------------------------------------------------- acenando (entrada) */
+/* a asa de LÁ (atrás do corpo e da cabeça, já erguida a 32°) abana no ombro (86, 76): 3 abanos e uma pausa
+   no alto. A asa do flanco continua dobrada no lugar. */
+.juca-acenando .juca-aceno {
+  transform-origin: 86px 76px;
+  animation: juca-aceno 2.6s var(--ease-senoide) infinite;
+}
+
+/* -------------------------------------------------------------------- surpreso e piscando (fx) */
+.juca-surpreso .juca-corpo {
+  animation-duration: 1.6s, 9.7s;
+}
+/* na surpresa o chapéu já pulou da cabeça: não "ajeita" (e a crista não sai da caixa) */
+.juca-surpreso .juca-chapeu {
+  animation: none;
+}
+.juca .juca-brilho {
+  transform-box: fill-box;
+  transform-origin: 50% 50%;
+  animation: juca-brilho 1.6s var(--ease-senoide) infinite;
+}
+.juca .juca-brilho-2 {
+  animation-delay: -0.8s;
+}
+.juca .juca-brilho-3 {
+  animation-delay: -0.4s;
+  animation-duration: 1.1s;
+}
+
+/* -------------------------------------------------------------------- parado / reduzir movimento */
+.juca-parado *,
+html.reduzir-movimento .juca * {
+  animation: none !important;
+}
+/* sem animação, 'falando' fica de bico entreaberto (ainda lê como fala) */
+.juca-parado.juca-falando .juca-bico-baixo,
+html.reduzir-movimento .juca-falando .juca-bico-baixo {
+  transform-origin: 78.6px 59px;
+  rotate: 20deg;
+}
+
+/* silhueta (teste de leitura a 32 px na galeria) */
+.juca-silhueta * {
+  fill: #1e1426 !important;
+  stroke: #1e1426 !important;
+  opacity: 1 !important;
+}
+.juca-silhueta .juca-sombra {
+  opacity: 0 !important;
+}
+
+/* ------------------------------------------------------------------------------------- keyframes */
+@keyframes juca-respira {
+  0%,
+  100% {
+    scale: 1 1;
+  }
+  50% {
+    scale: 1.03 0.975;
+  }
+}
+@keyframes juca-cabeca {
+  0%,
+  100% {
+    translate: 0 0;
+    rotate: 0deg;
+  }
+  50% {
+    translate: 0 1.4px;
+    rotate: 2deg;
+  }
+}
+/* momento (9,7 s): estufa o peito (~300 ms), segura, assenta com um pequeno overshoot */
+@keyframes juca-momento-corpo {
+  0%,
+  78%,
+  100% {
+    transform: none;
+  }
+  81% {
+    transform: scale(1.06, 0.97);
+  }
+  86% {
+    transform: scale(1.055, 0.975);
+  }
+  89.5% {
+    transform: scale(0.985, 1.015);
+  }
+  93% {
+    transform: scale(1.008, 0.996);
+  }
+  96% {
+    transform: none;
+  }
+}
+@keyframes juca-momento-cabeca {
+  0%,
+  78%,
+  100% {
+    transform: none;
+  }
+  81% {
+    transform: translate(0, -1.6px) rotate(-3deg);
+  }
+  86% {
+    transform: translate(0, -1.6px) rotate(-3.4deg);
+  }
+  89.5% {
+    transform: translate(0, 0.8px) rotate(1deg);
+  }
+  93% {
+    transform: rotate(-0.4deg);
+  }
+  96% {
+    transform: none;
+  }
+}
+@keyframes juca-cauda {
+  from {
+    rotate: 1.5deg;
+  }
+  to {
+    rotate: -3deg;
+  }
+}
+@keyframes juca-barbela {
+  0%,
+  100% {
+    rotate: -3deg;
+  }
+  50% {
+    rotate: 4deg;
+  }
+}
+@keyframes juca-capim {
+  from {
+    rotate: -4deg;
+  }
+  to {
+    rotate: 4deg;
+  }
+}
+@keyframes juca-chapeu {
+  0%,
+  74%,
+  100% {
+    translate: 0 0;
+    rotate: 0deg;
+  }
+  80% {
+    translate: 0 -2.4px;
+    rotate: -5deg;
+  }
+  86% {
+    translate: 0 0.6px;
+    rotate: 2.5deg;
+  }
+  90% {
+    translate: 0 0;
+    rotate: -1deg;
+  }
+  94% {
+    rotate: 0.4deg;
+  }
+}
+@keyframes juca-pisca {
+  0%,
+  92% {
+    scale: 1 0;
+  }
+  93.5% {
+    scale: 1 1;
+  }
+  95% {
+    scale: 1 0;
+  }
+  96.5% {
+    scale: 1 1;
+  }
+  98% {
+    scale: 1 0;
+  }
+}
+/* ritmo de fala irregular: abre muito, pouco, médio, fecha */
+@keyframes juca-fala {
+  0%,
+  100% {
+    rotate: 0deg;
+  }
+  10% {
+    rotate: 42deg;
+  }
+  22% {
+    rotate: 14deg;
+  }
+  34% {
+    rotate: 34deg;
+  }
+  46% {
+    rotate: 4deg;
+  }
+  60% {
+    rotate: 40deg;
+  }
+  76% {
+    rotate: 10deg;
+  }
+  88% {
+    rotate: 30deg;
+  }
+}
+@keyframes juca-cabeca-fala {
+  0%,
+  50%,
+  100% {
+    rotate: 0deg;
+    translate: 0 0;
+  }
+  14% {
+    rotate: -2deg;
+    translate: 0 -0.6px;
+  }
+  36% {
+    rotate: -1deg;
+  }
+  64% {
+    rotate: -1.5deg;
+    translate: 0 -0.4px;
+  }
+  86% {
+    rotate: -1.8deg;
+  }
+}
+@keyframes juca-sobrancelha {
+  0%,
+  40%,
+  100% {
+    translate: 0 0;
+  }
+  10% {
+    translate: 0 -1.8px;
+  }
+  60% {
+    translate: 0 -1px;
+  }
+}
+@keyframes juca-gesto {
+  0%,
+  100% {
+    rotate: 0deg;
+  }
+  30% {
+    rotate: -10deg;
+  }
+  55% {
+    rotate: -4deg;
+  }
+  75% {
+    rotate: -9deg;
+  }
+}
+/* aceno: 3 abanos rápidos (−16° para dentro, contra o céu, e só +6° para fora, para a mão não sair da
+   caixa) e uma pausa com a asa no alto */
+@keyframes juca-aceno {
+  0%,
+  100% {
+    rotate: 0deg;
+  }
+  10% {
+    rotate: -16deg;
+  }
+  22% {
+    rotate: 6deg;
+  }
+  34% {
+    rotate: -16deg;
+  }
+  46% {
+    rotate: 6deg;
+  }
+  58% {
+    rotate: -11deg;
+  }
+  70% {
+    rotate: 4deg;
+  }
+  80% {
+    rotate: -2deg;
+  }
+}
+@keyframes juca-brilho {
+  0%,
+  100% {
+    scale: 0.7;
+    rotate: 0deg;
+    opacity: 0.6;
+  }
+  50% {
+    scale: 1.15;
+    rotate: 45deg;
+    opacity: 1;
+  }
+}

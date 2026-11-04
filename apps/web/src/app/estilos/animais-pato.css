@@ -1,0 +1,116 @@
+/* Estilos: pato (raro). Importado por globals.css. Só variáveis + keyframes próprios (kit em animais.css).
+ * Ritmo (DIRECAO_DE_ARTE 9): respiração 3,0 s, piscar 5,3 s, ação 5,9 s.
+ * Neutro: inclina a cabeça, curioso, para um lado e para o outro; no fim do ciclo "se sacode" — a cauda
+ *   rebola e a cabeça treme junto (contrapeso).
+ * Feliz: "quack-quack" (a mandíbula .pato-mandibula desce e sobe duas vezes, só translate — scale
+ *   engrossaria o contorno do bico; a boca fixa atrás dela se revela) e a cabeça dá o tranco; depois bate
+ *   a asa de leve, desajeitado. Sem pálpebra no feliz, então continuam ≤ 4 grupos animados.
+ * Piscada: a do kit (<Piscada/>) com keyframe próprio (pato-piscar) que também ESCONDE a pálpebra fora da
+ *   piscada (opacity 0): em repouso (scale 1 0) o traço tracejado dela virava um fio fino na testa. O delineado
+ *   do kit (.ani-cilios) usa o corte do ganso (pato-cilios-piscar): some assim que a pálpebra começa a descer
+ *   e só volta quando ela já descobriu o topo do olho (sem cinza translúcido por cima da pálpebra). */
+
+.especie-pato {
+  --br-base: 3s;
+  --pisca-base: 5.3s;
+  --acao-base: 5.9s;
+  --anim-cabeca: pato-curioso;
+  --anim-cauda: pato-rebolar;
+  --anim-bico: none;
+  --pivo-cauda: 8% 92%;
+  --pivo-asa-e: 6% 12%;
+  --anim-cilios: pato-cilios-piscar;
+}
+.especie-pato.humor-feliz {
+  --anim-cabeca: pato-quack-cabeca;
+  --anim-cauda: none;
+  --anim-asa-e: pato-bater-asa;
+  --anim-bico: pato-quack;
+}
+
+/* Piscada do kit, mas invisível fora dela (sem o "fio" do traço achatado na testa, com o olho aberto). */
+.gi-animal.especie-pato .ani-palpebras {
+  animation-name: pato-piscar;
+}
+html.reduzir-movimento .gi-animal.especie-pato .ani-palpebras {
+  opacity: 0;
+}
+
+/* Mandíbula (língua + bico de baixo): desce e volta, por translate. */
+.gi-animal .pato-mandibula {
+  animation: var(--anim-bico, none) var(--acao) linear infinite;
+  animation-delay: calc(var(--atraso) * 2.3);
+}
+
+/* Mesmo tempo do ani-piscar do kit (desce 94 → 95,5%, sobe até 97%); fora disso, opacity 0. */
+@keyframes pato-piscar {
+  0%, 93.9% { scale: 1 0; opacity: 0; }
+  94% { scale: 1 0; opacity: 1; }
+  95.5% { scale: 1 1; opacity: 1; }
+  97% { scale: 1 0; opacity: 1; }
+  97.1%, 100% { scale: 1 0; opacity: 0; }
+}
+@keyframes pato-cilios-piscar {
+  0%, 93.8% { opacity: 1; }
+  94%, 96.8% { opacity: 0; }
+  97%, 100% { opacity: 1; }
+}
+
+/* Neutro: cabeça curiosa (inclina para a direita, segura, espia para a esquerda) e sacudida no fim. */
+@keyframes pato-curioso {
+  0%, 30% { rotate: 0deg; translate: 0 0; animation-timing-function: var(--ease-senoide, ease-in-out); }
+  /* inclina, curioso… */
+  37% { rotate: 11deg; translate: 1.2px -0.6px; animation-timing-function: ease-out; }
+  39%, 50% { rotate: 9deg; translate: 1px -0.4px; animation-timing-function: var(--ease-senoide, ease-in-out); }
+  /* …e espia para o outro lado */
+  57%, 64% { rotate: -6deg; translate: -0.8px 0; animation-timing-function: var(--ease-senoide, ease-in-out); }
+  71% { rotate: 0deg; translate: 0 0; }
+  /* sacudida (acompanha o rebolado da cauda) */
+  79% { rotate: 0deg; translate: 0 0; animation-timing-function: ease-out; }
+  81% { rotate: -4deg; translate: 0 -0.6px; }
+  83% { rotate: 4deg; translate: 0 -0.6px; }
+  85% { rotate: -3deg; translate: 0 -0.3px; }
+  87% { rotate: 2deg; translate: 0 0; }
+  90%, 100% { rotate: 0deg; translate: 0 0; }
+}
+/* Rebolado da cauda: 0 até 78% → 15° → −10° → 8° → −4° → 0 (95%). */
+@keyframes pato-rebolar {
+  0%, 78% { rotate: 0deg; }
+  81% { rotate: 15deg; animation-timing-function: ease-out; }
+  84% { rotate: -10deg; }
+  87% { rotate: 8deg; }
+  90% { rotate: -4deg; }
+  95%, 100% { rotate: 0deg; }
+}
+
+/* Feliz: quack duplo (mandíbula estica e fecha) com a cabeça empinando no mesmo tempo. */
+@keyframes pato-quack {
+  0%, 44% { translate: 0 0; }
+  47% { translate: 0 2.6px; animation-timing-function: ease-out; }
+  50.5% { translate: 0 -0.4px; animation-timing-function: ease-in; }
+  54% { translate: 0 2.2px; animation-timing-function: ease-out; }
+  57.5% { translate: 0 -0.3px; }
+  62%, 100% { translate: 0 0; }
+}
+@keyframes pato-quack-cabeca {
+  0%, 12% { rotate: 0deg; translate: 0 0; animation-timing-function: var(--ease-senoide, ease-in-out); }
+  /* inclina curioso antes de falar */
+  22%, 34% { rotate: 7deg; translate: 0.8px 0; animation-timing-function: var(--ease-senoide, ease-in-out); }
+  42% { rotate: 0deg; translate: 0 0; animation-timing-function: ease-out; }
+  /* quack… */
+  47% { rotate: -5deg; translate: 0 -1.6px; animation-timing-function: ease-in; }
+  50.5% { rotate: 1deg; translate: 0 0.4px; animation-timing-function: ease-out; }
+  /* …quack */
+  54% { rotate: -4deg; translate: 0 -1.4px; animation-timing-function: ease-in; }
+  57.5% { rotate: 1deg; translate: 0 0.3px; }
+  64%, 100% { rotate: 0deg; translate: 0 0; }
+}
+/* Bate a asa de leve, duas vezes, meio sem jeito (a 2ª batida é menor). */
+@keyframes pato-bater-asa {
+  0%, 70% { rotate: 0deg; }
+  73% { rotate: -22deg; animation-timing-function: ease-out; }
+  76% { rotate: -3deg; }
+  79% { rotate: -16deg; }
+  82.5% { rotate: 2deg; }
+  86%, 100% { rotate: 0deg; }
+}

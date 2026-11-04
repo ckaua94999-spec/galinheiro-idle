@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120">
+  <!-- Favicon (16–32 px): a cabeça da galinha espiando do ninho. Poucas formas, contorno grosso e
+       colorido, olhos grandes com brilho. Autocontido (gradientes locais). -->
+  <defs>
+    <linearGradient id="fc-ceu" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2f9bff"/><stop offset=".7" stop-color="#7fd0ff"/><stop offset="1" stop-color="#c4ecff"/>
+    </linearGradient>
+    <radialGradient id="fc-penas" cx=".38" cy=".32" r=".75" fx=".32" fy=".25">
+      <stop offset="0" stop-color="#ffffff"/><stop offset=".4" stop-color="#fff4e2"/><stop offset=".8" stop-color="#fbe2c2"/><stop offset="1" stop-color="#edbe96"/>
+    </radialGradient>
+    <radialGradient id="fc-crista" cx=".38" cy=".32" r=".8" fx=".3" fy=".22">
+      <stop offset="0" stop-color="#ff8466"/><stop offset=".45" stop-color="#ee4334"/><stop offset="1" stop-color="#b8233a"/>
+    </radialGradient>
+    <linearGradient id="fc-bico" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffe07a"/><stop offset=".45" stop-color="#ffb52e"/><stop offset="1" stop-color="#e2740f"/>
+    </linearGradient>
+    <linearGradient id="fc-ninho" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffe58a"/><stop offset=".4" stop-color="#e9b949"/><stop offset="1" stop-color="#b57a2c"/>
+    </linearGradient>
+    <clipPath id="fc-forma"><rect width="120" height="120" rx="26"/></clipPath>
+  </defs>
+  <g clip-path="url(#fc-forma)">
+  <rect width="120" height="120" fill="url(#fc-ceu)"/>
+  <!-- crista de 3 lóbulos -->
+  <path d="M42 34C36 28 38 17 46 16C47 8 56 4 62 9C67 4 77 7 77 15C84 17 85 28 78 34Z" fill="url(#fc-crista)" stroke="#6e1622" stroke-width="9" paint-order="stroke" stroke-linejoin="round"/>
+  <!-- cabeça -->
+  <circle cx="60" cy="62" r="36" fill="url(#fc-penas)" stroke="#8a4a22" stroke-width="10" paint-order="stroke"/>
+  <!-- bochechas -->
+  <ellipse cx="38" cy="74" rx="7" ry="4.6" fill="#ff7b8a" opacity=".75"/>
+  <ellipse cx="82" cy="74" rx="7" ry="4.6" fill="#ff7b8a" opacity=".75"/>
+  <!-- olhos -->
+  <ellipse cx="45" cy="60" rx="7.6" ry="9.6" fill="#2a160a"/>
+  <ellipse cx="75" cy="60" rx="7.6" ry="9.6" fill="#2a160a"/>
+  <circle cx="42.4" cy="56.4" r="3.4" fill="#fff"/>
+  <circle cx="72.4" cy="56.4" r="3.4" fill="#fff"/>
+  <!-- barbela e bico -->
+  <path d="M55 80C50 84 51 93 56 93C60 93 61 86 59.5 81ZM61 81C60 86 61 93 65 93C69 92 69 85 64 80Z" fill="url(#fc-crista)" stroke="#6e1622" stroke-width="4" paint-order="stroke" stroke-linejoin="round"/>
+  <path d="M48 70C53 64.5 67 64.5 72 70C69 77 64 81.5 60 82C56 81.5 51 77 48 70Z" fill="url(#fc-bico)" stroke="#7a3a0c" stroke-width="5" paint-order="stroke" stroke-linejoin="round"/>
+  <path d="M52 70Q56 67 62 67.4" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" opacity=".7"/>
+  <!-- borda do ninho, cobrindo o queixo -->
+  <path d="M-6 97Q10 87 24 95Q35 88 47 95Q60 89 73 95Q85 88 96 95Q110 87 126 97V126H-6Z" fill="url(#fc-ninho)" stroke="#6b4416" stroke-width="7" paint-order="stroke" stroke-linejoin="round"/>
+  <path d="M14 107l9 4M34 104l9 3M56 106l9 2M78 104l9 3M98 107l8 4" stroke="#b57a2c" stroke-width="3" stroke-linecap="round"/>
+  </g>
+  <rect x="1.5" y="1.5" width="117" height="117" rx="24.5" fill="none" stroke="#0b2d66" stroke-opacity=".35" stroke-width="3"/>
+</svg>

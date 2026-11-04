@@ -1,0 +1,396 @@
+/* Estilos de arte dos animais. Dono: arte dos animais. Importado por globals.css.
+ *
+ * ================================================================ SISTEMA DE ANIMAÇÃO OCIOSA (kit)
+ * O <svg class="gi-animal especie-<tipo> humor-<humor> lod-<p|m|g> [pronto]"> recebe --atraso (= -atrasoS,
+ * em s) do FiguraAnimal. As camadas do desenho usam classes ESTÁVEIS, iguais em todas as espécies:
+ *
+ *   .ani-rig        balanço "pronto" (rotate), só com .pronto
+ *   .ani-corpo      respiração com squash & stretch (scale), pivô embaixo; contém asas, cauda e cabeça
+ *   .ani-cabeca     ação ociosa da espécie (rotate + translate), pivô embaixo
+ *   .ani-palpebras  piscar (scale 1 0 → 1 1 a partir do topo); estado de repouso = escondida
+ *   .ani-cilios     delineado + cílios longos abertos de <Olhos/>: somem (opacity) enquanto a pálpebra cobre o
+ *                   olho (--anim-cilios, padrão ani-cilios-piscar). Por isso a pálpebra de piscar é do tamanho
+ *                   do olho (sem folga grande nem "asa" sobre o contorno da cabeça)
+ *   .ani-mandibula  bico de baixo/boca falando: SÓ translate (--anim-mandibula, ex. ani-tagarelar; amplitude
+ *                   --mandibula-abre, padrão 1,4px). Nunca scale: o contorno engrossaria/afinaria
+ *   .ani-cauda      ação (rotate), pivô na base (--pivo-cauda)
+ *   .ani-asa-e/-d   ação (rotate), pivô no ombro (--pivo-asa-e / --pivo-asa-d)
+ *   .ani-crista     ação (rotate), pivô embaixo (crista, topete)
+ *   .ani-pescoco    ação (rotate), pivô na base (ganso, avestruz)
+ *   .ani-z / .ani-exclama / .ani-tracos / .ani-ovo-pronto   fx (Zzz, "!", traços de susto, ovo)
+ *
+ * Cada espécie (estilos/animais-<especie>.css) só define VARIÁVEIS e @keyframes próprios:
+ *   --br-base (respiração), --pisca-base (piscar), --acao-base (ciclo da ação) e os nomes das ações
+ *   --anim-cabeca, --anim-cauda, --anim-asa-e, --anim-asa-d, --anim-crista, --anim-pescoco, --anim-mandibula
+ *   (padrão: none),
+ *   inclusive por humor: .especie-x.humor-feliz { --anim-asa-e: x-bate-asa; }.
+ *   Todas as ações de um animal usam o MESMO ciclo (--acao) e o mesmo atraso, então dá para coreografar
+ *   cabeça + cauda juntas por porcentagem do ciclo (ex.: a cauda sobe quando a cabeça bica).
+ * Os humores (abaixo) mudam o ritmo: feliz mais vivo; cansado/triste lentos; surpresa = susto rápido;
+ *   aposentado dormindo (respiração lenta e funda, sem piscar).
+ * Orçamento: ≤ 4 grupos animados ao mesmo tempo (corpo, cabeça, pálpebras + 1 ação). Só transform/opacity,
+ *   sem filter. Atraso: corpo ×1, olhos ×1,7, ação ×2,3 (as camadas nunca sincronizam entre ninhos).
+ * Piscada: espécie que troca o keyframe de .ani-palpebras (ex.: piscar duplo) troca o de .ani-cilios junto,
+ *   pela variável --anim-cilios (o delineado do kit está nesse grupo: sem isso ele some fora de hora).
+ *   Para revisar o quadro de olho FECHADO, a classe dev .gi-piscada-fechada (num ancestral) congela a piscada.
+ * Pausa: qualquer ancestral .pausado pausa tudo; html.reduzir-movimento desliga tudo (pose parada).
+ * LOD: .ani-linha e .ani-bochechas/.ani-brilho2/.ani-lagrima somem no lod-p; .ani-so-g só aparece no lod-g;
+ *   no lod-p a silhueta (.ani-sil) engrossa para 9, as peças pequenas (.ani-sil-fino, sil() com visível < 3)
+ *   só para 4, e a pupila cresce.
+ * Fx: o "!" (ani-pop, sobra máx. 1,12) e os Zzz (deriva --zzz-dx/-10px, escala final .9) ficam DENTRO da
+ *   caixa 120×120 — ponha o "!" com y ≥ 12 e os Zzz com y ≥ 26.
+ */
+
+.gi-animal {
+  --atraso: 0s;
+  --br-base: 2.8s;
+  --pisca-base: 5s;
+  --acao-base: 7s;
+  --br: var(--br-base);
+  --br-escala: 1.03;
+  --pisca: var(--pisca-base);
+  --acao: var(--acao-base);
+  --anim-cabeca: ani-olhar;
+}
+
+/* ------------------------------------------------------------------------------- ritmo por humor */
+.gi-animal.humor-feliz {
+  --br: calc(var(--br-base) * 0.85);
+  --acao: calc(var(--acao-base) * 0.75);
+}
+.gi-animal.humor-cansado {
+  --anim-mandibula: none;
+  --br: calc(var(--br-base) * 1.4);
+  --pisca: calc(var(--pisca-base) * 1.6);
+  --acao: 6.4s;
+  --anim-cabeca: ani-cochilar;
+  --anim-cauda: none;
+  --anim-asa-e: none;
+  --anim-asa-d: none;
+  --anim-crista: none;
+  --anim-pescoco: none;
+}
+.gi-animal.humor-triste {
+  --anim-mandibula: none;
+  --br: calc(var(--br-base) * 1.3);
+  --br-escala: 1.045;
+  --acao: 6s;
+  --anim-cabeca: ani-suspirar;
+  --anim-cauda: none;
+  --anim-asa-e: none;
+  --anim-asa-d: none;
+  --anim-crista: none;
+  --anim-pescoco: none;
+}
+.gi-animal.humor-aposentado {
+  --anim-mandibula: none;
+  --br: 4.5s;
+  --br-escala: 1.05;
+  --acao: 4.5s;
+  --anim-cabeca: ani-dormir;
+  --anim-cauda: none;
+  --anim-asa-e: none;
+  --anim-asa-d: none;
+  --anim-crista: none;
+  --anim-pescoco: none;
+}
+
+/* ------------------------------------------------------------------------------------ as camadas */
+.gi-animal :is(.ani-rig, .ani-corpo, .ani-cabeca, .ani-palpebras, .ani-cauda, .ani-asa-e, .ani-asa-d, .ani-crista, .ani-pescoco, .ani-mandibula, .ani-z, .ani-exclama, .ani-tracos, .ani-ovo-pronto, .ani-pupila) {
+  transform-box: fill-box;
+}
+
+.gi-animal .ani-corpo {
+  transform-origin: 50% 100%;
+  animation: ani-respirar var(--br) var(--ease-senoide, ease-in-out) infinite;
+  animation-delay: var(--atraso);
+}
+
+.gi-animal .ani-cabeca {
+  transform-origin: 50% 100%;
+  animation: var(--anim-cabeca, none) var(--acao) linear infinite;
+  animation-delay: calc(var(--atraso) * 2.3);
+}
+.gi-animal .ani-cauda {
+  transform-origin: var(--pivo-cauda, 0% 100%);
+  animation: var(--anim-cauda, none) var(--acao) linear infinite;
+  animation-delay: calc(var(--atraso) * 2.3);
+}
+.gi-animal .ani-asa-e {
+  transform-origin: var(--pivo-asa-e, 90% 5%);
+  animation: var(--anim-asa-e, none) var(--acao) linear infinite;
+  animation-delay: calc(var(--atraso) * 2.3);
+}
+.gi-animal .ani-asa-d {
+  transform-origin: var(--pivo-asa-d, 10% 5%);
+  animation: var(--anim-asa-d, none) var(--acao) linear infinite;
+  animation-delay: calc(var(--atraso) * 2.3);
+}
+.gi-animal .ani-crista {
+  transform-origin: 50% 100%;
+  animation: var(--anim-crista, none) var(--acao) linear infinite;
+  animation-delay: calc(var(--atraso) * 2.3);
+}
+.gi-animal .ani-pescoco {
+  transform-origin: 50% 100%;
+  animation: var(--anim-pescoco, none) var(--acao) linear infinite;
+  animation-delay: calc(var(--atraso) * 2.3);
+}
+
+/* Mandíbula (bico de baixo / boca): só TRANSLATE (nunca scale — o contorno engrossaria/afinaria). Usa o
+ * ciclo da ação; liga com --anim-mandibula: ani-tagarelar (ou keyframe da espécie com translate). */
+.gi-animal .ani-mandibula {
+  animation: var(--anim-mandibula, none) var(--acao) linear infinite;
+  animation-delay: calc(var(--atraso) * 2.3);
+}
+
+/* Piscada: pálpebra cheia escondida (scaleY 0) que desce do topo do olho. */
+.gi-animal .ani-palpebras {
+  transform-origin: 50% 0%;
+  scale: 1 0;
+  animation: ani-piscar var(--pisca) linear infinite;
+  animation-delay: calc(var(--atraso) * 1.7);
+}
+.humor-aposentado .ani-palpebras,
+.humor-surpresa .ani-palpebras {
+  display: none;
+}
+/* Delineado + cílios longos abertos (<Olhos/>): somem enquanto a pálpebra cobre o olho (mesmo ciclo e
+ * atraso). Espécie que troca o keyframe da piscada troca este também, com --anim-cilios (ex.: piscar duplo). */
+.gi-animal .ani-cilios {
+  animation: var(--anim-cilios, ani-cilios-piscar) var(--pisca) linear infinite;
+  animation-delay: calc(var(--atraso) * 1.7);
+}
+.gi-animal:is(.humor-feliz, .humor-surpresa, .humor-aposentado) .ani-cilios {
+  animation: none;
+}
+
+/* Desenhos portados (pato/ganso/avestruz antigos): pisca o grupo de olhos inteiro. */
+.gi-animal .ani-piscar-legado {
+  transform-box: fill-box;
+  transform-origin: 50% 50%;
+  animation: ani-piscar-legado var(--pisca) linear infinite;
+  animation-delay: calc(var(--atraso) * 1.7);
+}
+.humor-aposentado .ani-piscar-legado {
+  animation: none;
+}
+
+/* ---------------------------------------------------------------- surpresa: susto rápido (one-shot) */
+.humor-surpresa .ani-corpo {
+  animation: ani-susto 0.45s var(--ease-suave, ease-out) 1 both, ani-respirar 0.9s var(--ease-senoide, ease-in-out) 0.45s infinite;
+}
+.humor-surpresa .ani-cabeca {
+  animation: ani-susto-cabeca 0.5s var(--ease-elastico, ease-out) 1 both;
+}
+.humor-surpresa .ani-mandibula {
+  animation: none;
+}
+.humor-surpresa .ani-cauda,
+.humor-surpresa .ani-asa-e,
+.humor-surpresa .ani-asa-d,
+.humor-surpresa .ani-crista {
+  animation: ani-susto-tremer 0.18s linear 3 both;
+}
+
+/* -------------------------------------------------------------------------------------------- fx */
+.gi-animal .ani-exclama {
+  transform-origin: 50% 100%;
+  animation: ani-pop 0.42s var(--ease-elastico, ease-out) 1 both;
+}
+/* Traços de susto: saltam para fora a partir da cabeça (lado direito do traçado). */
+.gi-animal .ani-tracos {
+  transform-origin: 100% 50%;
+  animation: ani-tracos 0.36s var(--ease-suave, ease-out) 1 both;
+}
+.gi-animal .ani-z {
+  transform-origin: 50% 50%;
+  opacity: 0;
+  animation: ani-zzz 2.4s var(--ease-suave, ease-out) infinite;
+}
+.gi-animal .ani-fx-zzz > g:nth-child(2) .ani-z {
+  animation-delay: 0.8s;
+}
+.gi-animal .ani-fx-zzz > g:nth-child(3) .ani-z {
+  animation-delay: 1.6s;
+}
+
+/* Pronto: o rig "chama" (balança) e descansa; o ovo na borda balança junto. */
+.gi-animal.pronto .ani-rig {
+  transform-origin: 50% 100%;
+  animation: ani-pronto 2.4s var(--ease-senoide, ease-in-out) infinite;
+  animation-delay: calc(var(--atraso) * 0.5);
+}
+.gi-animal .ani-ovo-pronto {
+  transform-origin: 50% 100%;
+  animation: ani-ovo-pronto 2.4s var(--ease-senoide, ease-in-out) infinite;
+  animation-delay: calc(var(--atraso) * 0.5);
+}
+
+/* ------------------------------------------------------------------------------------------- LOD */
+.lod-p .ani-linha,
+.lod-p .ani-bochechas,
+.lod-p .ani-brilho2,
+.lod-p .ani-lagrima,
+.lod-p .ani-borda-luz {
+  display: none;
+}
+.lod-p .ani-sil {
+  stroke-width: 9;
+}
+/* Peças pequenas (bico, barbela, pés): engrossa pouco, senão o contorno vira mancha sobre o rosto. */
+.lod-p .ani-sil-fino {
+  stroke-width: 4;
+}
+.lod-p .ani-pupila {
+  stroke-width: 1.1;
+}
+.gi-animal .ani-so-g {
+  display: none;
+}
+.lod-g .ani-so-g {
+  display: inline;
+}
+.lod-g .ani-borda-luz {
+  opacity: 0.6;
+}
+
+/* ------------------------------------------------------------------------- pausa e menos movimento */
+.pausado * {
+  animation-play-state: paused;
+}
+.pausado .gi-animal *,
+.gi-animal.pausado * {
+  animation-play-state: paused !important;
+}
+html.reduzir-movimento .gi-animal,
+html.reduzir-movimento .gi-animal * {
+  animation: none !important;
+}
+html.reduzir-movimento .gi-animal .ani-z {
+  opacity: 0.9;
+}
+
+/* ------------------------------------------------------------------------------------- keyframes */
+@keyframes ani-respirar {
+  0%, 100% { scale: 1 1; }
+  50% { scale: 0.99 var(--br-escala, 1.03); }
+}
+@keyframes ani-piscar {
+  0%, 94% { scale: 1 0; }
+  95.5% { scale: 1 1; }
+  97%, 100% { scale: 1 0; }
+}
+/* Some enquanto a pálpebra desce (94–95%: ela já cobre ~2/3 do olho) e volta enquanto ela sobe. */
+@keyframes ani-cilios-piscar {
+  0%, 94% { opacity: 1; }
+  95%, 96.3% { opacity: 0; }
+  97%, 100% { opacity: 1; }
+}
+@keyframes ani-piscar-legado {
+  0%, 94%, 100% { scale: 1 1; }
+  95.5% { scale: 1 0.1; }
+}
+/* Olhar em volta (ação genérica de quem não tem uma própria). */
+@keyframes ani-olhar {
+  0%, 55% { rotate: 0deg; translate: 0 0; animation-timing-function: var(--ease-senoide, ease-in-out); }
+  62%, 72% { rotate: 5deg; translate: 0.6px 0; animation-timing-function: var(--ease-senoide, ease-in-out); }
+  80%, 88% { rotate: -4deg; translate: -0.6px 0; animation-timing-function: var(--ease-senoide, ease-in-out); }
+  95%, 100% { rotate: 0deg; translate: 0 0; }
+}
+/* Cansado: a cabeça vai caindo devagar e dá um tranco para cima. */
+@keyframes ani-cochilar {
+  0%, 8% { rotate: 0deg; translate: 0 0; animation-timing-function: cubic-bezier(0.45, 0, 0.8, 0.6); }
+  62% { rotate: -7deg; translate: -0.5px 3.2px; animation-timing-function: cubic-bezier(0.2, 0, 0.2, 1); }
+  66% { rotate: 2deg; translate: 0 -1.2px; animation-timing-function: var(--ease-senoide, ease-in-out); }
+  74%, 100% { rotate: 0deg; translate: 0 0; }
+}
+/* Triste: suspiro (abaixa, segura, volta devagar). */
+@keyframes ani-suspirar {
+  0%, 20% { rotate: 0deg; translate: 0 0; animation-timing-function: var(--ease-senoide, ease-in-out); }
+  38%, 58% { rotate: -3deg; translate: 0 2px; animation-timing-function: var(--ease-senoide, ease-in-out); }
+  80%, 100% { rotate: 0deg; translate: 0 0; }
+}
+/* Aposentado: cabeça sobe e desce com a respiração funda. */
+@keyframes ani-dormir {
+  0%, 100% { rotate: 0deg; translate: 0 0.6px; animation-timing-function: var(--ease-senoide, ease-in-out); }
+  50% { rotate: 2deg; translate: 0 -0.8px; animation-timing-function: var(--ease-senoide, ease-in-out); }
+}
+@keyframes ani-susto {
+  0% { scale: 1 1; translate: 0 0; }
+  22% { scale: 1.1 0.84; translate: 0 0; }
+  50% { scale: 0.9 1.14; translate: 0 -7px; }
+  78% { scale: 1.05 0.95; translate: 0 0; }
+  100% { scale: 1 1; translate: 0 0; }
+}
+@keyframes ani-susto-cabeca {
+  0% { rotate: 0deg; translate: 0 2px; }
+  40% { rotate: 7deg; translate: 0 -3px; }
+  100% { rotate: 0deg; translate: 0 0; }
+}
+@keyframes ani-susto-tremer {
+  0%, 100% { rotate: 0deg; }
+  25% { rotate: 6deg; }
+  75% { rotate: -6deg; }
+}
+@keyframes ani-pop {
+  0% { scale: 0; rotate: -20deg; opacity: 0; }
+  60% { scale: 1.12; rotate: 6deg; opacity: 1; }
+  100% { scale: 1; rotate: 0deg; opacity: 1; }
+}
+@keyframes ani-tracos {
+  0% { scale: 0.3; opacity: 0; }
+  60% { scale: 1.12; opacity: 1; }
+  100% { scale: 1; opacity: 1; }
+}
+@keyframes ani-zzz {
+  0% { translate: 0 0; scale: 0.6; opacity: 0; }
+  20% { opacity: 1; }
+  75% { opacity: 1; }
+  100% { translate: var(--zzz-dx, 5px) -10px; scale: 0.9; opacity: 0; }
+}
+/* Tagarelar: 2 rajadas de "bla-bla" no fim do ciclo da ação (o bico de baixo desce --mandibula-abre). */
+@keyframes ani-tagarelar {
+  0%, 60% { translate: 0 0; }
+  62% { translate: 0 var(--mandibula-abre, 1.4px); }
+  64.5% { translate: 0 0; }
+  67% { translate: 0 var(--mandibula-abre, 1.4px); }
+  69.5% { translate: 0 0; }
+  76% { translate: 0 0; }
+  78% { translate: 0 calc(var(--mandibula-abre, 1.4px) * 0.7); }
+  80.5%, 100% { translate: 0 0; }
+}
+@keyframes ani-pronto {
+  0% { rotate: 0deg; }
+  8% { rotate: -4deg; }
+  18% { rotate: 4deg; }
+  28% { rotate: -3deg; }
+  37% { rotate: 1.5deg; }
+  45%, 100% { rotate: 0deg; }
+}
+@keyframes ani-ovo-pronto {
+  0%, 4% { rotate: 0deg; }
+  12% { rotate: 8deg; }
+  22% { rotate: -6deg; }
+  32% { rotate: 3deg; }
+  42%, 100% { rotate: 0deg; }
+}
+
+/* Galeria (dev): congela a piscada no quadro de olho FECHADO (revisão da pálpebra e dos cílios). */
+.gi-piscada-fechada .gi-animal .ani-palpebras {
+  animation: none !important;
+  scale: 1 1;
+}
+.gi-piscada-fechada .gi-animal:not(.humor-feliz, .humor-surpresa, .humor-aposentado) :is(.ani-cilios, .ave-cilios-piscar) {
+  animation: none !important;
+  opacity: 0;
+}
+
+/* Teste de silhueta da galeria (dev): tudo preto, sem sombra de chão. */
+.gi-silhueta .gi-animal * {
+  fill: #1e1426 !important;
+  stroke: #1e1426 !important;
+}
+.gi-silhueta .ani-sombra {
+  display: none;
+}

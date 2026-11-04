@@ -1,0 +1,45 @@
+{
+  "name": "@galinheiro/web",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Galinheiro Idle — app web/PWA (Next.js) com API /api/v1",
+  "scripts": {
+    "dev": "next dev --port 3000",
+    "build": "next build",
+    "start": "next start --port 3000",
+    "start:local": "node scripts/producao-local.mjs",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "vapid": "node scripts/gerar-vapid.mjs",
+    "senha-admin": "node scripts/senha-admin.mjs"
+  },
+  "dependencies": {
+    "@electric-sql/pglite": "^0.5.8",
+    "@galinheiro/api-contract": "workspace:*",
+    "@galinheiro/game-core": "workspace:*",
+    "@tanstack/react-query": "^5.104.1",
+    "jose": "^6.2.12",
+    "lucide-react": "^1.52.0",
+    "motion": "^14.0.0",
+    "next": "^16.3.8",
+    "postgres": "^3.4.9",
+    "qrcode": "^1.5.4",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "recharts": "^3.10.1",
+    "web-push": "^3.6.7",
+    "zod": "^4.6.5",
+    "zustand": "^5.0.15"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.3.3",
+    "@types/node": "^22.20.5",
+    "@types/qrcode": "^1.5.6",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@types/web-push": "^3.6.4",
+    "tailwindcss": "^4.3.3",
+    "typescript": "~5.9.3",
+    "vitest": "^5.0.3"
+  }
+}

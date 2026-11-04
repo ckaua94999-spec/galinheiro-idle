@@ -1,0 +1,822 @@
+/* Estilos de efeitos (ninho pronto, alertas, obra, partículas, voos). Dono: cenário/efeitos.
+   Importado por globals.css. Só transform/opacity; nada de filter. Partículas somem em .reduzir-movimento. */
+
+/* ------------------------------------------------------------------ ninho pronto */
+/* Raios dourados + brilho atrás do animal: pulsa (scale/opacity) e gira devagar, tudo num elemento só */
+.halo-pronto {
+  position: absolute;
+  inset: 0;
+  translate: 0 3%;
+  pointer-events: none;
+  animation:
+    halo-pulso 1.6s var(--ease-senoide) infinite alternate,
+    halo-gira 14s linear infinite;
+}
+.halo-pronto > svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+@keyframes halo-pulso {
+  from {
+    opacity: 0.6;
+    scale: 0.88;
+  }
+  to {
+    opacity: 1;
+    scale: 1.06;
+  }
+}
+@keyframes halo-gira {
+  to {
+    rotate: 360deg;
+  }
+}
+html.reduzir-movimento .halo-pronto {
+  animation: none !important;
+  opacity: 0.8;
+}
+
+/* Balão de "pronto" (estilo Hay Day): balão branco com o ovo da espécie, pulando e balançando.
+   --balao-dx/--balao-dy: desvio por espécie (o balão não cobre o topete/bochecha do pato nem a cauda da
+   avestruz). O slot não corta mais (contain sem paint): o balão pode encostar na borda e passar 1–2 px. */
+/* galinha: o ovo do balão não encosta no olho nem o rabicho no blush (sobe e vai para o canto). Nos slots de
+   72–84 px (celulares de 375–414 px) a cabeça 3/4 ocupa até ~62% da largura e o rabicho pousava na bochecha:
+   o balão sobe até a borda do slot e passa ~6 px para o vão (o rabicho aponta para a nuca, acima do olho). Nos
+   slots ≤ 72 px a regra do slot pequeno (abaixo) volta ao desvio de antes (5 / −6 px), que já fica livre.
+   (No balão, não no slot: a @container do slot pequeno só alcança os filhos.) */
+.ninho-slot[data-especie='galinha'] > .selo-pronto {
+  --balao-dx: 8px;
+  --balao-dy: -11px;
+}
+.ninho-slot[data-especie='pato'] {
+  --balao-dx: 6px;
+  --balao-dy: -4px;
+}
+/* ganso: o balão sai da nuca; o "!" sobe e vai para o canto (não pisa no contorno do topo da cabeça/bico) */
+.ninho-slot[data-especie='ganso'] {
+  --balao-dx: 4px;
+  --balao-dy: -3px;
+  --alerta-dx: 5px;
+  --alerta-dy: 6px;
+}
+/* avestruz (cabeça grande no pescoço, no meio do slot): o balão sobe até a borda e passa um pouco para o vão
+   (o rabicho aponta para a coroa, não pousa no blush); o "!" da triste vai mais para o canto (não encosta no
+   contorno da cabeça). No slot pequeno o balão tem desvio próprio (a regra de lá reduz o desvio à metade). */
+.ninho-slot[data-especie='avestruz'] {
+  --alerta-dx: 4px;
+  --alerta-dy: 4px;
+}
+.ninho-slot[data-especie='avestruz'] > .selo-pronto {
+  --balao-dx: 9px;
+  --balao-dy: -13px;
+}
+.selo-pronto {
+  position: absolute;
+  z-index: 3;
+  top: calc(max(12px, 14cqw) + var(--balao-dy, 0px));
+  right: calc(max(4px, 4cqw) - var(--balao-dx, 0px));
+  width: clamp(26px, 36cqw, 38px);
+  height: clamp(26px, 36cqw, 38px);
+  transform-origin: 20% 95%;
+  pointer-events: none;
+  animation: selo-hop 1.2s var(--ease-suave) infinite;
+}
+.selo-pronto > svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.selo-pronto > .selo-pronto-ovo {
+  left: 36%;
+  top: 17%;
+  width: 34%;
+  height: 46%;
+  right: auto;
+  bottom: auto;
+  rotate: 12deg;
+}
+/* Slot pequeno (320 px e celulares estreitos, ~66–72 px): balão menor e colado no canto de cima. O slot não
+   corta (contain sem paint), então ele pode passar 2–4 px da borda sobre o vão entre os ninhos. */
+@container (max-width: 72px) {
+  .selo-pronto {
+    top: calc(5cqw + var(--balao-dy, 0px) * 0.5);
+    right: calc(-2px - var(--balao-dx, 0px) * 0.4);
+    width: 32cqw;
+    height: 32cqw;
+  }
+  .ninho-slot[data-especie='galinha'] > .selo-pronto {
+    --balao-dx: 5px;
+    --balao-dy: -6px;
+  }
+  .ninho-slot[data-especie='avestruz'] > .selo-pronto {
+    --balao-dx: 8px;
+    --balao-dy: -10px;
+  }
+}
+/* Slot grande (desktop, ~120 px): o balão para de crescer em 38 px e a cabeça da avestruz não; ele sobe mais */
+@container (min-width: 100px) {
+  .ninho-slot[data-especie='avestruz'] > .selo-pronto {
+    --balao-dx: 10px;
+    --balao-dy: -16px;
+  }
+}
+@keyframes selo-hop {
+  0%,
+  60%,
+  100% {
+    translate: 0 0;
+    rotate: 0deg;
+    scale: 1;
+  }
+  14% {
+    translate: 0 -5px;
+    rotate: -8deg;
+    scale: 1.04;
+  }
+  28% {
+    translate: 0 0;
+    rotate: 0deg;
+    scale: 1.12 0.86;
+  }
+  40% {
+    translate: 0 -2px;
+    rotate: 7deg;
+    scale: 0.96 1.06;
+  }
+  50% {
+    translate: 0 0;
+    rotate: -3deg;
+    scale: 1;
+  }
+}
+html.reduzir-movimento .selo-pronto {
+  animation: none !important;
+}
+
+/* Alertas pequenos nos cantos (vida baixa à esquerda, presente de último ciclo à direita) */
+.selo-alerta,
+.selo-presente {
+  position: absolute;
+  z-index: 3;
+  /* 3 px mais para o canto que o padrão antigo (6cqw): o "!" não pousa na coroa/rosto */
+  top: max(-4px, calc(6cqw - 3px - var(--alerta-dy, 0px)));
+  display: grid;
+  place-items: center;
+  width: clamp(20px, 26cqw, 26px);
+  height: clamp(20px, 26cqw, 26px);
+  border-radius: 999px;
+  border: 2px solid var(--selo-contorno);
+  box-shadow:
+    0 2px 0 var(--selo-contorno),
+    inset 0 2px 0 rgb(255 255 255 / 0.55);
+  pointer-events: none;
+}
+.selo-alerta {
+  --selo-contorno: #7a0e08;
+  left: max(-4px, calc(6cqw - 3px - var(--alerta-dx, 0px)));
+  background: linear-gradient(180deg, #ff9a8a 0%, #ff5a48 40%, #e0241a 100%);
+  animation: alerta-pulsa 2.4s var(--ease-suave) infinite;
+}
+.selo-alerta > span {
+  --contorno-cor: #7a0e08;
+  font-size: clamp(13px, 17cqw, 17px);
+  line-height: 1;
+  translate: 0 1px;
+}
+.selo-presente {
+  --selo-contorno: #7a1a4a;
+  right: max(1px, calc(6cqw - 3px));
+  background: linear-gradient(180deg, #ffd6e8 0%, #ffc0dc 35%, #ff7ab0 100%);
+}
+.selo-presente > svg {
+  width: 72%;
+  height: 72%;
+}
+/* pulso curto a cada 2,4 s (não fica pulsando o tempo todo) */
+@keyframes alerta-pulsa {
+  0%,
+  22%,
+  100% {
+    scale: 1;
+  }
+  8% {
+    scale: 1.22;
+  }
+  15% {
+    scale: 0.94;
+  }
+}
+html.reduzir-movimento .selo-alerta {
+  animation: none !important;
+}
+/* Enquanto o "+N"/"UAU!" da coleta vive no ninho (data-rotulo-vivo, useAcoes), o "!" some com fade: o rótulo
+   nasce no alto do ninho e a bolinha vermelha espiaria por trás das letras. */
+.selo-alerta {
+  transition: opacity 120ms var(--ease-suave);
+}
+.ninho-slot[data-rotulo-vivo] > .selo-alerta {
+  opacity: 0;
+}
+
+/* Entrada com pop (.entra): só nas peças que nascem com a tela aberta (ficou pronto / foi coletado). Usa
+   `transform`, que compõe com as propriedades scale/rotate/translate das animações contínuas; a ociosa de
+   cada peça começa depois do pop. Na montagem do grid nada disso roda (tudo aparece junto). */
+@keyframes entra-pop {
+  0% {
+    transform: scale(0.2);
+  }
+  60% {
+    transform: scale(1.14);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+@keyframes entra-halo {
+  from {
+    transform: scale(0.3) rotate(-40deg);
+  }
+  to {
+    transform: none;
+  }
+}
+.halo-pronto.entra {
+  animation:
+    entra-halo 520ms var(--ease-suave) both,
+    halo-pulso 1.6s var(--ease-senoide) 520ms infinite alternate,
+    halo-gira 14s linear infinite;
+}
+.selo-pronto.entra {
+  animation:
+    entra-pop 420ms var(--ease-elastico) 80ms both,
+    selo-hop 1.2s var(--ease-suave) 500ms infinite;
+}
+.selo-presente.entra,
+.ninho-timer.entra {
+  animation: entra-pop 380ms var(--ease-elastico) 120ms both;
+}
+html.reduzir-movimento .entra {
+  animation: none !important;
+}
+
+/* ------------------------------------------------------------------ obra (ampliação) */
+.obra {
+  position: absolute;
+  inset: 0;
+  display: block;
+  pointer-events: none;
+}
+.obra > svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.obra-andaime {
+  animation: obra-treme 0.55s linear infinite;
+  animation-delay: var(--atraso-obra, 0ms);
+}
+/* pivô na empunhadura (direita); a cabeça bate no monte de palha */
+.obra-martelo {
+  position: absolute;
+  left: 36%;
+  top: 31%;
+  width: 46%;
+  height: 46%;
+  transform-origin: 95% 75%;
+  animation: obra-martelada 0.55s infinite;
+  animation-delay: var(--atraso-obra, 0ms);
+}
+.obra-martelo > svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.obra-poeira {
+  position: absolute;
+  left: 48%;
+  top: 76%;
+  width: 0;
+  height: 0;
+}
+.obra-poeira > i {
+  position: absolute;
+  left: -7cqw;
+  top: -7cqw;
+  width: 14cqw;
+  height: 14cqw;
+  border-radius: 50%;
+  background: radial-gradient(circle at 38% 35%, #fff6e6 0%, #e8d2a8 55%, #d2b07a 100%);
+  border: 1.5px solid #9a6424;
+  opacity: 0;
+  animation: obra-poeira 0.55s var(--ease-explosao) infinite;
+  animation-delay: var(--atraso-obra, 0ms);
+}
+.obra-estalo {
+  position: absolute;
+  left: 48%;
+  top: 72%;
+  width: 26cqw;
+  height: 26cqw;
+  margin: -13cqw 0 0 -13cqw;
+  background: radial-gradient(circle, #fff 0 18%, #ffe27a 30%, transparent 62%);
+  clip-path: polygon(50% 0, 60% 40%, 100% 50%, 60% 60%, 50% 100%, 40% 60%, 0 50%, 40% 40%);
+  opacity: 0;
+  animation: obra-estalo 0.55s infinite;
+  animation-delay: var(--atraso-obra, 0ms);
+}
+@keyframes obra-martelada {
+  0% {
+    rotate: 12deg;
+    animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  42% {
+    rotate: 46deg;
+    animation-timing-function: cubic-bezier(0.5, 0, 0.9, 0.4);
+  }
+  58% {
+    rotate: -14deg;
+    animation-timing-function: ease-out;
+  }
+  70% {
+    rotate: -6deg;
+  }
+  100% {
+    rotate: 12deg;
+  }
+}
+@keyframes obra-poeira {
+  0%,
+  56% {
+    opacity: 0;
+    transform: translate(0, 0) scale(0.4);
+  }
+  60% {
+    opacity: 1;
+    transform: translate(0, 0) scale(0.5);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--dx), var(--dy)) scale(1.3);
+  }
+}
+@keyframes obra-estalo {
+  0%,
+  56% {
+    opacity: 0;
+    scale: 0.2;
+  }
+  60% {
+    opacity: 1;
+    scale: 1.1;
+  }
+  76%,
+  100% {
+    opacity: 0;
+    scale: 0.6;
+  }
+}
+@keyframes obra-treme {
+  0%,
+  57%,
+  70%,
+  100% {
+    translate: 0 0;
+  }
+  60% {
+    translate: 0 1.5px;
+  }
+  64% {
+    translate: 0 -0.5px;
+  }
+}
+html.reduzir-movimento .obra-martelo,
+html.reduzir-movimento .obra-andaime,
+html.reduzir-movimento .obra-poeira,
+html.reduzir-movimento .obra-estalo {
+  animation: none !important;
+}
+html.reduzir-movimento .obra-poeira,
+html.reduzir-movimento .obra-estalo {
+  display: none;
+}
+
+/* ------------------------------------------------------------------ partículas (camada .fx-camada) */
+/* ponto de origem de uma rajada: os filhos nascem no (0,0) dele */
+.fx-ponto {
+  position: absolute;
+  width: 0;
+  height: 0;
+}
+.fx-ponto > * {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+/* Faísca: --dx/--dy (destino), --s (tamanho inicial), --vida (duração), --atraso. */
+.faisca {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  margin: -6px 0 0 -6px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fff 0 30%, #ffe27a 60%, transparent 70%);
+  pointer-events: none;
+  animation: faisca var(--vida, 520ms) var(--ease-explosao) var(--atraso, 0ms) both;
+}
+@keyframes faisca {
+  from {
+    transform: translate(0, 0) scale(var(--s, 1));
+    opacity: 1;
+  }
+  to {
+    transform: translate(var(--dx, 0), var(--dy, 0)) scale(0);
+    opacity: 1;
+  }
+}
+/* estrela de 4 pontas (jackpot, chegada no HUD) */
+.faisca-estrela {
+  width: 16px;
+  height: 16px;
+  margin: -8px 0 0 -8px;
+  border-radius: 0;
+  background: radial-gradient(circle, #fff 0 22%, var(--cor, #ffd84d) 48%, var(--cor, #ffb300) 100%);
+  clip-path: polygon(50% 0, 61% 39%, 100% 50%, 61% 61%, 50% 100%, 39% 61%, 0 50%, 39% 39%);
+  animation-name: faisca-estrela;
+}
+@keyframes faisca-estrela {
+  from {
+    transform: translate(0, 0) scale(var(--s, 1)) rotate(0deg);
+    opacity: 1;
+  }
+  to {
+    transform: translate(var(--dx, 0), var(--dy, 0)) scale(0) rotate(160deg);
+    opacity: 1;
+  }
+}
+/* confete: sobe em leque e cai girando */
+.confete {
+  position: absolute;
+  width: 6px;
+  height: 10px;
+  margin: -5px 0 0 -3px;
+  border-radius: 1.5px;
+  background: var(--cor, #ffd23f);
+  box-shadow: inset -2px 0 0 rgb(0 0 0 / 0.18);
+  pointer-events: none;
+  animation: confete var(--vida, 1400ms) linear var(--atraso, 0ms) both;
+}
+@keyframes confete {
+  0% {
+    transform: translate(0, 0) rotate(0deg) scale(0.6);
+    opacity: 1;
+    animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  28% {
+    transform: translate(calc(var(--dx) * 0.7), var(--dy)) rotate(calc(var(--r) * 0.3)) scale(1);
+    opacity: 1;
+    animation-timing-function: cubic-bezier(0.32, 0, 0.67, 0);
+  }
+  85% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(var(--dx), calc(var(--dy) + 260px)) rotate(var(--r)) scale(1);
+    opacity: 0;
+  }
+}
+/* anel de impacto (coleta, jackpot, chegada da moeda) */
+.anel-fx {
+  position: absolute;
+  width: var(--tam, 60px);
+  height: var(--tam, 60px);
+  margin: calc(var(--tam, 60px) / -2) 0 0 calc(var(--tam, 60px) / -2);
+  border-radius: 50%;
+  border: 4px solid var(--cor, #ffe27a);
+  pointer-events: none;
+  animation: anel-fx var(--vida, 480ms) var(--ease-explosao) var(--atraso, 0ms) both;
+}
+@keyframes anel-fx {
+  from {
+    transform: scale(0.2);
+    opacity: 1;
+  }
+  to {
+    transform: scale(1.6);
+    opacity: 0;
+  }
+}
+/* clarão redondo (jackpot) */
+.clarao-fx {
+  position: absolute;
+  width: 160px;
+  height: 160px;
+  margin: -80px 0 0 -80px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgb(255 255 240 / 0.95) 0%, rgb(255 228 120 / 0.6) 35%, transparent 68%);
+  pointer-events: none;
+  animation: clarao-fx 650ms var(--ease-explosao) both;
+}
+@keyframes clarao-fx {
+  from {
+    transform: scale(0.2);
+    opacity: 1;
+  }
+  to {
+    transform: scale(1.5);
+    opacity: 0;
+  }
+}
+/* clarão menor: "boca" da fonte de moedas no botão Vender */
+.clarao-fx-p {
+  width: 96px;
+  height: 96px;
+  margin: -48px 0 0 -48px;
+  animation-duration: 480ms;
+}
+/* raios dourados girando atrás do jackpot */
+.raios-fx {
+  position: absolute;
+  width: 200px;
+  height: 200px;
+  margin: -100px 0 0 -100px;
+  pointer-events: none;
+  animation: raios-fx 1100ms var(--ease-suave) both;
+}
+.raios-fx > svg {
+  width: 100%;
+  height: 100%;
+}
+/* raios curtos (~0,6): jackpot "rebaixado" do Coletar Todos */
+.raios-fx-p {
+  width: 120px;
+  height: 120px;
+  margin: -60px 0 0 -60px;
+  animation-duration: 900ms;
+}
+@keyframes raios-fx {
+  0% {
+    transform: scale(0.3) rotate(0deg);
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  70% {
+    opacity: 0.9;
+  }
+  100% {
+    transform: scale(1.15) rotate(70deg);
+    opacity: 0;
+  }
+}
+
+/* "+N" flutuante (texto-contorno + texto-ouro). .so-opacidade: em reduzir movimento só faz fade. */
+.mais-n {
+  position: absolute;
+  translate: -50% -50%;
+  font-size: 24px;
+  line-height: 1;
+  white-space: nowrap;
+  pointer-events: none;
+  animation: mais-n 900ms var(--ease-suave) var(--atraso, 0ms) both;
+}
+.mais-n-grande {
+  font-size: 34px;
+}
+.mais-n-rotulo {
+  display: block;
+  margin-bottom: 2px;
+  font-size: 0.55em;
+  text-align: center;
+  color: #fff;
+  --contorno-cor: #7a3300;
+}
+.mais-n > svg {
+  display: inline-block;
+  width: 0.9em;
+  height: 0.9em;
+  margin-left: 2px;
+  vertical-align: -0.12em;
+}
+@keyframes mais-n {
+  0% {
+    transform: translateY(0) scale(0.6);
+    opacity: 0;
+  }
+  15% {
+    transform: translateY(-8px) scale(1.15);
+    opacity: 1;
+  }
+  30% {
+    transform: translateY(-14px) scale(1);
+    opacity: 1;
+  }
+  72% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-36px) scale(1);
+    opacity: 0;
+  }
+}
+.mais-n-longo {
+  animation-duration: 1400ms;
+}
+/* "+N" da coleta: por cima dos ovos e do rastro (que vêm depois na camada), com uma sombra escura macia
+   atrás (lê bem por cima das travessas da cerca). Sobe, segura parado até 55% e só então some subindo. */
+.mais-n-coleta {
+  z-index: 3;
+  padding: 6px 10px;
+  background: radial-gradient(closest-side, rgb(43 26 15 / 0.5), rgb(43 26 15 / 0.22) 60%, transparent);
+  animation-name: mais-n-coleta;
+}
+@keyframes mais-n-coleta {
+  0% {
+    transform: translateY(0) scale(0.6);
+    opacity: 0;
+  }
+  15% {
+    transform: translateY(-8px) scale(1.15);
+    opacity: 1;
+  }
+  30%,
+  55% {
+    transform: translateY(-14px) scale(1);
+    opacity: 1;
+  }
+  75% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-36px) scale(1);
+    opacity: 0;
+  }
+}
+/* Coletar Todos: "+N" menor (vários ninhos ao mesmo tempo) */
+.mais-n-pequeno {
+  font-size: 20px;
+}
+/* "UAU!" do jackpot escalonado do Coletar Todos (outro levou o grande): um pouco menor que o principal */
+.mais-n-medio {
+  font-size: 28px;
+}
+/* "UAU! +N" de todo jackpot: por cima dos ovos que saltam (vêm depois na camada) e com contorno mais grosso,
+   que separa as letras do ovo/clarão/raios atrás. */
+.mais-n-uau {
+  z-index: 4;
+  --contorno-largura: max(0.24em, 5px);
+}
+.mais-n-uau > .mais-n-rotulo {
+  --contorno-largura: max(0.3em, 4px);
+}
+/* Curto (há ninho acima): uma linha só, "UAU!" menor colado à esquerda do "+N", no alto do próprio ninho. A
+   fonte vem do tamanho do ninho (style). */
+.mais-n-uau-linha > .mais-n-rotulo {
+  display: inline-block;
+  margin: 0 0.16em 0 0;
+  font-size: 0.62em;
+  vertical-align: 0.22em;
+}
+/* Rótulo curto: nasce dentro do próprio ninho (há ninho ocupado logo acima) e sobe no máximo 12 px; não pousa
+   no timer nem na cabeça do vizinho de cima. Vale para "+N" (900 ms) e "UAU!" (1400 ms). */
+.mais-n.mais-n-curto {
+  animation-name: mais-n-curto;
+}
+@keyframes mais-n-curto {
+  0% {
+    transform: translateY(0) scale(0.6);
+    opacity: 0;
+  }
+  15% {
+    transform: translateY(-4px) scale(1.15);
+    opacity: 1;
+  }
+  30%,
+  58% {
+    transform: translateY(-6px) scale(1);
+    opacity: 1;
+  }
+  76% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-12px) scale(1);
+    opacity: 0;
+  }
+}
+/* ganho da venda (estilo Hay Day): colado embaixo do chip do saldo, nasce quando a primeira moeda chega (o
+   número começa a contar) e desce 6 px. x limitado em CamadaEfeitos (nunca encosta na borda). Pílula escura com
+   aro dourado: lê bem por cima dos botões do HUD. */
+.mais-n-desce {
+  z-index: 3;
+  translate: -50% 0;
+  font-size: 16px;
+  padding: 3px 9px 4px;
+  border-radius: 999px;
+  background: rgb(43 26 15 / 0.85);
+  box-shadow: 0 0 0 2px rgb(255 216 77 / 0.55);
+  transform-origin: 50% 0;
+  animation-name: mais-n-desce;
+  animation-duration: 1100ms;
+}
+@keyframes mais-n-desce {
+  0% {
+    transform: translateY(0) scale(0.6);
+    opacity: 0;
+  }
+  15% {
+    transform: translateY(2px) scale(1.12);
+    opacity: 1;
+  }
+  30%,
+  72% {
+    transform: translateY(4px) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(6px) scale(1);
+    opacity: 0;
+  }
+}
+@keyframes mais-n-fade {
+  0% {
+    opacity: 0;
+  }
+  20%,
+  70% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+html.reduzir-movimento .mais-n,
+html.reduzir-movimento .mais-n.mais-n-curto {
+  animation-name: mais-n-fade;
+}
+
+/* Itens voando (ovo, moeda): posicionados por transform via motion; o brilho atrás é estático */
+.voo-item {
+  position: absolute;
+  left: 0;
+  top: 0;
+  pointer-events: none;
+}
+.voo-brilho {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 46px;
+  height: 46px;
+  margin: -23px 0 0 -23px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgb(255 251 220 / 0.85) 0%, rgb(255 236 150 / 0.4) 38%, transparent 68%);
+}
+/* moeda girando "de lado" */
+.moeda-gira {
+  display: block;
+  animation: moeda-gira 0.32s var(--ease-senoide) infinite alternate;
+}
+@keyframes moeda-gira {
+  from {
+    scale: 1 1;
+  }
+  to {
+    scale: 0.2 1;
+  }
+}
+
+html.reduzir-movimento .faisca,
+html.reduzir-movimento .confete,
+html.reduzir-movimento .anel-fx,
+html.reduzir-movimento .clarao-fx,
+html.reduzir-movimento .raios-fx {
+  display: none;
+}
+html.reduzir-movimento .moeda-gira {
+  animation: none !important;
+}
+
+/* ------------------------------------------------------------------ tremidas */
+.tremer {
+  animation: tremer 300ms linear;
+}
+@keyframes tremer {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20%,
+  60% {
+    transform: translateX(-6px);
+  }
+  40%,
+  80% {
+    transform: translateX(6px);
+  }
+}

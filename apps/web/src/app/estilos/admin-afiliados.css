@@ -1,0 +1,1318 @@
+/* Painel: rede de afiliados e taxas e comissões (escopo .admin). Telas em cliente/admin/afiliados, prefixo afi-.
+   Reaproveita as peças da visão geral (vg-: segmentado, figuras, dica, tabela) e da ficha (adm-us-: avatar,
+   cabeçalho, opções, alertas). A grade segue a largura do conteúdo (container queries), não a da tela.
+   Cores: violeta = convites/rede, âmbar = moedas (comissões), azul = cadastros. */
+
+.admin {
+  --afi-violeta: #6d28d9;
+  --afi-violeta-fundo: #ede9fe;
+}
+.admin :is(.afi, .afi-rede, .afi-taxas) {
+  --vg-alt: 230px; /* altura dos gráficos (celular) */
+  container-type: inline-size;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.admin :is(.afi, .afi-taxas) > .adm-pagina-cabeca {
+  margin-bottom: 0;
+}
+@container (min-width: 700px) {
+  .admin .afi-periodo {
+    --vg-alt: 250px;
+  }
+}
+
+.admin .afi-texto-suave {
+  color: var(--adm-suave);
+  font-size: 13px;
+  line-height: 1.45;
+}
+.admin .afi-titulo-sub {
+  color: var(--adm-suave);
+  font-size: 13px;
+  font-weight: 700;
+}
+.admin .vg-secao-icone[data-tom='roxo'] {
+  background: var(--afi-violeta-fundo);
+  color: var(--afi-violeta);
+}
+.admin .afi-zero {
+  color: #a3acbd;
+}
+.admin .afi-moedas {
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+.admin .afi-nota {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 12px;
+  color: var(--adm-suave);
+  font-size: 12px;
+  line-height: 1.4;
+}
+.admin .afi-link-seta {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 8px;
+  border-radius: 6px;
+  color: #15803d;
+  font-size: 13px;
+  font-weight: 800;
+  text-decoration: none;
+}
+.admin .afi-link-seta:hover {
+  text-decoration: underline;
+}
+
+/* luz do selo Ligado/Pausado */
+.admin .afi-luz {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.admin .afi-luz[data-ativo] {
+  box-shadow: 0 0 0 0 rgb(22 163 74 / 0.45);
+  animation: afi-pulso 2.2s ease-out infinite;
+}
+@keyframes afi-pulso {
+  0% { box-shadow: 0 0 0 0 rgb(22 163 74 / 0.45); }
+  70%, 100% { box-shadow: 0 0 0 6px rgb(22 163 74 / 0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .admin .afi-luz[data-ativo] {
+    animation: none;
+  }
+}
+
+/* fichas "Nível 1 · 10%" */
+.admin .afi-fichas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.admin .afi-ficha {
+  display: inline-flex;
+  align-items: stretch;
+  overflow: hidden;
+  border: 1px solid #ddd6fe;
+  border-radius: 10px;
+  background: #fff;
+  font-size: 13px;
+  white-space: nowrap;
+}
+.admin .afi-ficha-nivel {
+  display: grid;
+  place-items: center;
+  padding: 3px 8px;
+  background: #f5f3ff;
+  color: #5b21b6;
+  font-weight: 800;
+}
+.admin .afi-ficha-pct {
+  display: grid;
+  place-items: center;
+  min-width: 46px;
+  padding: 3px 9px;
+  color: var(--adm-texto);
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+}
+.admin .afi-ficha[data-zero] .afi-ficha-pct,
+.admin .afi-fichas[data-pausado] .afi-ficha-pct {
+  color: #94a3b8;
+}
+.admin .afi-fichas[data-pausado] .afi-ficha {
+  border-style: dashed;
+}
+
+/* ================================================================ tela principal */
+.admin .afi-topo {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+}
+@container (min-width: 880px) {
+  .admin .afi-topo {
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+    align-items: stretch;
+  }
+}
+
+/* taxas em vigor */
+.admin .afi-taxas-linha {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 10px;
+}
+.admin .afi-taxas-meta {
+  margin-top: 10px;
+  color: #334155;
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+.admin .afi-taxas-meta strong {
+  color: var(--adm-texto);
+  font-weight: 900;
+}
+.admin .afi-taxas-meta .afi-pausado {
+  color: #b45309;
+}
+.admin .afi-taxas-alterado {
+  margin-top: 2px;
+  color: var(--adm-suave);
+  font-size: 12.5px;
+}
+
+/* busca de membro */
+.admin .afi-busca-cartao .afi-texto-suave {
+  margin-top: -4px;
+  margin-bottom: 12px;
+}
+.admin .afi-busca {
+  position: relative;
+}
+.admin .afi-busca-campo {
+  display: block;
+}
+.admin .afi-busca-campo input.adm-input {
+  padding-right: 40px;
+}
+.admin .afi-busca-painel {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  left: 0;
+  z-index: 15;
+  overflow: hidden;
+  border: 1px solid var(--adm-borda);
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 16px 40px rgb(15 23 42 / 0.16);
+}
+.admin .afi-busca-lista {
+  max-height: min(360px, 60dvh);
+  overflow-y: auto;
+  padding: 6px;
+}
+.admin .afi-busca-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+.admin .afi-busca-item[aria-selected='true'] {
+  background: #f1f5f9;
+}
+.admin .afi-busca-nome {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 8px;
+  font-size: 14px;
+  font-weight: 800;
+}
+.admin .afi-busca-email {
+  display: block;
+  overflow: hidden;
+  color: var(--adm-suave);
+  font-size: 12.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.admin .afi-busca-ir {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 2px;
+  color: #94a3b8;
+  font-size: 12.5px;
+  font-weight: 800;
+}
+.admin .afi-busca-item[aria-selected='true'] .afi-busca-ir {
+  color: #15803d;
+}
+.admin .afi-busca-estado {
+  padding: 10px 14px;
+  border-top: 1px solid #eef1f6;
+  color: var(--adm-suave);
+  font-size: 13px;
+  font-weight: 700;
+}
+.admin .afi-busca-lista + .afi-busca-estado {
+  background: #fafbfd;
+  font-size: 12px;
+}
+.admin .afi-busca-painel > .afi-busca-estado:only-child {
+  border-top: 0;
+}
+
+/* números: KPIs ao lado das comissões por nível */
+.admin .afi-numeros {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+}
+@container (min-width: 1000px) {
+  .admin .afi-numeros {
+    grid-template-columns: minmax(0, 2fr) minmax(300px, 1fr);
+    align-items: stretch;
+  }
+}
+.admin .afi-numeros-kpis {
+  container-type: inline-size;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+/* as linhas de KPIs acompanham a altura do cartão ao lado (os dois blocos terminam juntos) */
+.admin .afi-numeros-kpis > .afi-kpis {
+  flex: 1;
+  grid-auto-rows: 1fr;
+}
+.admin .afi-kpis,
+.admin .afi-kpis-rede {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+@container (min-width: 520px) {
+  .admin .afi-kpis {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+  }
+}
+@container (min-width: 640px) {
+  .admin .afi-kpis-rede {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+  }
+}
+.admin :is(.afi-kpis, .afi-kpis-rede) .adm-kpi {
+  container-type: inline-size;
+  min-width: 0;
+}
+/* o valor encolhe com o cartão (moedas com muitos dígitos não estouram no celular) */
+.admin :is(.afi-kpis, .afi-kpis-rede) .adm-kpi-valor {
+  font-size: clamp(19px, 11.5cqi, 26px);
+  white-space: nowrap;
+}
+.admin :is(.afi-kpis, .afi-kpis-rede) .adm-kpi-detalhe {
+  line-height: 1.45;
+}
+.admin :is(.afi-kpis, .afi-kpis-rede) .adm-kpi-detalhe strong {
+  color: var(--adm-texto);
+  font-weight: 800;
+}
+
+/* gráficos */
+.admin .afi-plot {
+  position: relative;
+}
+.admin .afi-plot-vazio {
+  position: absolute;
+  top: 42%;
+  left: 50%;
+  padding: 6px 12px;
+  border: 1px solid var(--adm-borda);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--adm-suave);
+  font-size: 12.5px;
+  font-weight: 800;
+  white-space: nowrap;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+.admin .afi-dica-rodape {
+  margin-top: 7px;
+  padding-top: 7px;
+  border-top: 1px solid #eef1f6;
+  color: var(--adm-suave);
+  font-size: 12.5px;
+}
+.admin .afi-dica-rodape strong {
+  color: var(--adm-texto);
+  font-weight: 900;
+}
+.admin .afi-tab-total {
+  font-weight: 800;
+}
+.admin .afi-leg-unica {
+  color: #334155;
+  font-weight: 700;
+}
+
+/* ranking */
+.admin .afi-ranking {
+  container-type: inline-size;
+}
+.admin .afi-seg-compacto {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}
+.admin .afi-seg-compacto .vg-seg-opcao span {
+  min-height: 30px;
+  padding: 0 10px;
+  font-size: 12.5px;
+}
+@media (max-width: 420px) {
+  .admin .afi-seg-compacto .vg-seg-rotulo {
+    display: none;
+  }
+}
+.admin .afi-ranking-tabela,
+.admin .afi-diretos-tabela {
+  display: none;
+  overflow-x: auto;
+  margin: 0 -16px;
+  padding: 0 16px;
+}
+.admin :is(.afi-ranking-tabela, .afi-diretos-tabela) .adm-tabela th,
+.admin :is(.afi-ranking-tabela, .afi-diretos-tabela) .adm-tabela td {
+  padding-right: 8px;
+  padding-left: 8px;
+}
+.admin .afi-ranking-tabela .adm-us-email {
+  max-width: 260px;
+}
+.admin .adm-tabela .afi-col-pos {
+  width: 38px;
+  text-align: center;
+}
+.admin .afi-posicao {
+  display: inline-grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: #f1f4f9;
+  color: var(--adm-suave);
+  font-size: 12.5px;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+}
+.admin .afi-posicao[data-pos='1'] { background: #fef3c7; color: #92400e; box-shadow: inset 0 0 0 1.5px #fbbf24; }
+.admin .afi-posicao[data-pos='2'] { background: #f1f5f9; color: #334155; box-shadow: inset 0 0 0 1.5px #cbd5e1; }
+.admin .afi-posicao[data-pos='3'] { background: #ffedd5; color: #9a3412; box-shadow: inset 0 0 0 1.5px #fdba74; }
+.admin .afi-linha {
+  cursor: pointer;
+}
+.admin .adm-tabela tbody tr.afi-linha:hover td {
+  background: #f4f7fb;
+}
+.admin .afi-linha[data-bloqueado] td {
+  background: #fffafa;
+}
+.admin .adm-tabela th[data-ordem] {
+  color: var(--adm-texto);
+}
+.admin .adm-tabela th[data-ordem]::after {
+  content: ' ↓';
+  color: var(--adm-verde);
+}
+.admin .adm-tabela td[data-ordem] {
+  background: #fafbfd;
+  font-weight: 900;
+}
+.admin .afi-codigo-mini {
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: #f5f3ff;
+  color: #5b21b6;
+  font: 700 12px/1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+/* tabela do ranking estreita (ex.: tablet): o código vai para baixo do e-mail e o "Ver rede" vira só a seta */
+.admin .afi-col-codigo,
+.admin .afi-ir-texto {
+  display: none;
+}
+.admin .afi-codigo-junto {
+  font: 700 11.5px/1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  letter-spacing: 0.04em;
+}
+@container (min-width: 840px) {
+  .admin .afi-col-codigo {
+    display: table-cell;
+  }
+  .admin .afi-ir-texto {
+    display: inline;
+  }
+  .admin .afi-codigo-junto {
+    display: none;
+  }
+}
+.admin .afi-col-ir {
+  width: 1%;
+  text-align: right;
+  white-space: nowrap;
+}
+.admin .afi-ir {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 5px 6px 5px 10px;
+  border-radius: 8px;
+  color: #15803d;
+  font-size: 13px;
+  font-weight: 800;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.admin .afi-ir:hover {
+  background: #f0fdf4;
+}
+
+.admin .afi-ranking-cartoes,
+.admin .afi-diretos-cartoes {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 10px;
+}
+@container (min-width: 520px) {
+  .admin :is(.afi-ranking-cartoes, .afi-diretos-cartoes) {
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  }
+}
+@container (min-width: 640px) {
+  .admin .afi-ranking-tabela {
+    display: block;
+  }
+  .admin .afi-ranking-cartoes {
+    display: none;
+  }
+}
+.admin .afi-cartao-membro {
+  display: block;
+  padding: 12px;
+  border: 1px solid var(--adm-borda);
+  border-radius: 14px;
+  background: #fff;
+  color: inherit;
+  text-decoration: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.admin .afi-cartao-membro:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 2px 10px rgb(16 24 40 / 0.06);
+}
+.admin .afi-cartao-membro:active {
+  background: #f8fafc;
+}
+.admin .afi-cartao-membro[data-bloqueado] {
+  border-color: #fecaca;
+  background: #fffafa;
+}
+.admin .afi-cartao-membro-topo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.admin .afi-cartao-membro .adm-us-email {
+  max-width: 100%;
+}
+.admin .afi-cartao-numeros {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+  margin-top: 10px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: #f6f8fc;
+}
+.admin .afi-cartao-numeros[data-colunas='3'] {
+  grid-template-columns: 1.2fr 0.8fr 1fr;
+}
+.admin .afi-cartao-numeros > div {
+  min-width: 0;
+}
+.admin .afi-cartao-numeros dt {
+  color: var(--adm-suave);
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.admin .afi-cartao-numeros dd {
+  margin-top: 1px;
+  overflow: hidden;
+  font-size: 14px;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.admin .afi-cartao-numeros > div[data-ordem] dt {
+  color: #15803d;
+}
+.admin .afi-cartao-rodape {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 8px;
+}
+
+/* barras horizontais (níveis) */
+.admin .afi-niveis {
+  display: flex;
+  flex-direction: column;
+}
+.admin .afi-nivel {
+  padding: 10px 0;
+  border-bottom: 1px solid #eef1f6;
+}
+.admin .afi-nivel:first-child {
+  padding-top: 2px;
+}
+.admin .afi-nivel:last-child {
+  border-bottom: 0;
+}
+.admin .afi-nivel-topo {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.admin .afi-nivel-nome {
+  font-size: 14px;
+  font-weight: 900;
+}
+.admin .afi-nivel-pct {
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--afi-violeta-fundo);
+  color: var(--afi-violeta);
+  font-size: 12px;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+}
+.admin .afi-nivel-pct:empty {
+  display: none;
+}
+.admin .afi-nivel[data-desligado] .afi-nivel-pct {
+  background: #f1f4f9;
+  color: #8a94a8;
+}
+.admin .afi-nivel-valor {
+  margin-left: auto;
+  font-size: 14px;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.admin .afi-barra {
+  --cor: #7c3aed;
+  display: block;
+  overflow: hidden;
+  height: 8px;
+  margin-top: 7px;
+  border-radius: 999px;
+  background: #eef1f6;
+}
+.admin .afi-barra[data-tom='ambar'] { --cor: #d97706; }
+.admin .afi-barra[data-tom='azul'] { --cor: #2a78d6; }
+.admin .afi-barra > span {
+  display: block;
+  min-width: 0;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--cor);
+  transition: width 0.25s ease;
+}
+.admin .afi-nivel[data-desligado] .afi-barra > span {
+  background: #cbd5e1;
+}
+.admin .afi-nivel-sub {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 2px 10px;
+  margin-top: 5px;
+  color: var(--adm-suave);
+  font-size: 12px;
+}
+.admin .afi-por-nivel {
+  display: flex;
+  flex-direction: column;
+}
+.admin .afi-por-nivel .afi-niveis {
+  margin-bottom: 8px;
+}
+.admin .afi-nivel-total {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: auto;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: #fffbeb;
+  color: #92400e;
+  font-size: 13px;
+  font-weight: 800;
+}
+.admin .afi-nivel-total strong {
+  color: #422006;
+  font-size: 17px;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+}
+.admin .afi-nivel-total strong span {
+  color: #92400e;
+  font-size: 12.5px;
+  font-weight: 800;
+}
+
+/* ================================================================ rede de um membro */
+.admin .afi-sobretitulo {
+  margin-bottom: 2px;
+  color: var(--afi-violeta);
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.admin .afi-codigo {
+  padding: 1px 7px;
+  border-radius: 7px;
+  background: var(--afi-violeta-fundo);
+  color: #4c1d95;
+  font: 800 13px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  letter-spacing: 0.06em;
+}
+.admin .afi-copiar-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-left: 2px;
+  padding-left: 9px;
+  border-left: 1px solid var(--adm-borda);
+  color: var(--adm-suave);
+  font-size: 13px;
+}
+.admin .afi-link-forte {
+  color: var(--adm-texto);
+  font-weight: 800;
+}
+
+/* quem está acima */
+.admin .afi-acima-vazio {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 12px;
+  background: #f0fdf4;
+  color: #166534;
+  font-size: 13.5px;
+  line-height: 1.45;
+}
+.admin .afi-trilha {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 4px;
+}
+.admin .afi-trilha-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  max-width: 100%;
+}
+.admin .afi-elo {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+  padding: 6px 12px 6px 6px;
+  border: 1px solid var(--adm-borda);
+  border-radius: 999px;
+  background: #fff;
+  color: inherit;
+  text-decoration: none;
+  transition: border-color 0.15s, background 0.15s;
+}
+.admin a.afi-elo:hover {
+  border-color: #c4b5fd;
+  background: #faf8ff;
+}
+.admin .afi-elo-atual {
+  border-color: #c4b5fd;
+  background: var(--afi-violeta-fundo);
+  box-shadow: 0 0 0 3px rgb(124 58 237 / 0.1);
+}
+.admin .afi-elo-nome {
+  display: block;
+  overflow: hidden;
+  font-size: 13.5px;
+  font-weight: 800;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.admin .afi-elo-sub {
+  display: block;
+  overflow: hidden;
+  color: var(--adm-suave);
+  font-size: 11.5px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.admin .afi-elo-recebe[data-paga] {
+  color: #15803d;
+}
+.admin .afi-trilha-seta {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  color: #a78bfa;
+}
+
+.admin .afi-rede-vazia {
+  padding: 14px;
+  border: 1px dashed #d8dee8;
+  border-radius: 12px;
+  text-align: center;
+}
+.admin .afi-rede-vazia-titulo {
+  margin-bottom: 2px;
+  color: #334155;
+  font-weight: 900;
+}
+
+/* indicados diretos × rede abaixo: lado a lado no desktop; no celular os níveis (curtos) vêm antes */
+.admin .afi-rede-colunas {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.admin .afi-sec-niveis { order: -1; }
+@container (min-width: 940px) {
+  .admin .afi-rede-colunas {
+    display: grid;
+    grid-template-columns: minmax(0, 1.6fr) minmax(300px, 1fr);
+    align-items: start;
+  }
+  .admin .afi-sec-niveis {
+    order: 0;
+  }
+}
+.admin .afi-sec-diretos {
+  container-type: inline-size;
+}
+@container (min-width: 600px) {
+  .admin .afi-diretos-tabela {
+    display: block;
+  }
+  .admin .afi-diretos-cartoes {
+    display: none;
+  }
+}
+.admin .afi-diretos-tabela .adm-us-email {
+  max-width: 210px;
+}
+.admin .afi-col-data {
+  margin-bottom: 1px;
+  color: var(--adm-suave);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* últimas comissões: em duas colunas quando cabe (a leitura desce a 1ª coluna e segue na 2ª) */
+.admin .afi-comissoes {
+  columns: 2 300px;
+  column-gap: 36px;
+}
+.admin .afi-comissao {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 0;
+  border-bottom: 1px solid #eef1f6;
+  break-inside: avoid;
+}
+.admin .afi-comissao-nivel {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  background: var(--afi-violeta-fundo);
+  color: var(--afi-violeta);
+  font-size: 12px;
+  font-weight: 900;
+}
+.admin .afi-comissao-titulo {
+  overflow: hidden;
+  font-size: 13.5px;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.admin .afi-comissao-detalhe {
+  color: var(--adm-suave);
+  font-size: 12px;
+}
+
+/* ================================================================ taxas e comissões */
+.admin .afi-aviso-fora {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  padding: 12px 14px;
+  border: 1px solid #fde68a;
+  border-radius: 14px;
+  background: #fffbeb;
+  color: #92400e;
+  font-size: 13.5px;
+  font-weight: 700;
+}
+.admin .afi-taxas-grade {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+}
+.admin .afi-taxas-form,
+.admin .afi-taxas-lado {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+@container (min-width: 980px) {
+  .admin .afi-taxas-grade {
+    grid-template-columns: minmax(0, 1.25fr) minmax(320px, 1fr);
+    align-items: start;
+  }
+  .admin .afi-taxas-lado {
+    position: sticky;
+    top: 16px;
+  }
+}
+@container (max-width: 520px) {
+  .admin .afi-taxas .adm-us-opcoes-grade {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.admin .afi-opcao-pausa:has(input:checked) {
+  border-color: #f59e0b;
+  background: #fffbeb;
+  box-shadow: 0 0 0 3px rgb(245 158 11 / 0.16);
+}
+.admin .afi-opcao-pausa:has(input:checked) .adm-us-opcao-icone {
+  color: #b45309;
+}
+.admin .afi-soma {
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: #f1f4f9;
+  color: #334155;
+  font-size: 12.5px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.admin .afi-explica {
+  margin: -4px 0 12px;
+}
+
+.admin .afi-campos-niveis {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.admin .afi-campo-nivel {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr) 104px 34px;
+  align-items: center;
+  gap: 4px 10px;
+  padding: 8px 8px 8px 10px;
+  border: 1px solid var(--adm-borda);
+  border-radius: 14px;
+  background: #fbfcfe;
+}
+.admin .afi-campo-nivel[data-erro] {
+  border-color: #fecaca;
+  background: #fffafa;
+}
+.admin .afi-campo-nivel-n {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--afi-violeta-fundo);
+  color: var(--afi-violeta);
+  font-size: 14px;
+  font-weight: 900;
+}
+.admin .afi-campo-nivel-texto {
+  min-width: 0;
+  cursor: pointer;
+}
+.admin .afi-campo-nivel-nome {
+  display: block;
+  font-size: 14px;
+  font-weight: 900;
+}
+.admin .afi-campo-nivel-sub {
+  display: block;
+  color: var(--adm-suave);
+  font-size: 12px;
+  line-height: 1.3;
+}
+.admin .afi-campo-pct {
+  position: relative;
+  display: block;
+}
+.admin .afi-campo-pct input.adm-input {
+  min-height: 42px;
+  padding-right: 30px;
+  font-size: 17px;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+.admin .afi-campo-pct > span {
+  position: absolute;
+  top: 50%;
+  right: 11px;
+  color: var(--adm-suave);
+  font-size: 15px;
+  font-weight: 900;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+.admin .afi-campo-pct input.adm-input[aria-invalid='true'] {
+  border-color: #f87171;
+  background: #fffafa;
+}
+.admin .afi-remover {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  color: #8a94a8;
+  cursor: pointer;
+}
+.admin .afi-remover:hover {
+  background: #fef2f2;
+  color: #b91c1c;
+}
+.admin .afi-remover-vago {
+  width: 34px;
+}
+.admin .afi-campo-nivel-erro {
+  grid-column: 2 / -1;
+}
+.admin .afi-niveis-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+  margin-top: 12px;
+}
+.admin .afi-campo-teto {
+  margin-top: 14px;
+}
+.admin .afi-campo-teto .adm-us-campo-moeda {
+  max-width: 260px;
+}
+.admin .afi-campo-teto input.adm-input[aria-invalid='true'] {
+  border-color: #f87171;
+  background: #fffafa;
+}
+
+.admin .afi-avisos {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 14px;
+  border: 1px solid #bfdbfe;
+  border-radius: 14px;
+  background: #eff6ff;
+  color: #1e3a8a;
+  font-size: 13.5px;
+  line-height: 1.45;
+}
+.admin .afi-avisos p {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+.admin .afi-avisos svg {
+  margin-top: 2px;
+}
+
+/* simulação */
+.admin .afi-sim-pausado {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: #fffbeb;
+  color: #92400e;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+.admin .afi-sim-venda {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 8px;
+  color: #334155;
+  font-size: 14px;
+  font-weight: 800;
+}
+.admin .afi-sim-venda-campo {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+.admin .afi-sim-venda-campo svg {
+  position: absolute;
+  left: 9px;
+  pointer-events: none;
+}
+.admin .afi-sim-venda-campo input.adm-input {
+  width: 128px;
+  min-height: 38px;
+  padding-left: 34px;
+  font-size: 15px;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+}
+.admin .afi-sim-venda-campo input.adm-input[aria-invalid='true'] {
+  border-color: #f87171;
+}
+.admin .afi-sim-lista {
+  display: flex;
+  flex-direction: column;
+  margin-top: 12px;
+}
+.admin .afi-sim-item {
+  padding: 9px 0;
+  border-bottom: 1px solid #eef1f6;
+}
+.admin .afi-sim-item:last-child {
+  border-bottom: 0;
+}
+.admin .afi-sim-item-topo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 8px;
+}
+.admin .afi-sim-nivel {
+  font-size: 13.5px;
+  font-weight: 900;
+}
+.admin .afi-sim-quem {
+  color: var(--adm-suave);
+  font-size: 12px;
+}
+.admin .afi-sim-valor {
+  margin-left: auto;
+  color: #334155;
+  font-size: 13px;
+  white-space: nowrap;
+}
+.admin .afi-sim-valor strong {
+  color: var(--adm-texto);
+  font-size: 15px;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+}
+.admin .afi-sim-item .afi-barra {
+  height: 6px;
+  margin-top: 6px;
+}
+.admin .afi-sim-antes {
+  display: inline-block;
+  margin-top: 3px;
+  color: #8a94a8;
+  font-size: 11.5px;
+  font-weight: 700;
+}
+.admin .afi-sim-item[data-mudou] .afi-sim-antes {
+  color: #b45309;
+}
+.admin .afi-sim-item[data-removido] {
+  opacity: 0.7;
+}
+.admin .afi-sim-item[data-removido] .afi-sim-quem {
+  color: #b91c1c;
+  font-weight: 800;
+}
+.admin .afi-sim-total {
+  margin-top: 6px;
+  padding: 12px;
+  border-radius: 12px;
+  background: #fffbeb;
+  color: #78350f;
+  font-size: 13.5px;
+  line-height: 1.45;
+}
+.admin .afi-sim-total strong {
+  color: #422006;
+  font-weight: 900;
+}
+.admin .afi-sim-total .afi-sim-antes {
+  margin-top: 0;
+  color: #b45309;
+  font-size: 12.5px;
+}
+.admin .afi-sim-sub {
+  margin-top: 4px;
+  color: #92400e;
+  font-size: 12px;
+}
+.admin .afi-sim-teto {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 10px;
+  color: #475569;
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+.admin .afi-sim-teto svg {
+  margin-top: 2px;
+  color: #8a94a8;
+}
+
+/* última alteração */
+.admin .afi-ultima-quando {
+  font-size: 14px;
+}
+.admin .afi-ultima-mudou {
+  margin-top: 6px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: #f6f8fc;
+  color: #334155;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+/* barra de salvar: com alterações pendentes, gruda no pé da tela enquanto o formulário está à vista */
+.admin .afi-salvar {
+  position: relative;
+  z-index: 12;
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 16px;
+  padding: 12px 16px;
+  border: 1px solid var(--adm-borda);
+  border-radius: 16px 16px 0 0;
+  background: rgb(255 255 255 / 0.96);
+  box-shadow: 0 -8px 24px rgb(15 23 42 / 0.08);
+  backdrop-filter: blur(6px);
+}
+.admin .afi-salvar[data-sujo] {
+  position: sticky;
+  bottom: 0;
+  margin: 0 -6px;
+  border-color: #bbf7d0;
+  box-shadow: 0 -8px 28px rgb(22 163 74 / 0.14);
+}
+.admin .afi-salvar:not([data-sujo]) {
+  border-radius: 16px;
+  box-shadow: none;
+}
+.admin .afi-salvar-titulo {
+  font-size: 14px;
+  font-weight: 900;
+}
+.admin .afi-salvar-detalhe {
+  overflow: hidden;
+  color: #334155;
+  font-size: 12.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.admin .afi-salvar-detalhe[data-erro] {
+  color: #b91c1c;
+  font-weight: 700;
+}
+.admin .afi-salvar-ok {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--adm-suave);
+  font-size: 13.5px;
+  font-weight: 700;
+}
+.admin .afi-salvar-ok svg {
+  color: #16a34a;
+}
+.admin .afi-salvar-botoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+@media (max-width: 520px) {
+  .admin .afi-salvar[data-sujo] {
+    margin: 0 -14px;
+    border-radius: 14px 14px 0 0;
+  }
+  .admin .afi-salvar-botoes {
+    flex: 1 1 100%;
+  }
+  .admin .afi-salvar-botoes > * {
+    flex: 1 1 0;
+  }
+  .admin .afi-salvar-detalhe {
+    white-space: normal;
+  }
+}
+
+/* confirmação */
+.admin .afi-confirmar-novo {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border-radius: 12px;
+  background: #f6f8fc;
+}
+.admin .afi-confirmar-linha {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ================================================================ ficha do membro (seção Afiliação) */
+/* celular: a seção entra logo depois do Perfil (no desktop vale a ordem do código) */
+@container (max-width: 939.98px) {
+  .admin .adm-us-sec-afiliacao {
+    order: 5;
+  }
+}
+.admin .adm-us-extrato-icone[data-tipo='COMISSAO_INDICACAO'] {
+  background: var(--afi-violeta-fundo);
+  color: var(--afi-violeta);
+}

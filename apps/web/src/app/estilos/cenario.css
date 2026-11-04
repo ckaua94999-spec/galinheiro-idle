@@ -1,0 +1,537 @@
+/* Estilos de cenário (galinheiro). Dono: cenário/efeitos. Importado por globals.css.
+   Topo (céu, sol, nuvens, colinas, celeiro), campo de grama, cercado de madeira e o slot do ninho.
+   Só transform/opacity animam; nada de filter. Em .reduzir-movimento tudo fica parado. */
+
+/* ------------------------------------------------------------------ tela */
+/* O pasto vai até o fim da página (por baixo das abas) para não sobrar faixa de céu embaixo: a tela ocupa
+   pelo menos toda a altura abaixo do HUD e o pasto estica até as abas, seja qual for a altura do topo do cenário
+   (muda com a largura) ou do cercado (muda com o nível). */
+.tela-galinheiro {
+  --cauda: calc(var(--altura-abas) + var(--seguro-base) + 20px);
+  margin-bottom: calc(-1 * var(--cauda));
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100dvh - var(--altura-hud) - var(--seguro-topo) - 8px);
+}
+.pasto {
+  flex: 1 0 auto;
+  position: relative;
+  isolation: isolate;
+  padding-bottom: calc(var(--cauda) + 18px);
+  background-color: #5cb83a;
+  background-image:
+    url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='150' height='150'><defs><path id='t' d='M0 9C1.3 6.4 1.3 2.6 0 0C2.6 2.6 3.9 5.2 3.9 7.8C4.5 3.9 6.5 1.3 9.1 0C7.2 3.9 6.5 6.5 6.5 9C7.8 6.5 10.4 5.2 13 5.2C10.4 6.5 9.8 7.8 9.8 9Z'/></defs><g fill='%237fd450'><use href='%23t' x='14' y='20'/><use href='%23t' x='92' y='12'/><use href='%23t' x='52' y='66'/><use href='%23t' x='118' y='84'/><use href='%23t' x='26' y='118'/><use href='%23t' x='84' y='130'/></g><g fill='%23449c2a' opacity='.6'><use href='%23t' x='40' y='38'/><use href='%23t' x='120' y='40'/><use href='%23t' x='8' y='76'/><use href='%23t' x='76' y='98'/><use href='%23t' x='130' y='132'/></g></svg>"),
+    radial-gradient(ellipse 120px 70px at 30% 40%, rgb(127 212 80 / 0.35), transparent 70%),
+    radial-gradient(ellipse 140px 80px at 75% 80%, rgb(68 156 42 / 0.25), transparent 70%);
+  background-size: 150px 150px, 340px 300px, 340px 300px;
+}
+/* Florzinhas do campo numa camada própria que termina 24 px acima da faixa das abas: nenhuma flor fica
+   "pousada" na borda da barra de abas. */
+.pasto::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: 0 0 calc(var(--cauda) + 24px);
+  background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='260' height='230'><g fill='%23fff'><circle cx='40' cy='60' r='2.2'/><circle cx='43' cy='57' r='2.2'/><circle cx='43.5' cy='62' r='2.2'/><circle cx='190' cy='160' r='2.2'/><circle cx='193' cy='157' r='2.2'/><circle cx='193.5' cy='162' r='2.2'/></g><g fill='%23ffd23f'><circle cx='42' cy='60' r='1.3'/><circle cx='192' cy='160' r='1.3'/></g><g fill='%23ff8ac0'><circle cx='150' cy='40' r='2'/><circle cx='153' cy='38' r='2'/><circle cx='152' cy='43' r='2'/></g><circle cx='152' cy='40.5' r='1.1' fill='%23fff3a0'/></svg>");
+  background-size: 260px 230px;
+  pointer-events: none;
+}
+
+/* ------------------------------------------------------------------ topo do cenário */
+.cenario-cq {
+  container-type: inline-size;
+}
+.cenario-topo {
+  /* --u: unidade das bases/larguras dos itens (cresce no desktop junto com a escala das colinas) */
+  --u: 1px;
+  position: relative;
+  height: 144px;
+  overflow: hidden;
+}
+@container (min-width: 640px) {
+  .cenario-topo {
+    height: 176px;
+  }
+}
+/* desktop: faixa mais alta (diorama), itens 1,3× maiores; as colinas (viewBox 1200, slice) acompanham */
+@container (min-width: 900px) {
+  .cenario-topo {
+    --u: 1.3px;
+    height: 230px;
+  }
+}
+/* celular de tela baixa (ex.: 375×667): faixa menor e itens 0,8×, para caber a 4ª fileira de ninhos */
+@media (max-height: 700px) and (max-width: 639px) {
+  .cenario-topo {
+    --u: 0.8px;
+    height: 112px;
+  }
+}
+.cenario-item {
+  position: absolute;
+  height: auto;
+}
+/* itens extras que só cabem em telas largas */
+.cenario-largo {
+  display: none;
+}
+@container (min-width: 640px) {
+  .cenario-largo {
+    display: block;
+  }
+}
+.cenario-muito-largo {
+  display: none;
+}
+@container (min-width: 900px) {
+  .cenario-muito-largo {
+    display: block;
+  }
+}
+/* A base do celeiro (y 100 do SVG) fica 8 unidades acima do pé do SVG (o terreiro mora embaixo).
+   Celular: base a ~12 px do chão, no vale da colina da frente; portão e terreiro aparecem inteiros. */
+.cenario-celeiro {
+  left: 36%;
+  bottom: 6px;
+  width: 132px;
+}
+@media (max-height: 700px) and (max-width: 639px) {
+  .cenario-celeiro {
+    bottom: 5px;
+    width: 112px;
+  }
+  .cenario-sol {
+    width: 88px;
+    height: 88px;
+  }
+}
+@container (min-width: 640px) {
+  .cenario-celeiro {
+    left: 40%;
+    bottom: 0;
+    width: 184px;
+  }
+}
+@container (min-width: 900px) {
+  .cenario-celeiro {
+    left: 42%;
+    bottom: -3px;
+    width: 230px;
+  }
+}
+
+/* Sol à direita, com os raios girando devagar (o span gira; o SVG fica parado dentro) */
+.cenario-sol {
+  position: absolute;
+  right: 3%;
+  top: -10px;
+  width: 104px;
+  height: 104px;
+}
+@container (min-width: 640px) {
+  .cenario-sol {
+    right: 6%;
+    width: 128px;
+    height: 128px;
+  }
+}
+@container (min-width: 900px) {
+  .cenario-sol {
+    right: 7%;
+    top: -6px;
+    width: 156px;
+    height: 156px;
+  }
+}
+.cenario-sol-raios {
+  position: absolute;
+  inset: 0;
+  animation: cenario-girar 40s linear infinite;
+}
+
+/* Nuvens derivando pela largura do cenário (cqw = largura do container) */
+.nuvem {
+  position: absolute;
+  left: 0;
+  height: auto;
+  animation: cenario-deriva linear infinite;
+}
+@keyframes cenario-deriva {
+  from {
+    transform: translateX(-40cqw);
+  }
+  to {
+    transform: translateX(110cqw);
+  }
+}
+
+/* Moinho: a torre é fixa, as pás giram num span por cima. --m: tamanho (no desktop 1,4× o do celular) */
+.cenario-moinho {
+  --m: var(--u);
+  position: absolute;
+  width: calc(var(--m) * 38);
+  height: calc(var(--m) * 58);
+}
+.cenario-moinho-pos {
+  left: 15%;
+  bottom: calc(var(--u) * 46);
+}
+@container (min-width: 900px) {
+  .cenario-moinho {
+    --m: 1.4px;
+  }
+}
+.cenario-moinho-pas {
+  position: absolute;
+  left: 50%;
+  top: 31%;
+  width: calc(var(--m) * 46);
+  height: calc(var(--m) * 46);
+  margin: calc(var(--m) * -23) 0 0 calc(var(--m) * -23);
+  animation: cenario-girar 9s linear infinite;
+}
+
+@keyframes cenario-girar {
+  to {
+    rotate: 360deg;
+  }
+}
+
+html.reduzir-movimento .nuvem {
+  animation: none !important;
+  transform: translateX(var(--x-parado, 0));
+}
+html.reduzir-movimento .cenario-sol-raios,
+html.reduzir-movimento .cenario-moinho-pas {
+  animation: none !important;
+}
+
+/* ------------------------------------------------------------------ cercado */
+.cerca {
+  position: relative;
+  isolation: isolate;
+  padding: 30px 14px 30px;
+}
+/* sombra do cercado no campo */
+.cerca::after {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  left: 2px;
+  right: 2px;
+  bottom: -7px;
+  height: 18px;
+  border-radius: 50%;
+  background: rgb(36 98 24 / 0.38);
+}
+
+/* Chão do cercado: grama bem cuidada com tufos (padrão estático) e a sombra da cerca do fundo */
+.grama {
+  background-color: #6cc644;
+  background-image:
+    url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><defs><path id='t' d='M0 7C1 5 1 2 0 0C2 2 3 4 3 6C3.5 3 5 1 7 0C5.5 3 5 5 5 7C6 5 8 4 10 4C8 5 7.5 6 7.5 7Z'/></defs><g fill='%239be36a'><use href='%23t' x='12' y='18'/><use href='%23t' x='70' y='8'/><use href='%23t' x='44' y='52'/><use href='%23t' x='98' y='64'/><use href='%23t' x='20' y='94'/><use href='%23t' x='66' y='102'/></g><g fill='%234fa832' opacity='.5'><use href='%23t' x='32' y='32'/><use href='%23t' x='90' y='30'/><use href='%23t' x='6' y='62'/><use href='%23t' x='60' y='78'/><use href='%23t' x='104' y='106'/></g></svg>"),
+    radial-gradient(ellipse 34px 20px at 50% 50%, rgb(155 227 106 / 0.5), transparent 70%),
+    radial-gradient(ellipse 30px 18px at 50% 50%, rgb(155 227 106 / 0.4), transparent 70%),
+    radial-gradient(ellipse 24px 14px at 50% 50%, rgb(63 143 42 / 0.18), transparent 70%);
+  background-size: 120px 120px, 52px 52px, 68px 68px, 44px 44px;
+  background-position: 0 0, 10px 6px, 40px 30px, 22px 18px;
+}
+.cerca-chao {
+  position: relative;
+  container-type: inline-size;
+  border-radius: 4px;
+  padding: 14px 8px 16px;
+  box-shadow:
+    inset 0 12px 0 rgb(63 143 42 / 0.42),
+    inset 10px 0 0 -2px rgb(63 143 42 / 0.28),
+    inset -6px 0 0 -2px rgb(63 143 42 / 0.18),
+    0 0 0 2px #2f7a22;
+}
+@container (min-width: 520px) {
+  .cerca-chao {
+    padding: 16px 12px 18px;
+  }
+}
+
+/* Fileiras em pé (padrão gi-cenario-cerca). A do fundo fica atrás dos ninhos; a da frente, na frente. */
+.cerca-fileira {
+  position: absolute;
+  z-index: 1;
+  left: 10px;
+  right: 10px;
+  width: calc(100% - 20px);
+  height: 40px;
+  pointer-events: none;
+}
+.cerca-fileira-fundo {
+  top: 0;
+}
+.cerca-fileira-frente {
+  bottom: 0;
+  z-index: 2;
+}
+
+/* Laterais vistas de cima: travessa grossa com pregos e tampas de poste */
+.cerca-lado {
+  position: absolute;
+  z-index: 1;
+  top: 22px;
+  bottom: 22px;
+  width: 14px;
+  border: 2px solid #3b200c;
+  border-radius: 5px;
+  background:
+    repeating-linear-gradient(180deg, transparent 0 70px, #3b200c 70px 72px, #9a5f2e 72px 84px, #3b200c 84px 86px),
+    radial-gradient(circle at 50% 50%, #5a3418 0 1.6px, transparent 2px) 0 22px / 100% 86px repeat-y,
+    linear-gradient(90deg, #e3a96b 0%, #c88a52 45%, #9a5f2e 100%);
+  box-shadow: inset 2px 0 0 rgb(255 226 176 / 0.45);
+}
+.cerca-lado-e {
+  left: 0;
+}
+.cerca-lado-d {
+  right: 0;
+}
+
+/* Postes dos cantos, mais grossos, com tampa escura saindo para cima */
+.cerca-poste {
+  position: absolute;
+  z-index: 3;
+  width: 20px;
+  height: 46px;
+  border: 2px solid #3b200c;
+  border-radius: 6px 6px 4px 4px;
+  background: linear-gradient(90deg, #e8b47a 0%, #c88a52 45%, #8a5428 100%);
+  box-shadow:
+    inset 2px 0 0 rgb(255 226 176 / 0.5),
+    0 4px 0 rgb(36 98 24 / 0.35);
+  pointer-events: none;
+}
+.cerca-poste::before {
+  content: '';
+  position: absolute;
+  left: -5px;
+  right: -5px;
+  top: -8px;
+  height: 12px;
+  border: 2px solid #3b200c;
+  border-radius: 7px;
+  background: linear-gradient(180deg, #c98a52, #9a5f2e 60%, #7a4a22);
+  box-shadow: inset 0 2px 0 rgb(255 226 176 / 0.45);
+}
+.cerca-poste::after {
+  content: '';
+  position: absolute;
+  left: 6px;
+  top: 12px;
+  width: 4px;
+  height: 18px;
+  border-radius: 2px;
+  background: rgb(122 74 34 / 0.45);
+}
+.cerca-poste-fundo {
+  top: 0;
+}
+.cerca-poste-frente {
+  bottom: -4px;
+}
+
+/* Placa pregada na cerca da frente */
+.placa-galinheiro-ancora {
+  position: relative;
+  z-index: 4;
+  display: flex;
+  justify-content: center;
+  margin-top: -36px;
+  pointer-events: none;
+}
+.placa-galinheiro {
+  position: relative;
+  margin: 0;
+  padding: 5px 16px 7px;
+  border-radius: 10px;
+  font-size: 13px;
+  line-height: 16px;
+  white-space: nowrap;
+  rotate: -1.5deg;
+}
+/* dois pregos */
+.placa-galinheiro::before,
+.placa-galinheiro::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: 5px;
+  height: 5px;
+  margin-top: -2.5px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #e8d2b0, #7a4a22 60%, #3b200c);
+}
+.placa-galinheiro::before {
+  left: 5px;
+}
+.placa-galinheiro::after {
+  right: 5px;
+}
+.dica-galinheiro {
+  display: table;
+  margin: 12px auto 0;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: rgb(43 26 15 / 0.62);
+  color: #fff6e0;
+  font-family: var(--font-texto);
+  font-weight: 800;
+  font-size: 12px;
+  line-height: 16px;
+  text-align: center;
+}
+
+/* ------------------------------------------------------------------ slot do ninho */
+/* contain: layout (isola o layout do slot). Sem "paint": o balão, o "!" e o halo podem passar uns pixels da
+   borda (sobre o vão entre os ninhos) em vez de sair cortados. container-type: as peças usam cqw (tamanho do slot).
+   data-especie: desvios do balão de "pronto" por espécie (efeitos.css). */
+.ninho-slot {
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  padding: 0;
+  border: 0;
+  border-radius: 18px;
+  background: none;
+  contain: layout;
+  container-type: inline-size;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  touch-action: manipulation;
+  cursor: pointer;
+}
+.ninho-slot:focus-visible {
+  outline: 3px solid #fff;
+  outline-offset: -3px;
+  box-shadow: inset 0 0 0 6px var(--color-compra-escura);
+}
+/* corpo do ninho (animal + palha): recebe o squash; o pé fica no chão do ninho */
+.ninho-corpo {
+  position: absolute;
+  inset: 0;
+  display: block;
+  transform-origin: 50% 92%;
+}
+.ninho-corpo > span {
+  position: absolute;
+  inset: 0;
+  display: block;
+}
+@media (hover: hover) {
+  .ninho-slot .ninho-corpo > span > svg {
+    transition: translate 220ms var(--ease-elastico);
+  }
+  .ninho-slot:hover .ninho-corpo > span > svg {
+    translate: 0 -2px;
+  }
+}
+
+/* Timer em chip escuro, sobrepondo a borda da frente do ninho */
+.ninho-timer {
+  position: absolute;
+  left: 50%;
+  bottom: 1%;
+  translate: -50% 0;
+  z-index: 2;
+  /* proporcional ao slot: 12 px no celular (mínimo da direção de arte), ~15 px no desktop */
+  height: clamp(20px, 24cqw, 26px);
+  padding: 0 0.55em 0 0.3em;
+  gap: 0.22em;
+  font-size: clamp(12px, 14cqw, 15px);
+  pointer-events: none;
+}
+.ninho-timer svg {
+  width: 1.08em;
+  height: 1.08em;
+}
+/* largura fixa: "23h59" ↔ "09:58" não fazem o chip pular */
+.ninho-timer-texto {
+  display: inline-block;
+  min-width: 4.3ch;
+  text-align: center;
+}
+.ninho-timer-h {
+  margin: 0 0.5px;
+  font-size: 0.82em;
+}
+/* menos de 30 min: chip dourado avisando que está quase */
+.ninho-timer[data-quase] {
+  --contorno-cor: #6a3d00;
+  border-color: #6a3d00;
+  background: linear-gradient(180deg, #ffd84d, #e6a100);
+  box-shadow: inset 0 1.5px 0 rgb(255 255 255 / 0.5);
+}
+@container (max-width: 64px) {
+  .ninho-timer {
+    padding: 0 5px;
+  }
+  .ninho-timer svg {
+    display: none;
+  }
+}
+
+/* Ninho vazio: "+" convidativo com brilho e pulso leve */
+.ninho-mais {
+  position: absolute;
+  left: 50%;
+  top: 46%;
+  translate: -50% -50%;
+  display: grid;
+  place-items: center;
+  width: 56cqw;
+  height: 56cqw;
+  pointer-events: none;
+}
+.ninho-mais::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgb(255 255 240 / 0.75) 0%, rgb(255 250 210 / 0.35) 40%, transparent 70%);
+  animation: ninho-mais-brilho 2.4s var(--ease-senoide) infinite alternate;
+}
+.ninho-mais > span {
+  position: relative;
+  font-size: clamp(26px, 40cqw, 46px);
+  line-height: 1;
+  --contorno-cor: #6b4416;
+  opacity: 0.95;
+  animation: ninho-mais-pulso 2.4s var(--ease-senoide) infinite;
+}
+@keyframes ninho-mais-brilho {
+  from {
+    opacity: 0.45;
+    scale: 0.85;
+  }
+  to {
+    opacity: 1;
+    scale: 1.05;
+  }
+}
+@keyframes ninho-mais-pulso {
+  0%,
+  100% {
+    scale: 1;
+  }
+  50% {
+    scale: 1.1;
+  }
+}
+@media (hover: hover) {
+  .ninho-slot:hover .ninho-mais > span {
+    animation-play-state: paused;
+    scale: 1.18;
+  }
+}
+html.reduzir-movimento .ninho-mais::before,
+html.reduzir-movimento .ninho-mais > span {
+  animation: none !important;
+}

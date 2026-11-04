@@ -1,0 +1,387 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#49b8ff" />
+    <title>Sem conexão · Galinheiro Idle</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120'%3E%3Cdefs%3E%3ClinearGradient id='fc-ceu' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%232f9bff'/%3E%3Cstop offset='.7' stop-color='%237fd0ff'/%3E%3Cstop offset='1' stop-color='%23c4ecff'/%3E%3C/linearGradient%3E%3CradialGradient id='fc-penas' cx='.38' cy='.32' r='.75' fx='.32' fy='.25'%3E%3Cstop offset='0' stop-color='%23ffffff'/%3E%3Cstop offset='.4' stop-color='%23fff4e2'/%3E%3Cstop offset='.8' stop-color='%23fbe2c2'/%3E%3Cstop offset='1' stop-color='%23edbe96'/%3E%3C/radialGradient%3E%3CradialGradient id='fc-crista' cx='.38' cy='.32' r='.8' fx='.3' fy='.22'%3E%3Cstop offset='0' stop-color='%23ff8466'/%3E%3Cstop offset='.45' stop-color='%23ee4334'/%3E%3Cstop offset='1' stop-color='%23b8233a'/%3E%3C/radialGradient%3E%3ClinearGradient id='fc-bico' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%23ffe07a'/%3E%3Cstop offset='.45' stop-color='%23ffb52e'/%3E%3Cstop offset='1' stop-color='%23e2740f'/%3E%3C/linearGradient%3E%3ClinearGradient id='fc-ninho' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%23ffe58a'/%3E%3Cstop offset='.4' stop-color='%23e9b949'/%3E%3Cstop offset='1' stop-color='%23b57a2c'/%3E%3C/linearGradient%3E%3CclipPath id='fc-forma'%3E%3Crect width='120' height='120' rx='26'/%3E%3C/clipPath%3E%3C/defs%3E%3Cg clip-path='url(%23fc-forma)'%3E%3Crect width='120' height='120' fill='url(%23fc-ceu)'/%3E%3Cpath d='M42 34C36 28 38 17 46 16C47 8 56 4 62 9C67 4 77 7 77 15C84 17 85 28 78 34Z' fill='url(%23fc-crista)' stroke='%236e1622' stroke-width='9' paint-order='stroke' stroke-linejoin='round'/%3E%3Ccircle cx='60' cy='62' r='36' fill='url(%23fc-penas)' stroke='%238a4a22' stroke-width='10' paint-order='stroke'/%3E%3Cellipse cx='38' cy='74' rx='7' ry='4.6' fill='%23ff7b8a' opacity='.75'/%3E%3Cellipse cx='82' cy='74' rx='7' ry='4.6' fill='%23ff7b8a' opacity='.75'/%3E%3Cellipse cx='45' cy='60' rx='7.6' ry='9.6' fill='%232a160a'/%3E%3Cellipse cx='75' cy='60' rx='7.6' ry='9.6' fill='%232a160a'/%3E%3Ccircle cx='42.4' cy='56.4' r='3.4' fill='%23fff'/%3E%3Ccircle cx='72.4' cy='56.4' r='3.4' fill='%23fff'/%3E%3Cpath d='M55 80C50 84 51 93 56 93C60 93 61 86 59.5 81ZM61 81C60 86 61 93 65 93C69 92 69 85 64 80Z' fill='url(%23fc-crista)' stroke='%236e1622' stroke-width='4' paint-order='stroke' stroke-linejoin='round'/%3E%3Cpath d='M48 70C53 64.5 67 64.5 72 70C69 77 64 81.5 60 82C56 81.5 51 77 48 70Z' fill='url(%23fc-bico)' stroke='%237a3a0c' stroke-width='5' paint-order='stroke' stroke-linejoin='round'/%3E%3Cpath d='M52 70Q56 67 62 67.4' fill='none' stroke='%23fff' stroke-width='2.4' stroke-linecap='round' opacity='.7'/%3E%3Cpath d='M-6 97Q10 87 24 95Q35 88 47 95Q60 89 73 95Q85 88 96 95Q110 87 126 97V126H-6Z' fill='url(%23fc-ninho)' stroke='%236b4416' stroke-width='7' paint-order='stroke' stroke-linejoin='round'/%3E%3Cpath d='M14 107l9 4M34 104l9 3M56 106l9 2M78 104l9 3M98 107l8 4' stroke='%23b57a2c' stroke-width='3' stroke-linecap='round'/%3E%3C/g%3E%3Crect x='1.5' y='1.5' width='117' height='117' rx='24.5' fill='none' stroke='%230b2d66' stroke-opacity='.35' stroke-width='3'/%3E%3C/svg%3E" />
+    <!-- Página offline do service worker: AUTOCONTIDA (sem fontes, CSS ou JS externos). Mesma arte do
+         jogo (a galinha vem de app/icones/arte.ts, cópia de arte/animais/Galinha.tsx) e o mesmo contrato
+         visual (DIRECAO_DE_ARTE: céu, painel creme com faixa, botão 3D laranja, texto com contorno). -->
+    <style>
+      :root {
+        color-scheme: light;
+        --contorno: #2b1a0f;
+        --titulo: 'Lilita One', ui-rounded, 'SF Pro Rounded', 'Arial Rounded MT Bold', 'Segoe UI Black', system-ui, sans-serif;
+        --texto: 'Nunito', ui-rounded, 'SF Pro Rounded', 'Segoe UI', system-ui, sans-serif;
+        /* lado do herói (galinha no ninho): tudo em volta dele se mede por aqui */
+        --heroi: 210px;
+      }
+      * { box-sizing: border-box; }
+      html { font-synthesis: none; -webkit-text-size-adjust: 100%; }
+      body {
+        margin: 0;
+        min-height: 100dvh;
+        font-family: var(--texto);
+        color: #2b1d12;
+        /* sem "fixed": a página não rola e o fundo fixo força repintura */
+        background: linear-gradient(180deg, #49b8ff 0%, #8fd6ff 28%, #c4ecff 55%, #dff6c8 100%);
+      }
+
+      /* Palco: ocupa a tela e recorta os raios de sol (que são maiores que ela) sem criar rolagem. */
+      .palco {
+        min-height: 100dvh;
+        display: grid;
+        place-items: center;
+        padding: 24px 16px calc(24px + env(safe-area-inset-bottom));
+        overflow: hidden;
+      }
+
+      /* ------------------------------------------- cenário da frente (nuvens e morro, atrás do conteúdo) */
+      .cenario { position: fixed; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; }
+      .nuvem { position: absolute; width: 132px; height: auto; animation: vagar 26s ease-in-out infinite alternate; }
+      .nuvem.n1 { left: -22px; top: 7%; }
+      .nuvem.n2 { right: -30px; top: 3%; width: 104px; animation-duration: 32s; animation-delay: -9s; }
+      .morro {
+        position: absolute;
+        left: -20%;
+        right: -20%;
+        bottom: -24vh;
+        height: 46vh;
+        border-radius: 50% 50% 0 0 / 34% 34% 0 0;
+        background: linear-gradient(180deg, #9be36a 0%, #6cc644 22%, #3f8f2a 100%);
+        box-shadow: inset 0 6px 0 rgb(212 255 158 / 0.8);
+      }
+
+      /* -------------------------------------------------------------------------------- conteúdo */
+      main { position: relative; width: 100%; max-width: 360px; display: grid; justify-items: center; }
+
+      /* Sol atrás da cabeça da galinha: ponto de tamanho zero posicionado pelo herói. Os raios são um SVG
+         de 18 triângulos com opacidade radial; só giram por transform (camada composta, sem repintura). */
+      .sol { position: absolute; left: 50%; top: calc(var(--heroi) * 0.36); width: 0; height: 0; z-index: -1; pointer-events: none; }
+      .raios {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 150vmax;
+        height: 150vmax;
+        margin: -75vmax 0 0 -75vmax;
+        animation: girar 90s linear infinite;
+        will-change: transform;
+      }
+      .halo {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 120vmin;
+        height: 120vmin;
+        margin: -60vmin 0 0 -60vmin;
+        background: radial-gradient(circle, rgb(255 246 200 / 0.95) 0, rgb(255 246 200 / 0.4) 30%, rgb(255 246 200 / 0) 62%);
+      }
+
+      .heroi { position: relative; width: var(--heroi); height: var(--heroi); margin-bottom: calc(var(--heroi) * -0.16); z-index: 1; }
+      .galinha { width: 100%; height: 100%; overflow: visible; }
+      .galinha .corpo { transform-box: fill-box; transform-origin: 50% 100%; animation: respirar 2.8s cubic-bezier(0.37, 0, 0.63, 1) infinite; }
+      .balao {
+        position: absolute;
+        right: -44px;
+        top: -14px;
+        width: 82px;
+        height: 71px;
+        transform-origin: 15% 100%;
+        animation: balao 2.4s cubic-bezier(0.37, 0, 0.63, 1) infinite;
+      }
+      .brilho { position: absolute; width: 28px; height: 28px; animation: piscar 2.2s ease-in-out infinite; }
+      .brilho.b1 { left: -22px; top: 40%; }
+      .brilho.b2 { left: 4px; top: 10%; width: 18px; height: 18px; animation-delay: -0.8s; }
+      .brilho.b3 { right: -16px; top: 56%; width: 20px; height: 20px; animation-delay: -1.5s; }
+
+      .painel {
+        position: relative;
+        width: 100%;
+        padding: 42px 22px 28px;
+        text-align: center;
+        border-radius: 26px;
+        background: linear-gradient(180deg, #fffcf3 0%, #fff6e0 60%, #fbedcd 100%);
+        border: 4px solid #6b4a26;
+        box-shadow: inset 0 3px 0 #ffffff, inset 0 -5px 0 rgb(236 213 164 / 0.9), 0 6px 0 2px rgb(43 26 15 / 0.22);
+      }
+      /* Faixa de título: fita azul com as pontas (SVG com contorno e dobra escura) presas atrás dela. */
+      .faixa { position: relative; display: inline-block; margin: 0 26px 22px; isolation: isolate; white-space: nowrap; }
+      .faixa .ponta { position: absolute; top: 16px; width: 40px; height: 50px; z-index: -1; overflow: visible; }
+      .faixa .ponta.e { left: -26px; }
+      .faixa .ponta.d { right: -26px; transform: scaleX(-1); }
+      .faixa h1 {
+        margin: 0;
+        padding: 8px 26px 10px;
+        border-radius: 14px;
+        border: 3px solid #0b2d66;
+        background: linear-gradient(180deg, #a8dcff 0%, #46a8ff 32%, #1868d0 100%);
+        box-shadow: inset 0 2px 0 rgb(255 255 255 / 0.6), 0 4px 0 #0b2d66;
+        font: 400 26px/30px var(--titulo);
+      }
+      .contorno {
+        color: #fff;
+        font-weight: 900;
+        -webkit-text-stroke: 0.16em var(--cor, var(--contorno));
+        paint-order: stroke fill;
+        text-shadow: 0 0.09em 0 var(--cor, var(--contorno));
+        letter-spacing: 0.01em;
+      }
+      @supports not (paint-order: stroke fill) {
+        .contorno {
+          -webkit-text-stroke: 0;
+          text-shadow: 2px 0 0 var(--cor, var(--contorno)), -2px 0 0 var(--cor, var(--contorno)), 0 2px 0 var(--cor, var(--contorno)),
+            0 -2px 0 var(--cor, var(--contorno)), 0 4px 0 var(--cor, var(--contorno));
+        }
+      }
+      .faixa h1.contorno { --cor: #0b2d66; }
+      p { margin: 0 auto; max-width: 290px; font-size: 16px; line-height: 22px; font-weight: 700; color: #6e5a46; }
+
+      .botao {
+        --cor: #6b2c00;
+        position: relative;
+        margin-top: 22px;
+        min-width: 230px;
+        min-height: 58px;
+        padding: 0 28px 4px;
+        border-radius: 18px;
+        border: 3px solid #6b2c00;
+        background: linear-gradient(180deg, #ffd36b 0%, #ff9d1e 48%, #e06a00 100%);
+        box-shadow: inset 0 3px 0 rgb(255 255 255 / 0.55), inset 0 -4px 0 rgb(107 44 0 / 0.25), 0 5px 0 #6b2c00, 0 8px 0 rgb(43 26 15 / 0.18);
+        font: 400 22px/1 var(--titulo);
+        cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
+        transition: translate 90ms cubic-bezier(0.32, 0, 0.67, 0), box-shadow 90ms;
+      }
+      /* brilho em "pílula" no alto do botão */
+      .botao::after {
+        content: '';
+        position: absolute;
+        left: 12px;
+        right: 12px;
+        top: 5px;
+        height: 9px;
+        border-radius: 999px;
+        background: rgb(255 255 255 / 0.35);
+        pointer-events: none;
+      }
+      .botao:active {
+        translate: 0 4px;
+        box-shadow: inset 0 3px 0 rgb(255 255 255 / 0.45), inset 0 -2px 0 rgb(107 44 0 / 0.25), 0 1px 0 #6b2c00;
+      }
+      .botao:focus-visible { outline: 4px solid #fff; outline-offset: 3px; }
+
+      @keyframes girar { to { rotate: 360deg; } }
+      @keyframes vagar { to { translate: 26px 6px; } }
+      @keyframes respirar { 0%, 100% { scale: 1 1; } 50% { scale: 1.025 0.985; } }
+      @keyframes balao { 0%, 100% { translate: 0 0; rotate: 0deg; } 50% { translate: 0 -5px; rotate: -4deg; } }
+      @keyframes piscar { 0%, 100% { scale: 0.6; opacity: 0.45; } 50% { scale: 1; opacity: 1; } }
+      @media (prefers-reduced-motion: reduce) {
+        *, *::before, *::after { animation: none !important; transition: none !important; }
+        .raios { will-change: auto; }
+      }
+      /* celular alto: herói maior para não sobrar céu vazio */
+      @media (min-height: 760px) {
+        :root { --heroi: 250px; }
+      }
+      @media (max-height: 600px) {
+        :root { --heroi: 150px; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="palco">
+      <main>
+        <div class="sol" aria-hidden="true">
+          <svg class="raios" viewBox="-100 -100 200 200">
+            <defs>
+              <radialGradient id="of-raios" cx="0" cy="0" r="100" gradientUnits="userSpaceOnUse">
+                <stop offset="0" stop-color="#fff" stop-opacity=".42"/><stop offset=".22" stop-color="#fff" stop-opacity=".26"/><stop offset=".55" stop-color="#fff" stop-opacity=".1"/><stop offset=".85" stop-color="#fff" stop-opacity="0"/>
+              </radialGradient>
+            </defs>
+            <path d="M0 0L0 -100L17.36 -98.48ZM0 0L34.2 -93.97L50 -86.6ZM0 0L64.28 -76.6L76.6 -64.28ZM0 0L86.6 -50L93.97 -34.2ZM0 0L98.48 -17.36L100 0ZM0 0L98.48 17.36L93.97 34.2ZM0 0L86.6 50L76.6 64.28ZM0 0L64.28 76.6L50 86.6ZM0 0L34.2 93.97L17.36 98.48ZM0 0L0 100L-17.36 98.48ZM0 0L-34.2 93.97L-50 86.6ZM0 0L-64.28 76.6L-76.6 64.28ZM0 0L-86.6 50L-93.97 34.2ZM0 0L-98.48 17.36L-100 0ZM0 0L-98.48 -17.36L-93.97 -34.2ZM0 0L-86.6 -50L-76.6 -64.28ZM0 0L-64.28 -76.6L-50 -86.6ZM0 0L-34.2 -93.97L-17.36 -98.48Z" fill="url(#of-raios)"/>
+          </svg>
+          <div class="halo"></div>
+        </div>
+
+        <div class="heroi" aria-hidden="true">
+          <svg class="galinha" viewBox="0 0 120 120">
+            <defs>
+            <radialGradient id="ic-penas" cx=".38" cy=".32" r=".75" fx=".32" fy=".25">
+            <stop offset="0" stop-color="#ffffff"/><stop offset=".35" stop-color="#fff4e2"/><stop offset=".78" stop-color="#fbe7cc"/><stop offset="1" stop-color="#edbe96"/>
+            </radialGradient>
+            <radialGradient id="ic-asa" cx=".38" cy=".3" r=".8" fx=".3" fy=".2">
+            <stop offset="0" stop-color="#fffaf0"/><stop offset=".4" stop-color="#fbe6ca"/><stop offset=".8" stop-color="#f0cba4"/><stop offset="1" stop-color="#e2a985"/>
+            </radialGradient>
+            <linearGradient id="ic-cauda" x1=".05" y1="1" x2=".9" y2="0">
+            <stop offset="0" stop-color="#d9824e"/><stop offset=".5" stop-color="#f2b27a"/><stop offset="1" stop-color="#fff3e0"/>
+            </linearGradient>
+            <radialGradient id="ic-crista" cx=".38" cy=".32" r=".8" fx=".3" fy=".22">
+            <stop offset="0" stop-color="#ff8466"/><stop offset=".4" stop-color="#ee4334"/><stop offset=".72" stop-color="#e2393a"/><stop offset="1" stop-color="#b8233a"/>
+            </radialGradient>
+            <linearGradient id="ic-bico" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#ffe07a"/><stop offset=".45" stop-color="#ffb52e"/><stop offset="1" stop-color="#e2740f"/>
+            </linearGradient>
+            <linearGradient id="ic-iris" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#2a160a"/><stop offset=".45" stop-color="#6b3f1f"/><stop offset="1" stop-color="#c0874a"/>
+            </linearGradient>
+            <linearGradient id="ic-esclera" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#e3cdb8"/><stop offset=".22" stop-color="#fffdf8"/><stop offset=".6" stop-color="#ffffff"/><stop offset="1" stop-color="#d3deec"/>
+            </linearGradient>
+            <radialGradient id="ic-realce" cx=".5" cy=".5" r=".5">
+            <stop offset="0" stop-color="#fffdf7" stop-opacity=".95"/><stop offset=".55" stop-color="#fffdf7" stop-opacity=".55"/><stop offset="1" stop-color="#fffdf7" stop-opacity="0"/>
+            </radialGradient>
+            <radialGradient id="ic-bochecha" cx=".5" cy=".5" r=".5">
+            <stop offset="0" stop-color="#ff6f86"/><stop offset=".55" stop-color="#ff7b8a" stop-opacity=".75"/><stop offset="1" stop-color="#ff7b8a" stop-opacity="0"/>
+            </radialGradient>
+            <linearGradient id="ic-ninho" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#ffe58a"/><stop offset=".35" stop-color="#e9b949"/><stop offset=".8" stop-color="#c98e34"/><stop offset="1" stop-color="#9a6424"/>
+            </linearGradient>
+            <radialGradient id="ic-ninho-dentro" cx=".5" cy=".35" r=".6">
+            <stop offset="0" stop-color="#7a4a1c"/><stop offset="1" stop-color="#4a2a10"/>
+            </radialGradient>
+            <radialGradient id="ic-ovo" cx=".38" cy=".3" r=".8" fx=".32" fy=".22">
+            <stop offset="0" stop-color="#ffffff"/><stop offset=".4" stop-color="#fffaf0"/><stop offset=".78" stop-color="#f8ead6"/><stop offset="1" stop-color="#f1dcc0"/>
+            </radialGradient>
+            <radialGradient id="ic-oclusao" cx=".5" cy=".55" r=".5">
+            <stop offset="0" stop-color="#3b2410" stop-opacity=".42"/><stop offset=".65" stop-color="#3b2410" stop-opacity=".2"/><stop offset="1" stop-color="#3b2410" stop-opacity="0"/>
+            </radialGradient>
+            <radialGradient id="ic-sombra" cx=".5" cy=".5" r=".5">
+            <stop offset="0" stop-color="#1d4d12" stop-opacity=".55"/><stop offset=".6" stop-color="#1d4d12" stop-opacity=".28"/><stop offset="1" stop-color="#1d4d12" stop-opacity="0"/>
+            </radialGradient>
+            <linearGradient id="ic-ouro" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#fff8d0"/><stop offset=".45" stop-color="#ffe066"/><stop offset="1" stop-color="#ffb21a"/>
+            </linearGradient>
+          </defs>
+            <ellipse cx="60" cy="111" rx="52" ry="7" fill="url(#ic-sombra)"/>
+            <g>
+            <ellipse cx="60" cy="92" rx="47" ry="13" fill="url(#ic-ninho)" stroke="#6b4416" stroke-width="7" paint-order="stroke" stroke-linejoin="round" stroke-linecap="round"/>
+            <path d="M24 86.2q5-3.6 10.5-3.4M39.5 82.3q6-1.7 12-1.3M66 80.6q6 0 12 1.3M83 82.4q6.5 1.2 11 3.8" fill="none" stroke="#c9932f" stroke-width="1.3" stroke-linecap="round" opacity=".8"/>
+            <path d="M28 83.4Q60 76.2 92 83.4" fill="none" stroke="#fff3c0" stroke-width="1.6" stroke-linecap="round" opacity=".6"/>
+            <ellipse cx="60" cy="90.6" rx="38.5" ry="8" fill="url(#ic-ninho-dentro)"/>
+            </g>
+            <g class="corpo">
+            <g transform="rotate(-8 88 74) translate(88 74) scale(.85) translate(-88 -74)">
+            <path d="M84 71Q95.2 53.7 106 39Q78.8 42.3 84 71Z" fill="url(#ic-cauda)" stroke="#8a4a22" stroke-width="6.8" paint-order="stroke" stroke-linejoin="round" stroke-linecap="round"/>
+            <path d="M85.6 72.6Q101.4 59.4 108.9 49.3Q88.6 46.6 85.6 72.6Z" fill="url(#ic-cauda)" stroke="#8a4a22" stroke-width="6.8" paint-order="stroke" stroke-linejoin="round" stroke-linecap="round"/>
+            <path d="M87 76.6Q103 71.2 110.1 60.7Q94 58 87 76.6Z" fill="url(#ic-cauda)" stroke="#8a4a22" stroke-width="8.2" paint-order="stroke" stroke-linejoin="round" stroke-linecap="round"/>
+            <path d="M84 71Q87 48 101.3 41.3M85.6 72.6Q95 53 105.4 50.2M87 76.6Q98.5 64.6 107.2 61.7" fill="none" stroke="#d9a07a" stroke-width="1.4" stroke-opacity=".8" stroke-linecap="round"/>
+            </g>
+            <path d="M30 80C27.6 68.6 33.4 60.4 42.4 57.6C47 56.2 52.6 56 58.6 56.4C75 56.2 87.6 60 93.6 69.4C98.8 77.6 97.2 92.4 87 100.2C77 107.4 45 107.6 34.4 100.4C27 95 27.6 87 30 80Z" fill="url(#ic-penas)" stroke="#8a4a22" stroke-width="7" paint-order="stroke" stroke-linejoin="round" stroke-linecap="round"/>
+            <path d="M93.6 69.6C99 79.6 96 94.6 86.4 100.6C75.4 107.4 46.4 107.2 35.8 100.6C51.6 103 74.4 100 84.4 90.6C90.4 84.8 93.2 77.6 93.6 69.6Z" fill="#edb592" opacity=".55"/>
+            <ellipse cx="44" cy="67" rx="10" ry="5.4" fill="url(#ic-realce)" transform="rotate(-22 44 67)"/>
+            <path d="M94.4 74.4Q95.6 81 93.6 87.4" fill="none" stroke="#bfe6ff" stroke-width="1.6" stroke-linecap="round" opacity=".6"/>
+            <path d="M38.6 72.6q2.7 2.6 5.4 0q2.7 2.6 5.4 0M35.4 79.4q2.7 2.6 5.4 0q2.7 2.6 5.4 0q2.7 2.6 5.4 0M43 86q2.7 2.4 5.4 0q2.7 2.4 5.4 0" fill="none" stroke="#d9a07a" stroke-width="1.3" stroke-opacity=".75" stroke-linecap="round"/>
+            <path d="M53 70q2.4 2.2 4.8 0M56.6 78.6q2.4 2.2 4.8 0M60.4 86q2.4 2.2 4.8 0" fill="none" stroke="#d9a07a" stroke-width="1.1" stroke-opacity=".6" stroke-linecap="round"/>
+            <g transform="rotate(-10 58 66)">
+            <path d="M58 65.4C67.4 61 80.4 63 87.6 70.4C92.2 75 93.6 81.4 90.6 84.8C88.6 87 85.2 86.4 84 84.2C82.4 87.4 77.8 88.2 75.6 85.6C69.4 85.6 59.6 80.6 56.6 74.4C55.2 71 55.8 67.2 58 65.4Z" fill="url(#ic-asa)" stroke="#8a4a22" stroke-width="4.8" paint-order="stroke" stroke-linejoin="round" stroke-linecap="round"/>
+            <path d="M75.6 85.6C75.2 81.6 73.8 78.6 71.6 76.2M84 84.2C83.6 80.4 82 77.2 79.6 74.8" fill="none" stroke="#8a4a22" stroke-width="1.4" stroke-opacity=".55" stroke-linecap="round"/>
+            <path d="M58 65.4C65.6 61.8 76.6 62.6 82.4 68.2C84 71.2 81.6 73.8 78.6 72.8C77.2 76 72.6 76.6 70.6 74C67.6 76.2 61.6 75.4 59.6 72.8C56.8 71 56 67.4 58 65.4Z" fill="url(#ic-penas)" stroke="#8a4a22" stroke-width="1.75" stroke-opacity=".85" stroke-linejoin="round"/>
+            </g>
+            <g transform="rotate(4 58 66)">
+            <g transform="rotate(-2 59 29)">
+            <path d="M47.5 30C43.4 25.4 44 18 49.6 17C50.6 11.6 56.4 8.4 61.2 11.6C64.8 8.2 71.6 10 71.2 16.2C75.6 18.4 75.2 25.2 70.2 29.2Z" fill="url(#ic-crista)" stroke="#6e1622" stroke-width="7" paint-order="stroke" stroke-linejoin="round" stroke-linecap="round"/>
+            <path d="M55.2 27.4Q54.8 20 57.2 14.6M64.4 27.4Q65.2 21.2 67.8 17" fill="none" stroke="#6e1622" stroke-width="1.2" stroke-opacity=".45" stroke-linecap="round"/>
+            <path d="M49.3 20.6a1.5 2.3 0 1 0 3 0a1.5 2.3 0 1 0 -3 0ZM57.7 15.4a1.7 2.3 0 1 0 3.4 0a1.7 2.3 0 1 0 -3.4 0ZM67.3 18.2a1.3 1.9 0 1 0 2.6 0a1.3 1.9 0 1 0 -2.6 0Z" fill="#ffc4b0" opacity=".75"/>
+            </g>
+            <path d="M58 23C70.4 23 80 32.2 80 44.6C80 56.4 70.8 65.6 58.6 65.6C52.6 65.6 47.6 63.8 44 60.6Q40.4 62.6 39.2 59.8Q36.6 59.2 38.2 55.6C37 52.2 36.4 48.6 36.4 44.6C36.4 32.2 45.8 23 58 23Z" fill="url(#ic-penas)" stroke="#8a4a22" stroke-width="7" paint-order="stroke" stroke-linejoin="round" stroke-linecap="round"/>
+            <path d="M79.6 47C78.4 57.6 70 65.2 58.6 65.4C52.4 65.4 47.8 63.6 44.6 60.8C49.6 62.6 54.4 63.2 59.4 62.6C69.4 61.6 76.6 55.6 79.6 47Z" fill="#edb592" opacity=".55"/>
+            <ellipse cx="48" cy="31.4" rx="8.4" ry="4.8" fill="url(#ic-realce)" transform="rotate(-28 48 31.4)"/>
+            <path d="M78.8 45Q78.6 50.6 75.2 55" fill="none" stroke="#bfe6ff" stroke-width="1.5" stroke-linecap="round" opacity=".6"/>
+            <path d="M54.6 57.6C50.8 60 51 66.6 54.6 67C57.8 67.4 58.8 62.2 57.6 58.4ZM59.6 58.2C58.6 62.4 59.6 67.8 62.8 67.4C66 67 65.4 60.6 61.8 57.8Z" fill="url(#ic-crista)" stroke="#6e1622" stroke-width="3.2" paint-order="stroke" stroke-linejoin="round" stroke-linecap="round"/>
+            
+            <ellipse cx="44.2" cy="55.6" rx="6.6" ry="4" fill="url(#ic-bochecha)"/>
+            <ellipse cx="73.4" cy="55" rx="6.6" ry="4" fill="url(#ic-bochecha)"/>
+            <path d="M42 44.6a7.4 9 0 1 0 14.8 0a7.4 9 0 1 0 -14.8 0ZM60.64 44.6a6.96 8.46 0 1 0 13.91 0a6.96 8.46 0 1 0 -13.91 0Z" fill="url(#ic-esclera)"/>
+            <path d="M43 45.2a6.1 6.1 0 1 0 12.2 0a6.1 6.1 0 1 0 -12.2 0ZM61.58 45.16a5.73 5.73 0 1 0 11.47 0a5.73 5.73 0 1 0 -11.47 0Z" fill="url(#ic-iris)"/>
+            <path d="M45.1 45.2a4 4 0 1 0 8 0a4 4 0 1 0 -8 0ZM63.56 45.16a3.76 3.76 0 1 0 7.52 0a3.76 3.76 0 1 0 -7.52 0Z" fill="#1e1426"/>
+            <path d="M45.08 42.9a2.5 2.5 0 1 0 5 0a2.5 2.5 0 1 0 -5 0ZM63.54 43a2.35 2.35 0 1 0 4.7 0a2.35 2.35 0 1 0 -4.7 0Z" fill="#fff"/>
+            <path d="M50.05 47a1.25 1.25 0 1 0 2.5 0a1.25 1.25 0 1 0 -2.5 0ZM68.21 46.86a1.17 1.17 0 1 0 2.35 0a1.17 1.17 0 1 0 -2.35 0Z" fill="#fff" fill-opacity=".85"/>
+            <path d="M55.21 39.02A7.4 9 0 0 0 42.05 43.52l-1.9 -1.5M62.14 39.35A6.96 8.46 0 0 1 74.51 43.58l1.79 -1.41" fill="none" stroke="#4a220c" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M44.8 31Q49.4 28.4 54 31M71.92 31.54Q67.6 28.94 63.28 31.54" fill="none" stroke="#8a4a22" stroke-width="2.3" stroke-linecap="round" opacity=".9"/>
+            <g transform="translate(58.6 52) scale(1.07) translate(-58.6 -52)">
+            <path d="M55.4 56.6C58.4 56 61.6 54.4 63.4 52.6C63.6 55.8 60.6 59 57.2 59.4C56.2 58.8 55.6 57.8 55.4 56.6Z" transform="rotate(30 54.4 55.6)" fill="url(#ic-bico)" stroke="#7a3a0c" stroke-width="3.2" paint-order="stroke" stroke-linejoin="round" stroke-linecap="round"/>
+            <path d="M52.6 50.2C55.6 47.6 62 47.4 65 50C63.4 53.6 59.4 57 56 57.6C53.8 56.2 52.2 53.4 52.6 50.2Z" fill="url(#ic-bico)" stroke="#7a3a0c" stroke-width="3.2" paint-order="stroke" stroke-linejoin="round" stroke-linecap="round"/>
+            <path d="M54.2 50.6Q57.4 48.6 61 49.2Q57.6 50.2 55.4 53Z" fill="#fff" opacity=".65"/>
+            <path d="M56 57.6C59.4 57 63.4 53.6 65 50L63.7 57.5C61.2 58.2 57.7 57.9 54.8 57Z" fill="#7a1e2c" stroke="#7a3a0c" stroke-width="1.1" stroke-linejoin="round"/>
+            <path d="M57.4 58Q60.2 53.6 63.7 57.9Q61.2 59 57.4 58Z" fill="#ff6f7d"/>
+            </g>
+            </g>
+          </g>
+            <ellipse cx="60" cy="90.4" rx="34" ry="5.2" fill="url(#ic-oclusao)"/>
+            <path d="M12 92Q10.5 106 30 110.8Q60 117.6 90 110.8Q109.5 106 108 92Q102 87.4 95.5 91.4Q88 87.8 80.5 92.6Q70.5 89.4 60 93.6Q49.5 89.4 39.5 92.6Q32 87.8 24.5 91.4Q18 87.4 12 92Z" fill="url(#ic-ninho)" stroke="#6b4416" stroke-width="7" paint-order="stroke" stroke-linejoin="round" stroke-linecap="round"/>
+            <path d="M16 99.5Q20.7 99.2 23.5 96.9M30.1 100.1Q34.1 98.8 37 96.5M53.9 99.3Q58 99.2 60.3 97.2M26.2 105.6Q31.3 105.4 33.7 102.5M41.3 105.4Q45.8 105.3 48.2 103.2M56.5 103.1Q58.3 105.1 62.2 104.9M87.5 105.1Q91.6 105 93.7 102.9M39.3 108.1Q41.7 110.5 45.5 111.4M60.4 107.8Q62.4 111.1 66.9 111.8M83.5 107.8Q85.4 110.6 89.7 111" fill="none" stroke="#ffe58a" stroke-width="1.6" stroke-linecap="round"/>
+            <path d="M45.7 96.3Q48.4 99.3 52.9 100.6M61.4 100.1Q64.8 99.3 66.8 97M75.6 100.4Q79.4 99.2 81.9 96.7M91.4 96.5Q93.7 99.4 98.1 100.3M49.8 106.6Q54.6 105.7 57.1 102.4M65.2 105.7Q69.5 105.5 71.1 102.7M80.7 102.2Q82.1 105.2 86.3 105.5M95 102.7Q97.7 104.9 101.5 106M46.4 110.5Q51 110.6 53 108.1M76.4 108.2Q79.2 110 83.2 110.6" fill="none" stroke="#d9a23e" stroke-width="1.6" stroke-linecap="round"/>
+            <path d="M23.4 97Q25.9 99.7 30.5 100.2M38.8 99.8Q43.6 100 45.7 97.5M67.6 97Q71 98.9 75.5 99.7M82.9 97Q85.1 99.3 89.3 99.6M19.5 103.1Q22.4 105.3 26.7 106M35.4 102.6Q37.8 104.4 41.3 105.1M71.6 103.4Q74.5 105 78.5 105.6M30.7 111.1Q34.6 110.8 36 108M53.2 107.9Q55.1 110.6 59.3 111.1M67.5 110.7Q72 110.5 74.4 108.4M27.4 96.6Q31.6 92.8 36.4 91M75.6 96.8Q71.8 93.6 66.6 92.4M97.6 98.8Q100.8 95.6 104.2 93.6" fill="none" stroke="#b57a2c" stroke-width="1.6" stroke-linecap="round"/>
+            <path d="M14.4 91.45Q18 89.95 21.6 91.45M28.4 91.8Q32 90.3 35.6 91.8M45.9 93.15Q49.5 91.65 53.1 93.15M66.9 93.15Q70.5 91.65 74.1 93.15M84.4 91.8Q88 90.3 91.6 91.8M98.4 91.45Q102 89.95 105.6 91.45" fill="none" stroke="#fff3c0" stroke-width="1.6" stroke-linecap="round" opacity=".75"/>
+            <path d="M26.6 95.4Q31 91.4 36 89.6M76.4 95.6Q72.4 92.2 66.8 91M97 97.6Q100.4 94.2 104 92.2" fill="none" stroke="#ffe58a" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M12.8 95.4Q11.4 92.6 13.2 91.6Q10.8 91.2 8.4 90Q10.2 93.6 12.8 95.4ZM16.6 105.4Q14 105.2 13 103.6Q12.8 106 11 107.6Q14.4 107.4 16.6 105.4ZM107.2 95Q108.6 92.4 106.8 91.4Q109.2 91 111.6 89.8Q109.8 93.4 107.2 95Z" fill="#c9932f" stroke="#6b4416" stroke-width="2.2" paint-order="stroke" stroke-linejoin="round" stroke-linecap="round"/>
+            <ellipse cx="79.4" cy="95.6" rx="7.6" ry="2.2" fill="#5a3410" opacity=".4"/>
+            <g transform="rotate(-12 80 87.4)">
+            <path d="M80 77.6C84.6 77.6 87.8 83 87.8 88.4C87.8 93.4 84.4 96.4 80 96.4C75.6 96.4 72.2 93.4 72.2 88.4C72.2 83 75.4 77.6 80 77.6Z" fill="url(#ic-ovo)" stroke="#8a6a3a" stroke-width="2.8" paint-order="stroke" stroke-linejoin="round" stroke-linecap="round"/>
+            <path d="M86.6 89.6C86 93.4 83.4 95.4 80 95.4C77.6 95.4 75.4 94.4 74.2 92.6C76.2 93.6 78.6 93.8 81 93.2C83.6 92.6 85.6 91.2 86.6 89.6Z" fill="#e8c9a0" opacity=".7"/>
+            <ellipse cx="77" cy="82.8" rx="1.9" ry="3" fill="#fff" transform="rotate(14 77 82.8)"/>
+            <ellipse cx="76.4" cy="87.6" rx=".9" ry="1.1" fill="#fff" opacity=".8"/>
+            </g>
+          </svg>
+          <!-- balão "sem sinal": ondas de wi-fi riscadas -->
+          <svg class="balao" viewBox="0 0 74 64">
+            <path d="M37 4C55 4 70 14 70 28S55 52 37 52c-3 0-6-.3-8.8-1L14 60l3.4-13C9 42 4 35.4 4 28 4 14 19 4 37 4Z" fill="#fffcf3" stroke="#6b4a26" stroke-width="4" stroke-linejoin="round"/>
+            <g transform="translate(1 -3)">
+              <path d="M27.25 37.18A7.5 7.5 0 0 1 38.75 37.18M21.51 32.36A15 15 0 0 1 44.49 32.36M15.76 27.54A22.5 22.5 0 0 1 50.24 27.54" fill="none" stroke="#6b7480" stroke-width="4.2" stroke-linecap="round"/>
+              <circle cx="33" cy="42" r="3.4" fill="#6b7480"/>
+              <!-- selo vermelho com X (anel creme separa do leque, contorno escuro do contrato) -->
+              <circle cx="51" cy="36" r="11" fill="#fffcf3"/>
+              <circle cx="51" cy="36" r="8.6" fill="#ff5a48" stroke="#5c0a05" stroke-width="2.4"/>
+              <path d="M46 32.4Q51 29.4 56 32.4" fill="none" stroke="#fff" stroke-opacity=".45" stroke-width="1.6" stroke-linecap="round"/>
+              <path d="M47.6 32.6 54.4 39.4M54.4 32.6 47.6 39.4" stroke="#5c0a05" stroke-width="5" stroke-linecap="round"/>
+              <path d="M47.6 32.6 54.4 39.4M54.4 32.6 47.6 39.4" stroke="#fff" stroke-width="2.8" stroke-linecap="round"/>
+            </g>
+          </svg>
+          <svg class="brilho b1" viewBox="0 0 28 28"><path d="M14 2Q16.4 11.6 26 14Q16.4 16.4 14 26Q11.6 16.4 2 14Q11.6 11.6 14 2Z" fill="#ffe066" stroke="#a85f00" stroke-width="2.4" stroke-linejoin="round"/></svg>
+          <svg class="brilho b2" viewBox="0 0 28 28"><path d="M14 2Q16.4 11.6 26 14Q16.4 16.4 14 26Q11.6 16.4 2 14Q11.6 11.6 14 2Z" fill="#ffe066" stroke="#a85f00" stroke-width="2.4" stroke-linejoin="round"/></svg>
+          <svg class="brilho b3" viewBox="0 0 28 28"><path d="M14 2Q16.4 11.6 26 14Q16.4 16.4 14 26Q11.6 16.4 2 14Q11.6 11.6 14 2Z" fill="#ffe066" stroke="#a85f00" stroke-width="2.4" stroke-linejoin="round"/></svg>
+        </div>
+
+        <section class="painel" aria-labelledby="titulo">
+          <div class="faixa">
+            <!-- pontas da fita: corpo com contorno e a dobra escura onde passam por trás da faixa -->
+            <svg class="ponta e" viewBox="0 0 40 50" aria-hidden="true">
+              <defs>
+                <linearGradient id="of-fita" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0" stop-color="#1d6fd6"/><stop offset="1" stop-color="#0f4fa8"/>
+                </linearGradient>
+              </defs>
+              <path d="M44 3H3.5L12.5 25L3.5 47H44Z" fill="url(#of-fita)" stroke="#0b2d66" stroke-width="3" stroke-linejoin="round"/>
+              <path d="M7.5 7H24" stroke="#fff" stroke-opacity=".35" stroke-width="2" stroke-linecap="round"/>
+              <path d="M25 37.5H41.5V48.5Z" fill="#0b2d66" stroke="#0b2d66" stroke-width="3" stroke-linejoin="round"/>
+            </svg>
+            <svg class="ponta d" viewBox="0 0 40 50" aria-hidden="true">
+              <path d="M44 3H3.5L12.5 25L3.5 47H44Z" fill="url(#of-fita)" stroke="#0b2d66" stroke-width="3" stroke-linejoin="round"/>
+              <path d="M7.5 7H24" stroke="#fff" stroke-opacity=".35" stroke-width="2" stroke-linecap="round"/>
+              <path d="M25 37.5H41.5V48.5Z" fill="#0b2d66" stroke="#0b2d66" stroke-width="3" stroke-linejoin="round"/>
+            </svg>
+            <h1 id="titulo" class="contorno">Sem conexão</h1>
+          </div>
+          <p>Seus animais continuam botando! Assim que a internet voltar, é só abrir o galinheiro de novo.</p>
+          <button type="button" class="botao contorno" onclick="location.href='/galinheiro'">Tentar de novo</button>
+        </section>
+      </main>
+    </div>
+
+    <!-- nuvens e morro: na frente dos raios de sol, atrás do conteúdo -->
+    <div class="cenario" aria-hidden="true">
+      <svg class="nuvem n1" viewBox="0 0 132 66"><path d="M18 58a16 16 0 0 1 2-31.6A26 26 0 0 1 69 16a20 20 0 0 1 34 12.6A15 15 0 0 1 114 58Z" fill="#bfe3ff"/><path d="M18 52a16 16 0 0 1 2-31.6A26 26 0 0 1 69 10a20 20 0 0 1 34 12.6A15 15 0 0 1 114 52Z" fill="#fff"/></svg>
+      <svg class="nuvem n2" viewBox="0 0 132 66"><path d="M18 58a16 16 0 0 1 2-31.6A26 26 0 0 1 69 16a20 20 0 0 1 34 12.6A15 15 0 0 1 114 58Z" fill="#bfe3ff"/><path d="M18 52a16 16 0 0 1 2-31.6A26 26 0 0 1 69 10a20 20 0 0 1 34 12.6A15 15 0 0 1 114 52Z" fill="#fff"/></svg>
+      <div class="morro"></div>
+    </div>
+    <script>
+      // A internet voltou: volta sozinho para o galinheiro.
+      addEventListener('online', function () {
+        location.href = '/galinheiro';
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,19 @@
+node_modules/
+.next/
+.turbo/
+dist/
+coverage/
+out/
+*.tsbuildinfo
+
+# Banco local, chaves de sessão, VAPID e dados de produção
+.data/
+
+# Segredos. O exemplo versionado é só .env.example
+.env
+.env.*
+!.env.example
+
+*.log
+.DS_Store
+Thumbs.db

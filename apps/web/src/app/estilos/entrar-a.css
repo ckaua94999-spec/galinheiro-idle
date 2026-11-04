@@ -1,0 +1,2747 @@
+/* Cena de abertura oficial — "pôr do sol cinematográfico" (telas/entrar/cena-a.tsx + cena-a/*).
+   Escopo: tudo sob .cena-a. Fora de @layer (vence o .entrar-painel/.entrar-legal de telas.css só aqui).
+
+   Encaixe por variáveis na raiz (cena-a.tsx): --chao (px do topo até a linha do chão), --e-logo, --e-palco,
+   --op-palco e --ergue (campo na frente dos pés, sem unidade). Os valores padrão abaixo são ESTIMATIVAS
+   por altura de tela: o HTML do servidor já pinta a cena inteira e a entrada (CSS) roda antes da
+   hidratação; o JS só refina (sem transição na 1ª vez, com mola depois: .ca-medido).
+
+   Mapa de profundidade (de trás para a frente), todas dentro do "mundo" cujo zero é a linha do chão:
+     céu (degradê preso ao horizonte) → sol (halo, 2 leques de raios em sentidos opostos, coroa, disco)
+     → nuvens + pássaros → serra lilás + névoa → colinas em contraluz (árvores, moinho, celeiro) + névoa
+     → campo dourado (trilha, sombras de nuvem, terreiro) → palco (elenco) → ninhos e borboletas
+     → capim da frente.
+   Por cima do mundo: poeira/vaga-lumes → vinheta → cortina (só cobre o mundo) → logo → painel.
+
+   Desktop: horizonte (--chao) a ~60% da altura; a paisagem distante cresce com a tela (--e-pais, pivô no
+   horizonte); o painel também (--e-base); as alas do elenco são contêineres do tamanho
+   min(espaço ao lado do painel, 52% da altura), presas ao pé da tela com folga.
+
+   Entrada (≤ 1,6 s, CSS): luz dourada clareia de baixo para cima (0,45 s) · camadas sobem em profundidade (0–1,3 s) · painel
+   (0,15–0,75 s) · fardo (0,25 s) · letras caem em cascata (0,3–1,15 s) · clarão do logo (0,85 s) · selo
+   (0,95 s) · gemas acendem do comum ao lendário (1,05–1,3 s) · Juca salta (0,4 s) · aves em escalada de
+   raridade com clarão na cor (0,62 / 0,76 / 0,9 / 1,02 s) · onda de choque da lendária (1,14 s) · lema (1,1 s).
+
+   Sistemas de animação contínua (ritmos diferentes e não múltiplos entre si):
+     1. sol: halo respira (7 s), coroa pulsa (4,2 s), raios giram 140 s / 210 s ao contrário + pulso 9 s;
+     2. céu: nuvens à deriva (27–52 s, vaivém), névoa da serra e das colinas (26 s / 34 s), sombras de
+        nuvem deslizando pelo campo (58 s / 74 s);
+     3. pássaros: 2 bandos em V cruzando o céu (30 s / 44 s), asas batendo defasadas, planeio;
+     4. fazenda: pás do moinho (9 s), portas do celeiro abrindo com a luz do feno (11 s), cata-vento (7 s),
+        fumaça da chaminé (5,2 s), janela tremeluzindo (3,3 s), galinhas do terreiro (9 s / 11 s, desktop);
+     5. vento: capim balança (3,3–5,3 s) + rajada que atravessa da esquerda para a direita (9 s);
+     6. partículas: 5 nuvenzinhas de poeira dourada (4 grãos cada, 1 animação por grupo) + 6 vaga-lumes
+        + 2 borboletas;
+     7. ninhos: o ovo pipoca com aura e estrelinhas e solta uma moeda que sobe girando (6,4 s / 7,8 s);
+     8. logo: flutua (5,7 s), faixa de brilho cruza as letras só com transform (5,2 s), reflexo no selo,
+        cintilas, gemas brilham em sequência (6,6 s), halo quente atrás;
+     9. elenco: galinha cisca (4,7 s, com poeirinha), pato rebola (1,9 s) e grasna (5,7 s, ondinhas), ganso
+        pose altiva + grasnado (7,3 s), avestruz se pavoneia (6,1 s) + aura (pulso 2,6 s, raios 16 s, facho
+        4,3 s, cintilas), Juca balança no fardo (5,3 s) e fala num balão (~10 s, JS).
+   html.reduzir-movimento (regra global de ui.css): tudo cai no estado base, que é a pose final (sem atraso
+   pendente); a raiz (so-opacidade) faz só um fade curto; o que só faz sentido em movimento some.
+   Desempenho: as entradas usam fill "backwards" (terminadas, deixam de existir); com o formulário aberto
+   o elenco, as partículas e o capim pausam (.ca-calmo) e com a aba escondida tudo pausa (.ca-oculta). */
+
+.cena-a {
+  --alto: max(480px, 100dvh);
+  --ergue: 12;
+  --chao: calc(var(--alto) - 244px - var(--ergue) * 1px);
+  --e-logo: 0.74;
+  --e-palco: 1.06;
+  --op-palco: 1;
+  --e-pais: 1;
+  --e-base: 1;
+  --campo: 0px;
+  --op-ninho: 1;
+  /* celular: o sol se põe atrás do Seu Juca; o moinho (pás finas) fica atrás da avestruz, na direita, e o
+     celeiro num outeiro à esquerda, com as portas acima da cabeça do ganso */
+  --sol-x: -20px;
+  --sol-y: 250px;
+  --moinho-l: clamp(62px, 18vw, 72px);
+  --moinho-x: min(170px, 50vw - var(--moinho-l) * 0.62);
+  --moinho-b: 113px;
+  --celeiro-l: clamp(96px, 29vw, 116px);
+  --celeiro-x: max(-150px, var(--celeiro-l) / 2 + 6px - 50vw);
+  --celeiro-b: 172px;
+  --palco-l: min(100vw - 24px, 540px);
+  --mola: cubic-bezier(0.3, 1.22, 0.5, 1);
+  --mx: 0;
+  --my: 0;
+  position: relative;
+  height: 100dvh;
+  min-height: 480px;
+  overflow: hidden;
+  isolation: isolate;
+  /* acima do céu, o azul-violeta do alto (telas muito altas) */
+  background: #2c3b78;
+  -webkit-tap-highlight-color: transparent;
+}
+/* estimativas por altura, calibradas com o que o JS mede (390×844 → chão 524, 360×640 → 366…) */
+@media (min-height: 600px) {
+  .cena-a {
+    --ergue: 28;
+  }
+}
+@media (min-height: 660px) {
+  .cena-a {
+    --e-logo: 0.86;
+  }
+}
+@media (min-height: 740px) {
+  .cena-a {
+    --ergue: 40;
+  }
+}
+@media (min-height: 760px) {
+  .cena-a {
+    --e-logo: 1;
+  }
+}
+@media (min-height: 800px) {
+  .cena-a {
+    --ergue: 62;
+  }
+}
+@media (min-height: 830px) {
+  .cena-a {
+    --ergue: 76;
+  }
+}
+/* desktop: panorama com o horizonte a ~60% da altura, elenco em duas alas dos lados do painel (só com altura
+   de sobra; janela baixa vira o layout "deitado", em duas colunas) */
+@media (min-width: 1024px) and (min-height: 601px) {
+  .cena-a {
+    --chao: calc(var(--alto) * 0.6);
+    --e-palco: 1;
+    --campo: calc(var(--alto) * 0.4 - 236px);
+    --sol-x: -170px;
+    --sol-y: 232px;
+    --moinho-x: -340px;
+    --moinho-l: 112px;
+    --celeiro-x: 262px;
+    --celeiro-l: 196px;
+    --celeiro-b: 110px;
+    --palco-l: 100vw;
+    /* largura VISUAL do painel (24rem × escala) e o espaço de cada ala ao lado dele */
+    --painel-v: calc(24rem * var(--e-base));
+    --ala-espaco: calc(50vw - var(--painel-v) / 2 - 64px);
+    --ala-l: min(var(--ala-espaco), 52dvh);
+  }
+}
+/* estimativas por altura (o JS refina: --e-base = H/880 em [1; 1,25], --e-pais = H/760 em [1; 1,45]) */
+@media (min-width: 1024px) and (min-height: 860px) {
+  .cena-a {
+    --e-pais: 1.13;
+  }
+}
+@media (min-width: 1024px) and (min-height: 960px) {
+  .cena-a {
+    --e-base: 1.1;
+    --e-pais: 1.26;
+  }
+}
+@media (min-width: 1024px) and (min-height: 1060px) {
+  .cena-a {
+    --e-base: 1.2;
+    --e-pais: 1.39;
+  }
+}
+
+/* ------------------------------------------------------------------------------- mundo e camadas */
+.cena-a .ca-mundo,
+.cena-a .ca-camada,
+.cena-a .ca-camada-entra {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 0;
+  pointer-events: none;
+}
+.cena-a .ca-mundo {
+  z-index: 0;
+  translate: 0 var(--chao);
+}
+.cena-a .ca-camada {
+  translate: calc(var(--mx) * var(--prof, 0) * -1px) calc(var(--my) * var(--prof, 0) * -0.35px);
+  transition: translate 0.9s var(--ease-suave);
+}
+/* entrada das camadas: sobem em profundidade (as de perto não somem: o campo cobre o pé da tela desde o
+   1º quadro, sem faixa lisa embaixo) */
+.cena-a .ca-camada-entra {
+  animation: ca-camada-entra 1.1s var(--ease-suave) var(--atraso, 0s) backwards;
+}
+/* paisagem distante: cresce com a tela alta do desktop (pivô no horizonte: as camadas têm altura 0 no chão) */
+.cena-a :is(.ca-c-sol, .ca-c-longe, .ca-c-meio) {
+  scale: var(--e-pais);
+  transform-origin: 50% 0;
+}
+.cena-a .ca-camada-entra-firme {
+  animation-name: ca-camada-sobe;
+}
+.cena-a .ca-prancha {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: 3000px;
+  height: 700px;
+  max-width: none;
+  margin-left: -1500px;
+  overflow: visible;
+}
+.cena-a .ca-prancha-campo {
+  height: 1600px;
+  bottom: -1300px;
+}
+/* depois da 1ª medição, as correções de encaixe (formulário abrindo, giro da tela) vão numa mola */
+.cena-a.ca-medido .ca-mundo {
+  transition: translate 0.75s var(--mola);
+}
+.cena-a.ca-medido :is(.ca-c-sol, .ca-c-longe, .ca-c-meio) {
+  transition:
+    translate 0.9s var(--ease-suave),
+    scale 0.75s var(--mola);
+}
+
+/* ------------------------------------------------------------------------------------------- céu */
+/* degradê preso ao horizonte: ouro no chão → coral → rosa → violeta → azul-violeta no alto (a ponte para o
+   céu azul do jogo, #49b8ff, sem o magenta chapado) */
+.cena-a .ca-ceu {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -60px;
+  height: 1920px;
+  background: linear-gradient(
+    0deg,
+    #ffe9a8 0px,
+    #ffd07e 130px,
+    #ffac68 250px,
+    #fb8c74 360px,
+    #e2788a 470px,
+    #b86c9e 590px,
+    #8c66b2 720px,
+    #6462b6 880px,
+    #4c5aac 1060px,
+    #3a4c96 1280px,
+    #2c3b78 1580px
+  );
+}
+
+/* ------------------------------------------------------------------------------------------- sol */
+.cena-a .ca-sol {
+  position: absolute;
+  left: calc(50% + var(--sol-x));
+  bottom: var(--sol-y);
+  width: 0;
+  height: 0;
+}
+.cena-a .ca-sol > span {
+  position: absolute;
+  left: 0;
+  top: 0;
+  border-radius: 50%;
+}
+/* halo e raios desenhados pequenos e ampliados com `scale` (são macios: textura do compositor 4× menor) */
+.cena-a .ca-sol-halo {
+  width: 560px;
+  height: 560px;
+  margin: -280px;
+  scale: 2;
+  background: radial-gradient(
+    closest-side,
+    rgb(255 228 164 / 0.9) 0%,
+    rgb(255 208 140 / 0.7) 11%,
+    rgb(255 174 112 / 0.4) 26%,
+    rgb(255 140 130 / 0.14) 48%,
+    transparent 72%
+  );
+  animation: ca-halo 7s var(--ease-senoide) infinite alternate;
+}
+.cena-a .ca-raios {
+  width: 720px;
+  height: 720px;
+  margin: -360px;
+  scale: 1.9;
+  -webkit-mask: radial-gradient(closest-side, #000 6%, rgb(0 0 0 / 0.5) 36%, transparent 74%);
+  mask: radial-gradient(closest-side, #000 6%, rgb(0 0 0 / 0.5) 36%, transparent 74%);
+}
+.cena-a .ca-raios-1 {
+  background: repeating-conic-gradient(
+    from 0deg,
+    rgb(255 244 210 / 0.34) 0deg 4deg,
+    transparent 4deg 11deg,
+    rgb(255 244 210 / 0.18) 11deg 13deg,
+    transparent 13deg 22deg
+  );
+  animation: ca-gira 140s linear infinite;
+}
+.cena-a .ca-raios-2 {
+  background: repeating-conic-gradient(from 7deg, rgb(255 214 150 / 0.24) 0deg 7deg, transparent 7deg 19deg);
+  animation: ca-gira-volta 210s linear infinite;
+}
+.cena-a .ca-sol-coroa {
+  width: 260px;
+  height: 260px;
+  margin: -130px;
+  background: radial-gradient(closest-side, rgb(255 236 170 / 0.75) 40%, rgb(255 200 120 / 0.35) 66%, transparent 100%);
+  animation: ca-coroa 4.2s var(--ease-senoide) infinite alternate;
+}
+.cena-a .ca-sol-disco {
+  width: 124px;
+  height: 124px;
+  margin: -62px;
+  background: radial-gradient(circle at 42% 38%, #ffffff 0 26%, #fff6cc 48%, #ffe08a 74%, #ffbe56 94%, #ffa94a 100%);
+  box-shadow:
+    0 0 0 3px rgb(255 248 220 / 0.85),
+    0 0 0 10px rgb(255 226 160 / 0.3),
+    0 0 0 22px rgb(255 214 150 / 0.14);
+}
+
+/* ---------------------------------------------------------------------------- nuvens e pássaros */
+.cena-a .ca-nuvem {
+  position: absolute;
+  display: block;
+  animation: ca-deriva var(--dur, 30s) var(--ease-senoide) var(--atraso, 0s) infinite alternate;
+}
+.cena-a .ca-nuvem svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+/* distantes: macias, sem contorno e mais transparentes (perspectiva atmosférica) */
+.cena-a .ca-nuvem-longe {
+  opacity: 0.8;
+}
+.cena-a .ca-bando {
+  position: absolute;
+  left: 50%;
+  width: 0;
+  height: 0;
+  animation: ca-voo 30s linear infinite;
+}
+.cena-a .ca-bando-1 {
+  bottom: 330px;
+  animation-delay: -9s;
+}
+.cena-a .ca-bando-2 {
+  bottom: 430px;
+  scale: 0.72;
+  animation-duration: 44s;
+  animation-delay: -36s;
+}
+.cena-a .ca-bando-ave {
+  position: absolute;
+  width: 22px;
+  height: 12px;
+}
+/* asas batendo: a peça HTML achata no eixo Y (compositor; nada anima dentro do SVG) */
+.cena-a .ca-bando-asa {
+  display: block;
+  width: 100%;
+  height: 100%;
+  transform-origin: 50% 60%;
+  animation: ca-bate 0.46s ease-in-out infinite alternate;
+  animation-delay: calc(var(--i) * -0.13s);
+}
+.cena-a .ca-passaro {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+/* ------------------------------------------------------------------------------------- névoa */
+.cena-a .ca-nevoa {
+  position: absolute;
+  left: 50%;
+  border-radius: 50%;
+}
+.cena-a .ca-nevoa-1 {
+  bottom: 74px;
+  width: 2200px;
+  height: 150px;
+  margin-left: -1100px;
+  background: radial-gradient(closest-side, rgb(255 216 200 / 0.78), rgb(240 196 210 / 0.36) 55%, transparent);
+  animation: ca-nevoa 26s var(--ease-senoide) infinite alternate;
+}
+.cena-a .ca-nevoa-2 {
+  bottom: 44px;
+  width: 2400px;
+  height: 100px;
+  margin-left: -1200px;
+  background: radial-gradient(closest-side, rgb(255 200 196 / 0.5), rgb(255 190 200 / 0.16) 60%, transparent);
+  animation: ca-nevoa 34s var(--ease-senoide) -10s infinite alternate-reverse;
+}
+
+/* ------------------------------------------------------------------------------------- moinho */
+.cena-a .ca-moinho {
+  position: absolute;
+  left: calc(50% + var(--moinho-x) - var(--moinho-l) / 2);
+  bottom: var(--moinho-b);
+  width: var(--moinho-l);
+  aspect-ratio: 120 / 210;
+  /* horizonte alto (formulário aberto em tela baixa): o moinho desce encosta abaixo para as pás nunca
+     saírem pelo topo da tela */
+  translate: 0 max(0px, var(--moinho-b) + var(--moinho-l) * 2.1 + 19px - var(--chao));
+}
+.cena-a.ca-medido :is(.ca-moinho, .ca-celeiro) {
+  transition: translate 0.75s var(--mola);
+}
+.cena-a :is(.ca-moinho, .ca-celeiro) svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.cena-a .ca-moinho-pas {
+  position: absolute;
+  left: 50%;
+  top: 26.67%;
+  width: 153%;
+  aspect-ratio: 1;
+  translate: -50% -50%;
+  animation: ca-gira 9s linear infinite;
+}
+
+/* ------------------------------------------------------------------------------------- celeiro */
+.cena-a .ca-celeiro {
+  position: absolute;
+  left: calc(50% + var(--celeiro-x) - var(--celeiro-l) / 2);
+  bottom: var(--celeiro-b);
+  width: var(--celeiro-l);
+  aspect-ratio: 240 / 160;
+  translate: 0 max(0px, var(--celeiro-b) + var(--celeiro-l) * 0.76 + 14px - var(--chao));
+}
+/* luz quente do feno que acende quando as portas abrem (vão da porta: x 88–132, y 99–152 de 240×160) */
+.cena-a .ca-porta-luz {
+  position: absolute;
+  left: 36.67%;
+  top: 61.9%;
+  width: 18.33%;
+  height: 33.1%;
+  background: radial-gradient(ellipse 72% 82% at 50% 92%, rgb(255 230 150 / 0.98), rgb(255 186 80 / 0.55) 48%, rgb(255 160 40 / 0) 80%);
+  opacity: 0;
+  animation: ca-porta-luz 11s var(--ease-senoide) infinite 1.2s;
+}
+.cena-a .ca-porta {
+  position: absolute;
+  top: 61.9%;
+  width: 9.17%;
+  height: 33.1%;
+  transform-origin: 0 50%;
+  animation: ca-porta-e 11s var(--ease-senoide) infinite 1.2s;
+}
+.cena-a .ca-porta-e {
+  left: 36.67%;
+}
+.cena-a .ca-porta-d {
+  left: 45.83%;
+  transform-origin: 100% 50%;
+  animation-name: ca-porta-d;
+}
+.cena-a .ca-catavento {
+  position: absolute;
+  left: 45.83%;
+  top: 12%;
+  width: 15%;
+  aspect-ratio: 40 / 44;
+  translate: -50% -100%;
+  animation: ca-catavento 7s var(--ease-senoide) infinite alternate;
+}
+.cena-a .ca-catavento svg {
+  overflow: visible;
+}
+/* fumaça da chaminé do rancho (boca em x 23, y 53 de 240×160): baforadas que sobem, incham e somem */
+.cena-a .ca-fumaca {
+  position: absolute;
+  left: 9.6%;
+  top: 33%;
+  width: 13%;
+  aspect-ratio: 1;
+  translate: -50% -50%;
+}
+.cena-a .ca-fumaca i {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle at 40% 36%, rgb(255 240 236 / 0.92) 0 22%, rgb(236 206 220 / 0.66) 46%, rgb(200 170 210 / 0.22) 60%, rgb(200 170 210 / 0) 70%);
+  opacity: 0;
+  animation: ca-fumaca 5.2s linear infinite;
+}
+.cena-a .ca-fumaca i:nth-child(2) {
+  animation-delay: -1.73s;
+}
+.cena-a .ca-fumaca i:nth-child(3) {
+  animation-delay: -3.47s;
+}
+/* brilho da janela acesa do rancho (atrás do desenho), tremeluzindo como lamparina */
+.cena-a .ca-janela-halo {
+  position: absolute;
+  left: 11.5%;
+  top: 70%;
+  width: 22%;
+  aspect-ratio: 1;
+  translate: -50% -50%;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgb(255 210 120 / 0.75), rgb(255 180 90 / 0.25) 55%, transparent);
+  animation: ca-janela 3.3s steps(1, end) infinite;
+}
+
+/* ------------------------------------------------------------------------- campo: sombras e terreiro */
+.cena-a .ca-sombra-nuvem {
+  position: absolute;
+  left: 0;
+  top: 40px;
+  width: 560px;
+  height: 90px;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgb(60 30 90 / 0.2), rgb(60 30 90 / 0.1) 55%, rgb(60 30 90 / 0));
+  animation: ca-sombra 58s linear infinite -20s;
+}
+.cena-a .ca-sombra-nuvem-2 {
+  top: 150px;
+  width: 760px;
+  height: 140px;
+  animation-duration: 74s;
+  animation-delay: -61s;
+}
+.cena-a .ca-terreiro {
+  display: none;
+  position: absolute;
+  left: calc(50% - 150px);
+  bottom: -14px;
+  width: 120px;
+  aspect-ratio: 3 / 1;
+}
+.cena-a .ca-anda {
+  position: absolute;
+  bottom: 0;
+  width: 34%;
+  aspect-ratio: 1;
+  animation: ca-anda 9s var(--ease-senoide) infinite;
+}
+.cena-a .ca-anda-1 {
+  left: 0;
+}
+.cena-a .ca-anda-2 {
+  left: 54%;
+  width: 30%;
+  animation-duration: 11s;
+  animation-delay: -6s;
+  animation-direction: reverse;
+}
+.cena-a .ca-anda-vira {
+  position: absolute;
+  inset: 0;
+  animation: ca-vira 9s linear infinite;
+}
+.cena-a .ca-anda-2 .ca-anda-vira {
+  animation-duration: 11s;
+  animation-delay: -6s;
+  animation-direction: reverse;
+}
+.cena-a .ca-anda-vira > svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* ------------------------------------------------------------------------- capim da frente */
+.cena-a .ca-tufo {
+  position: absolute;
+  display: block;
+}
+.cena-a .ca-tufo svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+  scale: var(--esp, 1) 1;
+}
+/* balanço + rajada numa animação só (a rajada atravessa da esquerda para a direita pelo atraso) */
+.cena-a .ca-tufo-vento {
+  display: block;
+  transform-origin: 50% 100%;
+  animation: ca-capim-vento var(--dur, 9s) ease-in-out var(--rajada, 0s) infinite;
+}
+
+/* ------------------------------------------------------------------------------------- palco */
+.cena-a .ca-palco {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: var(--palco-l);
+  height: calc(var(--palco-l) * 0.64);
+  margin-left: calc(var(--palco-l) / -2);
+  container-type: inline-size;
+  transform-origin: 50% 100%;
+  scale: var(--e-palco);
+  opacity: var(--op-palco);
+}
+.cena-a.ca-medido .ca-palco {
+  transition:
+    scale 0.75s var(--mola),
+    translate 0.75s var(--mola),
+    opacity 0.25s var(--ease-suave);
+}
+.cena-a .ca-elenco {
+  position: absolute;
+  inset: 0;
+}
+/* celular: as alas não têm caixa (posições em cqw do palco inteiro); desktop: contêineres próprios */
+.cena-a .ca-ala {
+  display: contents;
+}
+.cena-a .ca-fardo,
+.cena-a .ca-pedestal {
+  position: absolute;
+  display: block;
+  transform-origin: 50% 100%;
+}
+.cena-a .ca-fardo {
+  z-index: 2;
+  left: 27%;
+  bottom: -2cqw;
+  width: 46cqw;
+  animation: ca-fardo-entra 0.5s var(--ease-elastico) 0.25s backwards;
+}
+.cena-a .ca-pedestal {
+  z-index: 1;
+  left: 64.5%;
+  bottom: -1cqw;
+  width: 33cqw;
+  animation: ca-fardo-entra 0.5s var(--ease-elastico) 0.5s backwards;
+}
+.cena-a :is(.ca-fardo, .ca-pedestal) svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.cena-a .ca-ator {
+  --x: var(--x-e);
+  --b: var(--b-e);
+  --t: var(--t-e);
+  position: absolute;
+  left: calc(var(--x) - var(--t) / 2);
+  bottom: var(--b);
+  width: var(--t);
+  height: var(--t);
+}
+.cena-a :is(.ca-ator-entra, .ca-ator-acao, .ca-ator-reage) {
+  position: absolute;
+  inset: 0;
+  display: block;
+  transform-origin: 50% 94%;
+}
+.cena-a .ca-ator-entra {
+  animation: ca-ator-entra 0.56s ease-out var(--entra, 0.6s) backwards;
+}
+.cena-a .ca-ator-reage {
+  pointer-events: none;
+}
+.cena-a .ca-ator-reage > svg {
+  width: 100%;
+  height: 100%;
+}
+/* toque só no desenho (não na caixa quadrada): os vizinhos se sobrepõem */
+.cena-a .ca-ator-reage svg * {
+  pointer-events: visiblePainted;
+  cursor: pointer;
+}
+/* a sombra embutida no desenho sairia do chão no pulo: cada ator desenha a sua, presa ao chão */
+.cena-a .ca-ator :is(.ani-sombra, .juca-sombra) {
+  display: none;
+}
+.cena-a .ca-ator-sombra {
+  position: absolute;
+  left: 23%;
+  right: 23%;
+  bottom: 3.4%;
+  height: 8%;
+}
+.cena-a .ca-ator-juca .ca-ator-sombra {
+  bottom: 1.6%;
+  left: 28%;
+  right: 22%;
+}
+.cena-a .ca-ator-sombra-reage {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgb(58 24 72 / 0.55), rgb(58 24 72 / 0.25) 60%, rgb(58 24 72 / 0));
+}
+
+/* clarão da raridade na entrada (escalada comum → lendário) e onda de choque dourada da lendária */
+.cena-a .ca-ator-clarao {
+  position: absolute;
+  left: 50%;
+  top: 56%;
+  width: 120%;
+  aspect-ratio: 1;
+  margin: -60% 0 0 -60%;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, #fff 0 12%, color-mix(in srgb, var(--cor-rar) 85%, transparent) 34%, color-mix(in srgb, var(--cor-rar) 30%, transparent) 58%, transparent 74%);
+  opacity: 0;
+  pointer-events: none;
+  animation: ca-clarao-ator 0.6s ease-out calc(var(--entra) + 0.2s) backwards;
+}
+.cena-a .ca-onda-choque {
+  position: absolute;
+  left: 50%;
+  top: 70%;
+  width: 90%;
+  aspect-ratio: 1;
+  margin: -45% 0 0 -45%;
+  border-radius: 50%;
+  box-shadow:
+    inset 0 0 0 5px rgb(255 214 90 / 0.95),
+    inset 0 0 18px 6px rgb(255 236 160 / 0.6),
+    0 0 0 2px rgb(255 248 210 / 0.8);
+  opacity: 0;
+  pointer-events: none;
+  animation: ca-onda-choque 0.5s ease-out 1.14s backwards;
+}
+
+/* ações próprias por espécie (por cima do ocioso do desenho) */
+.cena-a .ca-ator-juca .ca-ator-acao {
+  transform-origin: 54% 97%;
+  animation: ca-juca-balanca 5.3s var(--ease-senoide) infinite alternate;
+}
+.cena-a .ca-ator-galinha .ca-ator-acao {
+  animation: ca-ciscar 4.7s var(--ease-senoide) infinite;
+}
+.cena-a .ca-ator-pato .ca-ator-acao {
+  animation: ca-rebolar 1.9s var(--ease-senoide) infinite alternate;
+}
+.cena-a .ca-ator-ganso .ca-ator-acao {
+  animation: ca-pose 7.3s var(--ease-senoide) infinite;
+}
+.cena-a .ca-ator-avestruz .ca-ator-acao {
+  animation: ca-pavonear 6.1s var(--ease-senoide) infinite;
+}
+
+/* poeirinha do ciscar (mesmo ciclo da galinha) */
+.cena-a .ca-poeirinha {
+  position: absolute;
+  left: 14%;
+  bottom: 5%;
+  width: 30%;
+  height: 16%;
+  opacity: 0;
+  transform-origin: 50% 100%;
+  animation: ca-poeirinha 4.7s ease-out infinite;
+}
+.cena-a .ca-poeirinha i {
+  position: absolute;
+  bottom: 0;
+  width: 26%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgb(255 236 190 / 0.9), rgb(232 190 130 / 0.5) 60%, transparent);
+}
+.cena-a .ca-poeirinha i:nth-child(1) {
+  left: 0;
+  scale: 0.8;
+}
+.cena-a .ca-poeirinha i:nth-child(2) {
+  left: 30%;
+  bottom: 20%;
+}
+.cena-a .ca-poeirinha i:nth-child(3) {
+  left: 60%;
+  scale: 0.7;
+}
+
+/* grasnado do ganso (o bico aponta para a esquerda: risquinhos espelhados) */
+.cena-a .ca-grasnado {
+  position: absolute;
+  left: 0;
+  top: 19%;
+  width: 20%;
+  height: 20%;
+  scale: -1 1;
+  opacity: 0;
+  pointer-events: none;
+  animation: ca-grasnado 7.3s ease-out infinite;
+}
+/* ondinhas de som do pato (de C), saindo do bico (à esquerda) */
+.cena-a .ca-quack {
+  position: absolute;
+  left: 6%;
+  top: 30%;
+  width: 30%;
+  aspect-ratio: 1;
+  scale: -1 1;
+  pointer-events: none;
+  opacity: 0;
+  animation: ca-quack 5.7s ease-out infinite -2s;
+}
+.cena-a .ca-quack i {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 40%;
+  aspect-ratio: 1;
+  border: 3px solid #fff;
+  border-color: transparent #fff8e8 transparent transparent;
+  border-radius: 50%;
+}
+.cena-a .ca-quack i:nth-child(2) {
+  width: 62%;
+  translate: -12% -12%;
+  opacity: 0.75;
+}
+.cena-a .ca-quack i:nth-child(3) {
+  width: 84%;
+  translate: -24% -24%;
+  opacity: 0.5;
+}
+
+/* aura da lendária */
+.cena-a .ca-aura {
+  position: absolute;
+  inset: 0;
+}
+.cena-a .ca-aura > span {
+  position: absolute;
+  left: 50%;
+  top: 54%;
+  display: block;
+}
+.cena-a .ca-aura-luz {
+  width: 150%;
+  aspect-ratio: 1;
+  margin: -75% 0 0 -75%;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgb(255 230 130 / 0.85), rgb(255 200 60 / 0.38) 46%, transparent 74%);
+  animation:
+    ca-aura-pulsa 2.6s var(--ease-senoide) infinite alternate,
+    ca-aura-flare 6.1s var(--ease-senoide) infinite;
+}
+.cena-a .ca-aura-raios {
+  width: 200%;
+  aspect-ratio: 1;
+  margin: -100% 0 0 -100%;
+  border-radius: 50%;
+  background: repeating-conic-gradient(rgb(255 232 150 / 0.6) 0 6deg, transparent 6deg 24deg);
+  -webkit-mask: radial-gradient(closest-side, transparent 20%, #000 34%, transparent 72%);
+  mask: radial-gradient(closest-side, transparent 20%, #000 34%, transparent 72%);
+  animation: ca-gira 16s linear infinite;
+}
+.cena-a .ca-aura-facho {
+  width: 70%;
+  height: 190%;
+  margin-left: -35%;
+  top: auto !important;
+  bottom: 34%;
+  background: linear-gradient(0deg, rgb(255 228 140 / 0.42), rgb(255 228 140 / 0.12) 50%, transparent 100%);
+  clip-path: polygon(32% 0, 68% 0, 100% 100%, 0 100%);
+  transform-origin: 50% 100%;
+  transition: opacity 0.3s var(--ease-suave);
+  animation: ca-facho 4.3s var(--ease-senoide) infinite alternate;
+}
+.cena-a .ca-aura-cintila {
+  width: 16%;
+  aspect-ratio: 1;
+  margin: -8% 0 0 -8%;
+  scale: 0;
+  animation: ca-cintila 2.3s var(--ease-senoide) infinite;
+}
+.cena-a .ca-aura-cintila svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.cena-a .ca-aura-cintila-0 {
+  translate: -330% -260%;
+}
+.cena-a .ca-aura-cintila-1 {
+  translate: 300% -330%;
+  animation-delay: -1.2s;
+}
+
+/* toque: estrelinhas + penas da espécie, onomatopeia e balão do Juca */
+.cena-a .ca-estouro {
+  position: absolute;
+  left: 50%;
+  top: 46%;
+  z-index: 5;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+.cena-a .ca-faisca {
+  position: absolute;
+  left: -9px;
+  top: -9px;
+  width: 18px;
+  height: 18px;
+  animation: ca-faisca 0.85s var(--ease-explosao) forwards;
+}
+.cena-a :is(.ca-faisca, .ca-pena) svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.cena-a .ca-pena {
+  position: absolute;
+  left: -6px;
+  top: -10px;
+  width: 12px;
+  height: 20px;
+  opacity: 0;
+  animation: ca-pena 1s var(--ease-explosao) var(--d, 0s) forwards;
+}
+.cena-a .ca-grito {
+  position: absolute;
+  left: 50%;
+  top: 2%;
+  z-index: 7;
+  translate: -50% 0;
+  white-space: nowrap;
+  font-family: var(--font-titulo);
+  font-size: max(17px, 6.4cqw);
+  line-height: 1;
+  color: #fff;
+  -webkit-text-stroke: 0.2em #4a1a3a;
+  paint-order: stroke fill;
+  text-shadow: 0 0.09em 0 #4a1a3a;
+  pointer-events: none;
+  animation: ca-grito 1.1s ease-out forwards;
+}
+.cena-a .ca-ator-avestruz .ca-grito {
+  color: #ffe27a;
+  -webkit-text-stroke-color: #5a3a00;
+  text-shadow: 0 0.09em 0 #5a3a00;
+}
+/* celular: acima e à direita do chapéu, no céu entre o lema e o elenco (não cobre o ganso nem o moinho) */
+.cena-a .ca-balao {
+  position: absolute;
+  left: 54%;
+  bottom: 99%;
+  z-index: 7;
+  width: max-content;
+  max-width: 36cqw;
+  padding: 5px 11px 6px;
+  border-radius: 14px;
+  background: linear-gradient(180deg, #fff 0%, #fff6e0 100%);
+  box-shadow:
+    0 0 0 3px #6b4a26,
+    0 5px 0 3px rgb(43 26 15 / 0.24);
+  font-family: var(--font-titulo);
+  font-size: max(13px, 3.9cqw);
+  line-height: 1.12;
+  text-align: center;
+  color: #2b1d12;
+  transform-origin: 0% 100%;
+  pointer-events: none;
+  animation: ca-balao 0.36s var(--ease-elastico) backwards;
+}
+/* rabicho do balão (aponta para baixo e para a esquerda, para o chapéu e o bico): escuro + claro, sem filter */
+.cena-a .ca-balao::before,
+.cena-a .ca-balao::after {
+  content: '';
+  position: absolute;
+  left: 12px;
+  bottom: -13px;
+  width: 18px;
+  height: 15px;
+  background: #6b4a26;
+  clip-path: polygon(0 0, 100% 0, 6% 100%);
+}
+.cena-a .ca-balao::after {
+  left: 15px;
+  bottom: -8px;
+  width: 12px;
+  height: 10px;
+  background: #fff6e0;
+}
+
+/* capim na frente dos pés */
+.cena-a .ca-capim-pe {
+  position: absolute;
+  z-index: 6;
+  display: block;
+  width: 13cqw;
+  transform-origin: 50% 100%;
+  animation: ca-balanco 3.3s var(--ease-senoide) infinite alternate;
+}
+.cena-a .ca-capim-pe svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+.cena-a .ca-capim-pe-1 {
+  left: 36%;
+  bottom: -5cqw;
+}
+.cena-a .ca-capim-pe-2 {
+  left: 55%;
+  bottom: -6cqw;
+  width: 12cqw;
+  animation-duration: 4.1s;
+}
+.cena-a .ca-capim-pe-3 {
+  left: 4%;
+  bottom: -1cqw;
+  width: 11cqw;
+  animation-duration: 3.7s;
+}
+.cena-a :is(.ca-capim-pe-4, .ca-capim-pe-5, .ca-capim-pe-6) {
+  display: none;
+}
+
+/* ---------------------------------------------------------- vida do campo: ninhos e borboletas */
+.cena-a .ca-c-vida {
+  --ninho-l: 56px;
+}
+.cena-a .ca-ninho {
+  position: absolute;
+  bottom: calc(var(--ergue) * -0.72px - 12px);
+  width: var(--ninho-l);
+  aspect-ratio: 1;
+  opacity: clamp(0, calc((var(--ergue) - 30) / 22), 1);
+  transition: opacity 0.3s var(--ease-suave);
+  pointer-events: none;
+  --dur: 6.4s;
+  --atraso: -2.4s;
+}
+.cena-a.ca-medido .ca-ninho {
+  transition:
+    opacity 0.3s var(--ease-suave),
+    bottom 0.75s var(--mola);
+}
+.cena-a .ca-ninho-1 {
+  left: calc(50% - 150px - var(--ninho-l) / 2);
+}
+.cena-a .ca-ninho-2 {
+  left: calc(50% + 152px - var(--ninho-l) / 2);
+  --dur: 7.8s;
+  --atraso: -6.6s;
+}
+.cena-a .ca-ninho-entra {
+  position: absolute;
+  inset: 0;
+  transform-origin: 50% 90%;
+  animation: ca-ninho-entra 0.5s var(--ease-elastico) 1.15s backwards;
+}
+.cena-a .ca-ninho-fig {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.cena-a .ca-ovo {
+  position: absolute;
+  left: 50%;
+  top: 33%;
+  width: 40%;
+  translate: -50% 0;
+  transform-origin: 50% 100%;
+  animation: ca-ovo var(--dur) var(--ease-senoide) infinite var(--atraso);
+}
+.cena-a .ca-ovo > svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.cena-a .ca-ovo-aura {
+  position: absolute;
+  left: 50%;
+  top: 44%;
+  width: 120%;
+  aspect-ratio: 1;
+  translate: -50% -50%;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgb(255 246 190 / 0.9), rgb(255 220 120 / 0.35) 50%, rgb(255 220 120 / 0));
+  opacity: 0;
+  animation: ca-ovo-aura var(--dur) ease-out infinite var(--atraso);
+}
+/* as 3 estrelinhas são um grupo: 1 animação (o grupo estoura e gira) */
+.cena-a .ca-ovo-brilhos {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  animation: ca-ovo-brilho var(--dur) ease-out infinite var(--atraso);
+}
+.cena-a .ca-ovo-brilhos svg {
+  position: absolute;
+  display: block;
+  width: 26%;
+  aspect-ratio: 1;
+}
+.cena-a .ca-ovo-brilho-1 {
+  left: 6%;
+  top: 6%;
+}
+.cena-a .ca-ovo-brilho-2 {
+  right: 2%;
+  top: 0;
+  width: 32% !important;
+}
+.cena-a .ca-ovo-brilho-3 {
+  right: 12%;
+  top: 36%;
+  width: 18% !important;
+}
+/* a moeda que o ovo solta no alto do pulo: sobe girando e brilhando, e some (motivo para a moeda existir) */
+.cena-a .ca-ninho-moeda {
+  position: absolute;
+  left: 50%;
+  top: 22%;
+  width: 34%;
+  translate: -50% 0;
+  opacity: 0;
+  animation: ca-ninho-moeda var(--dur) ease-out infinite var(--atraso);
+}
+.cena-a .ca-ninho-moeda-gira {
+  display: block;
+  animation: ca-moeda-gira 0.9s linear infinite;
+}
+.cena-a .ca-ninho-moeda svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.cena-a .ca-borboleta {
+  position: absolute;
+  width: 22px;
+}
+.cena-a .ca-borboleta-1 {
+  left: calc(50% - 170px);
+  bottom: 30px;
+}
+.cena-a .ca-borboleta-2 {
+  left: calc(50% + 96px);
+  bottom: 150px;
+  width: 18px;
+}
+.cena-a .ca-borboleta-voo {
+  display: block;
+  animation: ca-borboleta 13s var(--ease-senoide) infinite;
+}
+.cena-a .ca-borboleta-2 .ca-borboleta-voo {
+  animation-duration: 17s;
+  animation-delay: -7s;
+  animation-direction: reverse;
+}
+.cena-a .ca-borboleta-asas {
+  display: block;
+  animation: ca-asas 0.19s var(--ease-senoide) infinite alternate;
+}
+.cena-a .ca-borboleta-2 .ca-borboleta-asas {
+  animation-duration: 0.23s;
+}
+.cena-a .ca-borboleta svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* ------------------------------------------------------------------------- poeira e vinheta */
+.cena-a .ca-poeira {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  translate: calc(var(--mx) * -20px) calc(var(--my) * -8px);
+  transition: translate 0.9s var(--ease-suave);
+}
+/* nuvenzinha de poeira: o GRUPO sobe, deriva e apaga (1 animação para 4 grãos) */
+.cena-a .ca-poeira-grupo {
+  position: absolute;
+  width: 100px;
+  height: 130px;
+  opacity: 0;
+  animation: ca-grao var(--dur) linear var(--atraso) infinite;
+}
+.cena-a .ca-poeira-grupo i {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, #fffbe0 0 30%, rgb(255 214 110 / 0.75) 55%, transparent);
+}
+/* vaga-lume: laço e pisca na mesma animação */
+.cena-a .ca-vagalume {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, #fbffd8 0 22%, rgb(220 255 130 / 0.6) 46%, transparent);
+  opacity: 0;
+  animation: ca-vagalume var(--dur) var(--ease-senoide) var(--atraso) infinite;
+}
+.cena-a .ca-vinheta {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background:
+    radial-gradient(130% 95% at 50% 40%, transparent 56%, rgb(30 16 60 / 0.42) 100%),
+    linear-gradient(0deg, rgb(24 10 30 / 0.5) 0, rgb(24 10 30 / 0) 32%);
+}
+/* "nascer da luz": véu dourado/pêssego (nada de flash escuro) que sobe e clareia de baixo para cima; fica
+   abaixo do logo e do painel, então os botões aparecem desde o 1º quadro */
+.cena-a .ca-cortina {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 200%;
+  z-index: 2;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgb(255 226 168 / 0.92) 0 46%, rgb(255 200 150 / 0.6) 58%, rgb(255 190 150 / 0) 76%);
+  opacity: 0;
+  animation: ca-cortina 0.45s ease-in backwards;
+}
+
+/* -------------------------------------------------------------------------------------- logo */
+.cena-a .ca-logo-caixa {
+  position: absolute;
+  z-index: 3;
+  left: 0;
+  right: 0;
+  top: calc(var(--seguro-topo, 0px) + 26px);
+  display: flex;
+  justify-content: center;
+  transform-origin: 50% 0;
+  scale: var(--e-logo);
+  pointer-events: none;
+}
+.cena-a.ca-medido .ca-logo-caixa {
+  transition: scale 0.7s var(--mola);
+}
+.cena-a .ca-logo {
+  --fs: clamp(50px, 17.2vw, 104px);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  pointer-events: auto;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  translate: calc(var(--mx) * 9px) calc(var(--my) * 5px);
+  transition: translate 0.9s var(--ease-suave);
+}
+.cena-a .ca-logo-halo,
+.cena-a .ca-logo-clarao {
+  position: absolute;
+  left: 50%;
+  top: 34%;
+  border-radius: 50%;
+  pointer-events: none;
+}
+.cena-a .ca-logo-halo {
+  width: 130%;
+  height: 150%;
+  margin: -75% 0 0 -65%;
+  background: radial-gradient(closest-side, rgb(255 200 130 / 0.42), rgb(255 160 130 / 0.16) 55%, transparent);
+  animation: ca-halo-logo 5.7s var(--ease-senoide) infinite alternate;
+}
+.cena-a .ca-logo-clarao {
+  width: 110%;
+  aspect-ratio: 1;
+  margin: -55% 0 0 -55%;
+  background: radial-gradient(closest-side, rgb(255 255 255 / 0.95), rgb(255 232 170 / 0.55) 38%, transparent 70%);
+  opacity: 0;
+  animation: ca-clarao-logo 0.9s ease-out 0.88s backwards;
+}
+.cena-a :is(.ca-logo-flutua, .ca-logo-corpo) {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transform-origin: 50% 80%;
+}
+.cena-a .ca-logo-flutua {
+  animation: ca-logo-flutua 5.7s var(--ease-senoide) 1.6s infinite alternate;
+}
+.cena-a .ca-titulo {
+  position: relative;
+  margin: 0;
+  font-family: var(--font-titulo);
+  font-size: var(--fs);
+  font-weight: 400;
+  line-height: 1;
+  white-space: nowrap;
+}
+.cena-a .ca-palavra {
+  position: relative;
+  display: block;
+}
+/* 3 cópias empilhadas: todos os contornos atrás de todas as faces */
+.cena-a .ca-palavra-camada {
+  display: flex;
+}
+.cena-a .ca-palavra-camada + .ca-palavra-camada {
+  position: absolute;
+  inset: 0;
+}
+/* uma caixa por letra: arco em translate/rotate (propriedades próprias), queda (CSS) e pulo do toque
+   (motion) em transform — compõem sem brigar */
+.cena-a .ca-letra {
+  position: relative;
+  display: block;
+  translate: 0 var(--arco-y);
+  rotate: var(--arco-r);
+  transform-origin: 50% 90%;
+  animation: ca-letra-cai 0.5s ease-out calc(0.3s + var(--i) * 0.05s) backwards;
+}
+/* 1) contorno grosso marrom-queimado + extrusão para baixo + sombra no céu */
+.cena-a .ca-l-base .ca-letra {
+  color: #4a1800;
+  -webkit-text-stroke: 0.2em #4a1800;
+  paint-order: stroke fill;
+  text-shadow:
+    0 0.035em 0 #4a1800,
+    0 0.07em 0 #4a1800,
+    0 0.105em 0 #421500,
+    0 0.14em 0 #381100,
+    0 0.2em 0 rgb(46 14 60 / 0.34),
+    0 0.26em 0.12em rgb(30 8 50 / 0.3);
+}
+/* 2) filete de bisel laranja, com a "lateral" do ouro (extrusão interna) aparecendo embaixo */
+.cena-a .ca-l-bisel .ca-letra {
+  color: #d86a00;
+  -webkit-text-stroke: 0.085em #e88400;
+  paint-order: stroke fill;
+  text-shadow:
+    0 0.035em 0 #c25a00,
+    0 0.07em 0 #9a4400;
+}
+/* 3) face de ouro com verniz no alto (estática: pintada uma vez) */
+.cena-a .ca-l-face .ca-letra {
+  background-image:
+    linear-gradient(180deg, rgb(255 255 255 / 0.62) 0 28%, rgb(255 255 255 / 0) 42%),
+    linear-gradient(180deg, #fffbe6 0%, #fff0a0 22%, #ffd84a 48%, #ffb21f 74%, #ff9100 100%);
+  background-repeat: no-repeat;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+/* 4) faixa de brilho só com transform: a janela inclinada (overflow hidden, bordas macias) atravessa a
+   palavra e a cópia branca das letras anda ao contrário na mesma medida — fica parada sobre a face e só
+   aparece dentro da janela. Os dois movimentos compõem a identidade: T(x)·S(−a) · S(a)·T(−x). */
+.cena-a .ca-brilho-janela {
+  position: absolute;
+  left: 0;
+  top: -0.2em;
+  width: 0.8em;
+  height: 1.6em;
+  overflow: hidden;
+  pointer-events: none;
+  transform-origin: 0 0;
+  transform: translateX(-1.4em) skewX(-16deg);
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 35%, #000 65%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 35%, #000 65%, transparent);
+  animation: ca-brilho-janela 5.2s ease-in-out 1.6s infinite;
+}
+.cena-a .ca-l-brilho {
+  position: absolute;
+  left: 0;
+  top: 0.2em;
+  display: flex;
+  transform-origin: 0 -0.2em;
+  transform: skewX(16deg) translateX(1.4em);
+  animation: ca-brilho-palavra 5.2s ease-in-out 1.6s infinite;
+}
+.cena-a .ca-l-brilho .ca-letra {
+  color: rgb(255 255 255 / 0.92);
+  animation: none;
+}
+
+/* selo PIX: contorno verde-escuro → aro de ouro → esmalte verde, recortados em hexágono alongado */
+.cena-a .ca-selo-caixa {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+}
+.cena-a .ca-selo {
+  display: block;
+  padding: 2.5px;
+  rotate: -3deg;
+  background: #0b3d20;
+  clip-path: polygon(0 50%, 9% 0, 91% 0, 100% 50%, 91% 100%, 9% 100%);
+  animation: ca-selo-entra 0.45s var(--ease-elastico) 0.95s backwards;
+}
+.cena-a .ca-selo-aro {
+  display: block;
+  padding: 3px;
+  background: linear-gradient(180deg, #fff6c0 0%, #ffd23f 40%, #e09400 70%, #ffe27a 100%);
+  clip-path: polygon(0 50%, 8.6% 0, 91.4% 0, 100% 50%, 91.4% 100%, 8.6% 100%);
+}
+.cena-a .ca-selo-esmalte {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  padding: 3px 30px 5px 34px;
+  background: linear-gradient(180deg, #a6f5b8 0%, #34c46a 36%, #169247 72%, #0b6a33 100%);
+  box-shadow:
+    inset 0 3px 0 rgb(255 255 255 / 0.35),
+    inset 0 -4px 0 rgb(4 60 26 / 0.4);
+  clip-path: polygon(0 50%, 8.2% 0, 91.8% 0, 100% 50%, 91.8% 100%, 8.2% 100%);
+}
+.cena-a .ca-selo-texto {
+  position: relative;
+  display: block;
+  font-family: var(--font-titulo);
+  font-size: clamp(20px, 6.2vw, 32px);
+  line-height: 1.1;
+  letter-spacing: 0.3em;
+  color: #fff;
+  -webkit-text-stroke: 0.15em #0b3d20;
+  paint-order: stroke fill;
+  text-shadow: 0 0.08em 0 #0b3d20;
+}
+.cena-a .ca-selo-reflexo {
+  position: absolute;
+  top: -20%;
+  bottom: -20%;
+  left: -30%;
+  width: 22%;
+  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.6), transparent);
+  transform: skewX(-20deg);
+  animation: ca-reflexo 5.6s ease-in-out 2.4s infinite;
+}
+.cena-a .ca-selo-cintila {
+  position: absolute;
+  top: 50%;
+  width: 22px;
+  height: 22px;
+  margin-top: -11px;
+  scale: 0;
+  animation: ca-cintila 2.9s var(--ease-senoide) infinite;
+}
+.cena-a .ca-selo-cintila svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.cena-a .ca-selo-cintila-1 {
+  left: 18px;
+  animation-delay: 1.4s;
+}
+.cena-a .ca-selo-cintila-2 {
+  right: 16px;
+  margin-top: -22px;
+  animation-delay: 2.6s;
+}
+/* gemas das 4 raridades ladeando o selo (de B): acendem do comum ao lendário e brilham em sequência */
+.cena-a .ca-gemas {
+  display: flex;
+  gap: 3px;
+}
+.cena-a .ca-gema {
+  display: block;
+  width: clamp(12px, 3.6vw, 17px);
+  animation:
+    ca-gema-entra 0.4s var(--ease-elastico) calc(1.05s + var(--n) * 0.08s) backwards,
+    ca-gema-brilha 6.6s var(--ease-senoide) calc(2.4s + var(--n) * 0.32s) infinite;
+}
+.cena-a .ca-gema-svg {
+  display: block;
+}
+.cena-a .ca-gema-svg svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.cena-a .ca-gema-lendario {
+  width: clamp(14px, 4.2vw, 20px);
+}
+/* lema numa pílula translúcida (de C): lê bem sobre os raios; sai em tela baixa e no formulário */
+.cena-a .ca-lema {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  margin: 8px 0 0;
+  translate: -50% 0;
+  white-space: nowrap;
+  pointer-events: none;
+  transition:
+    opacity 0.3s var(--ease-suave),
+    translate 0.3s var(--ease-suave),
+    visibility 0s 0s;
+}
+.cena-a .ca-lema-pilula {
+  display: block;
+  padding: 4px 13px 5px;
+  border-radius: 999px;
+  background: rgb(44 20 70 / 0.5);
+  box-shadow:
+    inset 0 1px 0 rgb(255 230 200 / 0.28),
+    0 2px 0 rgb(30 10 50 / 0.25);
+  font-family: var(--font-texto);
+  font-size: 13.5px;
+  font-weight: 800;
+  line-height: 1.3;
+  letter-spacing: 0.01em;
+  color: #fff7e6;
+  text-shadow: 0 1px 0 rgb(60 20 70 / 0.8);
+  animation: ca-lema-entra 0.4s var(--ease-suave) 1.1s backwards;
+}
+@media (max-height: 699px) {
+  .cena-a .ca-lema {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+/* estalinhos do toque no logo (de C) */
+.cena-a .ca-estalos {
+  position: absolute;
+  left: 50%;
+  top: 40%;
+  z-index: 2;
+  pointer-events: none;
+}
+.cena-a .ca-estalo {
+  position: absolute;
+  left: -11px;
+  top: -11px;
+  width: 22px;
+  height: 22px;
+  animation: ca-estalo 0.75s var(--ease-explosao) forwards;
+}
+.cena-a .ca-estalo svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* ------------------------------------------------------------------------ painel e texto legal */
+.cena-a .ca-base {
+  position: absolute;
+  z-index: 4;
+  left: 50%;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  width: min(100% - 32px, 24rem);
+  padding-bottom: calc(14px + var(--seguro-base, 0px));
+  translate: -50% 0;
+  /* desktop: cresce com a tela alta (pivô no pé, centro) */
+  scale: var(--e-base);
+  transform-origin: 50% 100%;
+  animation: ca-base-entra 0.6s var(--ease-suave) 0.15s backwards;
+}
+.cena-a .entrar-painel {
+  width: 100%;
+  margin: 0;
+}
+/* início: os botões flutuam sobre o campo, sem cartão (splash de jogo, não formulário) */
+.cena-a .entrar-painel:not(.painel-com-faixa) {
+  padding: 0 2px;
+  border: 0;
+  background: none;
+  box-shadow: none;
+}
+.cena-a .entrar-painel.painel-com-faixa {
+  margin-top: 28px;
+  padding: 32px 16px 14px;
+  box-shadow:
+    0 0 0 2px #6b4a26,
+    0 0 0 6px rgb(255 214 150 / 0.32),
+    inset 0 2px 0 #fff,
+    inset 0 -4px 0 rgb(201 154 85 / 0.22),
+    0 18px 40px -8px rgb(40 10 50 / 0.6);
+}
+.cena-a .entrar-legal {
+  margin-top: 12px;
+  padding: 7px 12px;
+  border-radius: 14px;
+  background: rgb(30 18 52 / 0.58);
+  box-shadow: inset 0 0 0 1px rgb(255 220 170 / 0.22);
+  font-size: 12px;
+  line-height: 1.4;
+  text-align: center;
+  color: #fbe8d0;
+}
+
+/* ------------------------------------------------------------------- formulário aberto */
+.cena-a--form {
+  --e-logo: 0.52;
+  --ergue: 0;
+}
+@media (min-height: 760px) {
+  .cena-a--form {
+    --e-logo: 0.64;
+  }
+}
+.cena-a--form .ca-lema {
+  opacity: 0;
+  translate: -50% -6px;
+  visibility: hidden;
+  transition:
+    opacity 0.2s var(--ease-suave),
+    translate 0.2s var(--ease-suave),
+    visibility 0s 0.2s;
+}
+.cena-a--form .ca-aura-facho,
+.cena-a--form .ca-balao {
+  opacity: 0;
+}
+.cena-a.ca-sem-elenco .ca-palco {
+  visibility: hidden;
+  transition: visibility 0s 0.25s;
+}
+.cena-a.ca-sem-elenco .ca-ninho {
+  opacity: 0;
+}
+
+/* ------------------------------------------------------------------- desktop: duas alas */
+@media (min-width: 1024px) and (min-height: 601px) {
+  /* as alas ficam no primeiro plano, presas ao pé da tela com folga (o mundo sobe e desce com o painel; o
+     palco anda o contrário na mesma mola, então fica parado) */
+  .cena-a .ca-palco {
+    height: calc(var(--ala-l) * 0.8);
+    translate: 0 calc(var(--alto) - max(26px, 3.2dvh) - var(--chao));
+  }
+  /* cada ala é um contêiner do tamanho min(espaço ao lado do painel, 52% da altura), centrado no seu
+     espaço: o elenco escala com min(largura, altura) e fica ≥ 48 px longe do painel */
+  .cena-a .ca-ala {
+    display: block;
+    position: absolute;
+    bottom: 0;
+    width: var(--ala-l);
+    height: calc(var(--ala-l) * 0.8);
+    container-type: inline-size;
+  }
+  .cena-a .ca-ala-e {
+    left: calc(16px + (var(--ala-espaco) - var(--ala-l)) / 2);
+  }
+  .cena-a .ca-ala-d {
+    right: calc(16px + (var(--ala-espaco) - var(--ala-l)) / 2);
+  }
+  .cena-a .ca-ator {
+    --x: var(--x-l);
+    --b: var(--b-l);
+    --t: var(--t-l);
+  }
+  .cena-a .ca-fardo {
+    left: 25%;
+    bottom: 1cqw;
+    width: 54cqw;
+  }
+  /* pedestal à direita do pato (o pato fica do lado de dentro, sem encostar na pedra) */
+  .cena-a .ca-pedestal {
+    left: 38%;
+    bottom: 1cqw;
+    width: 50cqw;
+  }
+  .cena-a .ca-capim-pe {
+    display: block;
+    width: 14cqw;
+  }
+  .cena-a .ca-capim-pe-1 {
+    left: 62%;
+    bottom: -2cqw;
+    width: 15cqw;
+  }
+  .cena-a .ca-capim-pe-3 {
+    left: -3%;
+    bottom: -1cqw;
+  }
+  .cena-a .ca-capim-pe-5 {
+    left: 17%;
+    bottom: -3cqw;
+    width: 13cqw;
+    animation-duration: 4.4s;
+  }
+  .cena-a .ca-capim-pe-2 {
+    left: 31%;
+    bottom: -2cqw;
+  }
+  .cena-a .ca-capim-pe-4 {
+    left: 88%;
+    bottom: -1cqw;
+    animation-duration: 3.9s;
+  }
+  .cena-a .ca-capim-pe-6 {
+    left: 55%;
+    bottom: -3cqw;
+    width: 13cqw;
+    animation-duration: 4.8s;
+  }
+  .cena-a .ca-grito {
+    font-size: max(20px, 7cqw);
+  }
+  /* balão acima do chapéu, puxado para o lado oposto ao sol (o Juca está à esquerda do sol) */
+  .cena-a .ca-balao {
+    left: 4%;
+    bottom: 99%;
+    max-width: 50cqw;
+    font-size: max(15px, 4.4cqw);
+    transform-origin: 70% 100%;
+  }
+  .cena-a .ca-balao::before {
+    left: 62%;
+    clip-path: polygon(0 0, 100% 0, 94% 100%);
+  }
+  .cena-a .ca-balao::after {
+    left: calc(62% + 3px);
+    clip-path: polygon(0 0, 100% 0, 94% 100%);
+  }
+  .cena-a .ca-terreiro {
+    display: block;
+  }
+  /* o capim do horizonte ficaria na frente do rosto das alas (que estão mais perto da câmera) */
+  .cena-a .ca-c-frente {
+    display: none;
+  }
+  /* ninhos no pasto do meio, ladeando o topo do painel (no meio da faixa entre o horizonte e o painel);
+     somem quando o painel cresce e a faixa acaba (formulário) */
+  .cena-a .ca-c-vida {
+    --ninho-l: calc(56px * var(--e-base));
+  }
+  .cena-a .ca-ninho {
+    bottom: calc(var(--campo) * -0.5 - var(--ninho-l) * 0.45);
+    opacity: var(--op-ninho);
+  }
+  .cena-a.ca-medido .ca-ninho {
+    transition:
+      opacity 0.3s var(--ease-suave),
+      bottom 0.75s var(--mola),
+      left 0.75s var(--mola);
+  }
+  .cena-a .ca-ninho-1 {
+    left: calc(50% - var(--painel-v) / 2 - 30px - var(--ninho-l) / 2);
+  }
+  .cena-a .ca-ninho-2 {
+    left: calc(50% + var(--painel-v) / 2 + 30px - var(--ninho-l) / 2);
+  }
+  .cena-a .ca-borboleta-1 {
+    left: calc(50% - 300px);
+    bottom: 40px;
+  }
+  .cena-a .ca-borboleta-2 {
+    left: calc(50% + 250px);
+    bottom: 120px;
+  }
+  /* logo maior em tela alta (o selo e as gemas acompanham a letra) */
+  .cena-a .ca-logo {
+    --fs: clamp(96px, 12.5dvh, 136px);
+  }
+  .cena-a .ca-selo-texto {
+    font-size: calc(var(--fs) * 0.31);
+  }
+  .cena-a .ca-gema {
+    width: calc(var(--fs) * 0.165);
+  }
+  .cena-a .ca-gema-lendario {
+    width: calc(var(--fs) * 0.19);
+  }
+  .cena-a .ca-lema-pilula {
+    font-size: calc(var(--fs) * 0.14);
+  }
+}
+
+/* --------------------------------------------- tela deitada ou baixa: duas colunas (cena | painel) */
+/* Celular deitado, janela baixa e o painel lateral do app (largo e baixo): o painel vai para a direita,
+   centrado na vertical (rola sozinho se o formulário não couber), e a cena — logo no alto e elenco embaixo —
+   ocupa a coluna da esquerda. Nada de altura mínima (antes, 480 px numa tela de 390 cortava o painel e o
+   logo sumia ao rolar). Mesma consulta de DEITADA em cena-a.tsx; os valores abaixo são estimativas para o
+   1º quadro (o JS refina --chao, --e-logo e --e-palco). */
+@media (min-aspect-ratio: 5/4) and (max-width: 1023px), (min-aspect-ratio: 5/4) and (max-height: 600px) {
+  .cena-a {
+    --alto: 100dvh;
+    --margem-d: max(12px, 2.4vw, env(safe-area-inset-right));
+    --painel-d: min(23rem, 46vw);
+    --col-painel: calc(var(--painel-d) + var(--margem-d) * 2);
+    --col-cena: calc(100vw - var(--col-painel));
+    --chao: calc(var(--alto) - 32px);
+    --e-logo: 0.56;
+    --e-palco: 0.5;
+    --ergue: 0;
+    --sol-x: 0px;
+    --sol-y: 190px;
+    --moinho-l: clamp(44px, 12dvh, 64px);
+    --moinho-x: calc(var(--col-cena) * 0.36);
+    --moinho-b: 96px;
+    --celeiro-l: clamp(64px, 19dvh, 104px);
+    --celeiro-x: calc(var(--col-cena) * -0.38);
+    --celeiro-b: 120px;
+    min-height: 0;
+  }
+  /* o mundo inteiro centra na coluna da cena (a prancha tem 3000 px: continua cobrindo atrás do painel) */
+  .cena-a .ca-mundo {
+    translate: calc(var(--col-painel) / -2) var(--chao);
+  }
+  .cena-a .ca-logo-caixa {
+    right: var(--col-painel);
+    top: calc(var(--seguro-topo, 0px) + 10px);
+  }
+  .cena-a .ca-base {
+    left: auto;
+    right: calc(var(--margem-d) - 16px);
+    top: 50%;
+    bottom: auto;
+    width: calc(var(--painel-d) + 32px);
+    max-height: 100dvh;
+    padding: 10px 16px calc(10px + var(--seguro-base, 0px));
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: none;
+    translate: 0 -50%;
+    scale: 1;
+  }
+  .cena-a .ca-base::-webkit-scrollbar {
+    display: none;
+  }
+  /* sem espaço para o lema, os ninhos e o capim alto na frente dos pés */
+  .cena-a .ca-lema,
+  .cena-a .ca-ninho {
+    display: none;
+  }
+  /* formulários mais compactos (altura curta) */
+  .cena-a .entrar-painel.painel-com-faixa {
+    margin-top: 24px;
+    padding: 28px 14px 10px;
+  }
+  .cena-a .entrar-form.space-y-3 > :not(:last-child) {
+    margin-bottom: 8px;
+  }
+  .cena-a .entrar-legal {
+    margin-top: 8px;
+    font-size: 11px;
+  }
+}
+
+/* deitada e MUITO baixa (celular deitado, painel do app): campos e botões um pouco menores, para o cadastro
+   (4 campos) caber sem rolar em ~390 px de altura */
+@media (min-aspect-ratio: 5/4) and (max-height: 440px) {
+  .cena-a .ca-base {
+    padding-top: 2px;
+    padding-bottom: calc(4px + var(--seguro-base, 0px));
+  }
+  .cena-a .entrar-form .campo {
+    min-height: 38px;
+    padding-top: 5px;
+    padding-bottom: 5px;
+  }
+  .cena-a .entrar-form .botao-g {
+    min-height: 46px;
+    padding-top: 6px;
+    padding-bottom: 6px;
+  }
+  .cena-a .entrar-form .link-jogo {
+    min-height: 32px;
+  }
+  .cena-a .entrar-form.space-y-3 > :not(:last-child) {
+    margin-bottom: 6px;
+  }
+  .cena-a .entrar-painel.painel-com-faixa {
+    margin-top: 22px;
+    padding-top: 26px;
+    padding-bottom: 8px;
+  }
+  .cena-a .entrar-legal {
+    margin-top: 4px;
+    padding: 4px 8px;
+    font-size: 10px;
+    line-height: 1.3;
+  }
+}
+
+/* ------------------------------------------------------------------- desempenho: pausas */
+/* formulário aberto (depois da entrada): o elenco pequeno, as partículas e o capim param; o céu e a fazenda
+   seguem vivos. Estouros e onomatopeias do toque continuam (somem sozinhos). Aba escondida: tudo para. */
+.cena-a.ca-calmo :is(.ca-palco, .ca-c-vida, .ca-poeira, .ca-c-frente) *:not(.ca-estouro *):not(.ca-grito),
+.cena-a.ca-oculta * {
+  animation-play-state: paused !important;
+}
+
+/* ------------------------------------------------------------------- reduzir movimento */
+html.reduzir-movimento .cena-a {
+  animation: ca-fade-curto 0.35s ease-out both;
+}
+/* nenhum atraso pendente: a regra global encurta a duração, não o atraso (as gemas e o brilho do logo
+   ficavam agendados para 2,4 s ou mais) */
+html.reduzir-movimento .cena-a *,
+html.reduzir-movimento .cena-a *::before,
+html.reduzir-movimento .cena-a *::after {
+  animation-delay: 0s !important;
+}
+html.reduzir-movimento .cena-a :is(.ca-estouro, .ca-estalos, .ca-bando, .ca-vagalume, .ca-poeira-grupo, .ca-grasnado, .ca-quack, .ca-poeirinha, .ca-selo-cintila, .ca-aura-cintila, .ca-fumaca, .ca-sombra-nuvem, .ca-borboleta, .ca-ovo-aura, .ca-ovo-brilhos, .ca-ninho-moeda, .ca-onda-choque, .ca-ator-clarao, .ca-logo-clarao, .ca-grito, .ca-brilho-janela, .ca-cortina) {
+  display: none;
+}
+html.reduzir-movimento .cena-a :is(.ca-camada, .ca-logo, .ca-poeira) {
+  translate: none;
+}
+
+/* ------------------------------------------------------------------------------- keyframes */
+@keyframes ca-fade-curto {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes ca-camada-entra {
+  from {
+    transform: translateY(var(--dy, 40px));
+    opacity: 0;
+  }
+}
+@keyframes ca-camada-sobe {
+  from {
+    transform: translateY(var(--dy, 40px));
+  }
+}
+@keyframes ca-base-entra {
+  from {
+    transform: translateY(40px);
+    opacity: 0;
+  }
+}
+@keyframes ca-cortina {
+  from {
+    transform: none;
+    opacity: 1;
+  }
+  to {
+    transform: translateY(-100%);
+    opacity: 1;
+  }
+}
+@keyframes ca-fardo-entra {
+  from {
+    transform: translateY(40px) scaleY(0.6);
+    opacity: 0;
+  }
+}
+@keyframes ca-ator-entra {
+  0% {
+    transform: translateY(70px) scale(0.4);
+    opacity: 0;
+  }
+  60% {
+    transform: translateY(-18px) scale(1.08);
+    opacity: 1;
+  }
+  100% {
+    transform: none;
+    opacity: 1;
+  }
+}
+@keyframes ca-clarao-ator {
+  0% {
+    transform: scale(0.3);
+    opacity: 0;
+  }
+  30% {
+    transform: scale(1);
+    opacity: 0.95;
+  }
+  100% {
+    transform: scale(1.45);
+    opacity: 0;
+  }
+}
+@keyframes ca-onda-choque {
+  0% {
+    transform: scale(0.2);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(2.6);
+    opacity: 0;
+  }
+}
+@keyframes ca-letra-cai {
+  0% {
+    transform: translateY(-150px) scale(0.8, 1.3);
+    opacity: 0;
+  }
+  62% {
+    transform: translateY(0) scale(1.22, 0.7);
+    opacity: 1;
+  }
+  100% {
+    transform: none;
+    opacity: 1;
+  }
+}
+@keyframes ca-clarao-logo {
+  0% {
+    transform: scale(0.3);
+    opacity: 0;
+  }
+  25% {
+    transform: scale(1.25);
+    opacity: 0.95;
+  }
+  100% {
+    transform: scale(1.6);
+    opacity: 0;
+  }
+}
+@keyframes ca-selo-entra {
+  0% {
+    transform: translateY(-10px) scale(0.2);
+    opacity: 0;
+  }
+  100% {
+    transform: none;
+    opacity: 1;
+  }
+}
+@keyframes ca-gema-entra {
+  0% {
+    transform: scale(0) rotate(-90deg);
+    opacity: 0;
+  }
+  100% {
+    transform: none;
+    opacity: 1;
+  }
+}
+@keyframes ca-gema-brilha {
+  0%,
+  8%,
+  100% {
+    transform: none;
+  }
+  4% {
+    transform: scale(1.3) rotate(12deg);
+  }
+}
+@keyframes ca-lema-entra {
+  from {
+    transform: translateY(8px);
+    opacity: 0;
+  }
+}
+@keyframes ca-logo-flutua {
+  from {
+    transform: translateY(0) rotate(-0.6deg);
+  }
+  to {
+    transform: translateY(-5px) rotate(0.6deg);
+  }
+}
+@keyframes ca-gira {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes ca-gira-volta {
+  to {
+    transform: rotate(-360deg);
+  }
+}
+@keyframes ca-halo {
+  from {
+    transform: scale(0.94);
+    opacity: 0.85;
+  }
+  to {
+    transform: scale(1.05);
+    opacity: 1;
+  }
+}
+@keyframes ca-coroa {
+  from {
+    transform: scale(0.92);
+    opacity: 0.75;
+  }
+  to {
+    transform: scale(1.08);
+    opacity: 1;
+  }
+}
+@keyframes ca-deriva {
+  to {
+    transform: translateX(var(--deriva, 30px));
+  }
+}
+@keyframes ca-voo {
+  0% {
+    transform: translate(-80vw, 30px);
+  }
+  74% {
+    transform: translate(80vw, -46px);
+  }
+  100% {
+    transform: translate(80vw, -46px);
+  }
+}
+@keyframes ca-bate {
+  from {
+    transform: scaleY(1);
+  }
+  to {
+    transform: scaleY(-0.5);
+  }
+}
+@keyframes ca-nevoa {
+  from {
+    transform: translateX(-80px);
+  }
+  to {
+    transform: translateX(80px);
+  }
+}
+@keyframes ca-janela {
+  0%,
+  100% {
+    opacity: 0.7;
+  }
+  40% {
+    opacity: 1;
+  }
+  46% {
+    opacity: 0.6;
+  }
+  52% {
+    opacity: 0.9;
+  }
+}
+@keyframes ca-porta-e {
+  0%,
+  8% {
+    transform: perspective(140px) rotateY(0deg);
+  }
+  13% {
+    transform: perspective(140px) rotateY(-84deg);
+  }
+  16% {
+    transform: perspective(140px) rotateY(-70deg);
+  }
+  19%,
+  52% {
+    transform: perspective(140px) rotateY(-76deg);
+  }
+  60%,
+  100% {
+    transform: perspective(140px) rotateY(0deg);
+  }
+}
+@keyframes ca-porta-d {
+  0%,
+  8% {
+    transform: perspective(140px) rotateY(0deg);
+  }
+  13% {
+    transform: perspective(140px) rotateY(84deg);
+  }
+  16% {
+    transform: perspective(140px) rotateY(70deg);
+  }
+  19%,
+  52% {
+    transform: perspective(140px) rotateY(76deg);
+  }
+  60%,
+  100% {
+    transform: perspective(140px) rotateY(0deg);
+  }
+}
+@keyframes ca-porta-luz {
+  0%,
+  9% {
+    opacity: 0;
+  }
+  18%,
+  50% {
+    opacity: 1;
+  }
+  58%,
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes ca-catavento {
+  0%,
+  20% {
+    transform: scaleX(1);
+  }
+  80%,
+  100% {
+    transform: scaleX(-1);
+  }
+}
+@keyframes ca-fumaca {
+  0% {
+    transform: translate(0, 0) scale(0.35);
+    opacity: 0;
+  }
+  12% {
+    opacity: 0.9;
+  }
+  60% {
+    opacity: 0.55;
+  }
+  100% {
+    transform: translate(90%, -380%) scale(2.5);
+    opacity: 0;
+  }
+}
+@keyframes ca-sombra {
+  from {
+    transform: translateX(-800px);
+  }
+  to {
+    transform: translateX(calc(100vw + 100px));
+  }
+}
+@keyframes ca-anda {
+  0%,
+  8% {
+    transform: translateX(0);
+  }
+  42%,
+  58% {
+    transform: translateX(130%);
+  }
+  92%,
+  100% {
+    transform: translateX(0);
+  }
+}
+@keyframes ca-vira {
+  0%,
+  49.9% {
+    transform: scaleX(1);
+  }
+  50%,
+  99.9% {
+    transform: scaleX(-1);
+  }
+  100% {
+    transform: scaleX(1);
+  }
+}
+@keyframes ca-balanco {
+  from {
+    transform: rotate(-3deg) skewX(2deg);
+  }
+  to {
+    transform: rotate(3.5deg) skewX(-3deg);
+  }
+}
+/* capim ao vento: 3 balanços suaves e, no fim do ciclo, a rajada (dobra forte, ricocheteia e assenta) */
+@keyframes ca-capim-vento {
+  0%,
+  100% {
+    transform: rotate(-2.5deg) skewX(1.5deg);
+  }
+  11% {
+    transform: rotate(3deg) skewX(-2deg);
+  }
+  22% {
+    transform: rotate(-2deg) skewX(1deg);
+  }
+  33% {
+    transform: rotate(3.5deg) skewX(-2.5deg);
+  }
+  44% {
+    transform: rotate(-2.5deg) skewX(1.5deg);
+  }
+  55% {
+    transform: rotate(2.5deg) skewX(-1.5deg);
+  }
+  66% {
+    transform: rotate(-1.5deg) skewX(1deg);
+  }
+  73% {
+    transform: rotate(12deg) skewX(-6deg);
+  }
+  79% {
+    transform: rotate(-4deg) skewX(2deg);
+  }
+  85% {
+    transform: rotate(5deg) skewX(-2.5deg);
+  }
+  92% {
+    transform: rotate(-3deg) skewX(1.5deg);
+  }
+}
+@keyframes ca-juca-balanca {
+  from {
+    transform: rotate(-1.6deg);
+  }
+  to {
+    transform: rotate(1.8deg);
+  }
+}
+@keyframes ca-ciscar {
+  0%,
+  60%,
+  100% {
+    transform: none;
+  }
+  64% {
+    transform: translateX(3%) rotate(-8deg);
+  }
+  68% {
+    transform: translateX(-1%) rotate(2deg);
+  }
+  72% {
+    transform: translateX(3%) rotate(-8deg);
+  }
+  76% {
+    transform: none;
+  }
+  81% {
+    transform: translateY(-7%) scale(0.97, 1.04);
+  }
+  85% {
+    transform: scale(1.04, 0.96);
+  }
+  89% {
+    transform: none;
+  }
+}
+@keyframes ca-poeirinha {
+  0%,
+  62% {
+    opacity: 0;
+    transform: translate(0, 0) scale(0.4);
+  }
+  66% {
+    opacity: 0.9;
+  }
+  80% {
+    opacity: 0;
+    transform: translate(-60%, -90%) scale(1.3);
+  }
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes ca-rebolar {
+  from {
+    transform: rotate(-4deg) translateX(-1.5%);
+  }
+  to {
+    transform: rotate(4deg) translateX(1.5%);
+  }
+}
+@keyframes ca-quack {
+  0%,
+  73% {
+    opacity: 0;
+    transform: translateX(0) scale(0.6);
+  }
+  77% {
+    opacity: 1;
+  }
+  88%,
+  100% {
+    opacity: 0;
+    transform: translateX(10px) scale(1.15);
+  }
+}
+@keyframes ca-pose {
+  0%,
+  55%,
+  100% {
+    transform: none;
+  }
+  60% {
+    transform: scale(1.04, 0.95);
+  }
+  64% {
+    transform: scale(0.97, 1.07) rotate(-3deg);
+  }
+  67%,
+  80% {
+    transform: scale(1, 1.05) rotate(-4deg);
+  }
+  88% {
+    transform: none;
+  }
+}
+@keyframes ca-grasnado {
+  0%,
+  63% {
+    opacity: 0;
+    transform: translateX(0) scale(0.6);
+  }
+  66% {
+    opacity: 1;
+    transform: translateX(-4px) scale(1);
+  }
+  72% {
+    opacity: 0;
+    transform: translateX(-10px) scale(1.1);
+  }
+  73% {
+    opacity: 0;
+    transform: translateX(0) scale(0.6);
+  }
+  75% {
+    opacity: 1;
+    transform: translateX(-4px) scale(1);
+  }
+  81%,
+  100% {
+    opacity: 0;
+    transform: translateX(-10px) scale(1.1);
+  }
+}
+/* pavoneio da lendária: empina o peito para trás, dois passinhos de desfile e um pulinho de vaidade
+   (nunca espelha: a luz do desenho continua vindo da esquerda) */
+@keyframes ca-pavonear {
+  0%,
+  56%,
+  100% {
+    transform: none;
+  }
+  60% {
+    transform: translateY(1%) scale(1.05, 0.95);
+  }
+  64% {
+    transform: translateY(-2%) rotate(-6deg) scale(1.03, 1.05);
+  }
+  68% {
+    transform: translateX(2%) rotate(3deg);
+  }
+  71% {
+    transform: translateX(2%) translateY(-5%) rotate(-2deg);
+  }
+  74% {
+    transform: translateX(-1%) rotate(-4deg);
+  }
+  77% {
+    transform: translateX(-1%) translateY(-5%) rotate(2deg);
+  }
+  81% {
+    transform: translateY(-9%) rotate(-5deg) scale(0.97, 1.05);
+  }
+  85% {
+    transform: scale(1.06, 0.94);
+  }
+  90% {
+    transform: none;
+  }
+}
+@keyframes ca-aura-pulsa {
+  from {
+    opacity: 0.65;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes ca-aura-flare {
+  0%,
+  58%,
+  100% {
+    transform: scale(1);
+  }
+  66% {
+    transform: scale(1.35);
+  }
+  80% {
+    transform: scale(1.2);
+  }
+  90% {
+    transform: scale(1);
+  }
+}
+@keyframes ca-facho {
+  from {
+    opacity: 0.55;
+    transform: scaleX(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scaleX(1.06);
+  }
+}
+@keyframes ca-cintila {
+  0%,
+  100% {
+    transform: scale(0) rotate(0);
+  }
+  18% {
+    transform: scale(1.1) rotate(45deg);
+  }
+  36%,
+  99% {
+    transform: scale(0) rotate(90deg);
+  }
+}
+@keyframes ca-faisca {
+  0% {
+    transform: rotate(var(--ang)) translateX(0) scale(0.3);
+    opacity: 1;
+  }
+  70% {
+    opacity: 1;
+  }
+  100% {
+    transform: rotate(var(--ang)) translateX(var(--dist)) scale(1) rotate(120deg);
+    opacity: 0;
+  }
+}
+@keyframes ca-pena {
+  0% {
+    opacity: 1;
+    transform: rotate(var(--ang)) translateX(0) rotate(calc(var(--ang) * -1)) scale(0.6);
+  }
+  55% {
+    opacity: 1;
+    transform: rotate(var(--ang)) translateX(var(--dist)) rotate(calc(var(--ang) * -1)) rotate(calc(var(--giro) * 0.6)) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: rotate(var(--ang)) translateX(var(--dist)) rotate(calc(var(--ang) * -1)) translateY(46px) rotate(var(--giro)) scale(0.9);
+  }
+}
+@keyframes ca-grito {
+  0% {
+    transform: translateY(0) scale(0.3);
+    opacity: 0;
+  }
+  20% {
+    transform: translateY(-18px) scale(1.15);
+    opacity: 1;
+  }
+  70% {
+    transform: translateY(-26px) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-40px) scale(0.9);
+    opacity: 0;
+  }
+}
+@keyframes ca-balao {
+  from {
+    transform: translateY(10px) scale(0.3);
+    opacity: 0;
+  }
+}
+@keyframes ca-estalo {
+  0% {
+    transform: translate(0, 0) scale(0.2);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(var(--dx), var(--dy)) scale(var(--s)) rotate(90deg);
+    opacity: 0;
+  }
+}
+@keyframes ca-brilho-janela {
+  0% {
+    transform: translateX(-1.4em) skewX(-16deg);
+  }
+  22%,
+  100% {
+    transform: translateX(6em) skewX(-16deg);
+  }
+}
+@keyframes ca-brilho-palavra {
+  0% {
+    transform: skewX(16deg) translateX(1.4em);
+  }
+  22%,
+  100% {
+    transform: skewX(16deg) translateX(-6em);
+  }
+}
+@keyframes ca-reflexo {
+  0% {
+    transform: translateX(0) skewX(-20deg);
+  }
+  22%,
+  100% {
+    transform: translateX(780%) skewX(-20deg);
+  }
+}
+@keyframes ca-halo-logo {
+  from {
+    opacity: 0.7;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes ca-ninho-entra {
+  from {
+    transform: translateY(20px) scale(0.3);
+    opacity: 0;
+  }
+}
+@keyframes ca-ovo {
+  0%,
+  70% {
+    transform: translateY(0) scale(1);
+  }
+  74% {
+    transform: translateY(4%) scale(1.14, 0.84);
+  }
+  80% {
+    transform: translateY(-78%) scale(0.92, 1.1) rotate(-10deg);
+  }
+  85% {
+    transform: translateY(-64%) scale(1) rotate(8deg);
+  }
+  91% {
+    transform: translateY(0) scale(1.12, 0.88) rotate(0deg);
+  }
+  95% {
+    transform: translateY(0) scale(0.96, 1.05);
+  }
+  100% {
+    transform: translateY(0) scale(1);
+  }
+}
+@keyframes ca-ovo-aura {
+  0%,
+  74% {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  82% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.3);
+  }
+}
+@keyframes ca-ovo-brilho {
+  0%,
+  76% {
+    opacity: 0;
+    transform: scale(0.1) rotate(0deg);
+  }
+  83% {
+    opacity: 1;
+    transform: scale(1.15) rotate(40deg);
+  }
+  94%,
+  100% {
+    opacity: 0;
+    transform: scale(0.3) rotate(100deg);
+  }
+}
+/* a moeda sai do ninho no alto do pulo do ovo (80% do ciclo dele), sobe girando e some */
+@keyframes ca-ninho-moeda {
+  0%,
+  78% {
+    opacity: 0;
+    transform: translateY(10%) scale(0.4);
+  }
+  82% {
+    opacity: 1;
+    transform: translateY(-70%) scale(1.05);
+  }
+  92% {
+    opacity: 1;
+    transform: translateY(-170%) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-230%) scale(0.8);
+  }
+}
+@keyframes ca-borboleta {
+  0% {
+    transform: translate(0, 0) rotate(-6deg);
+  }
+  20% {
+    transform: translate(46px, -34px) rotate(8deg);
+  }
+  38% {
+    transform: translate(96px, -6px) rotate(-4deg);
+  }
+  55% {
+    transform: translate(70px, -52px) rotate(10deg);
+  }
+  75% {
+    transform: translate(18px, -28px) rotate(-8deg);
+  }
+  100% {
+    transform: translate(0, 0) rotate(-6deg);
+  }
+}
+@keyframes ca-asas {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0.22);
+  }
+}
+@keyframes ca-moeda-gira {
+  0% {
+    transform: scaleX(1);
+  }
+  25% {
+    transform: scaleX(0.12);
+  }
+  50% {
+    transform: scaleX(-1);
+  }
+  75% {
+    transform: scaleX(0.12);
+  }
+  100% {
+    transform: scaleX(1);
+  }
+}
+@keyframes ca-grao {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0) scale(0.6);
+  }
+  15% {
+    opacity: 1;
+  }
+  50% {
+    transform: translate(calc(var(--dx) * 0.6), calc(var(--sobe) * 0.5)) scale(1);
+  }
+  85% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--dx), var(--sobe)) scale(0.7);
+  }
+}
+/* vaga-lume: passeia em laço e pisca (acende, apaga, reacende) no mesmo ciclo */
+@keyframes ca-vagalume {
+  0%,
+  100% {
+    transform: translate(0, 0);
+    opacity: 0;
+  }
+  14% {
+    opacity: 1;
+  }
+  25% {
+    transform: translate(var(--ax), calc(var(--ay) * -1));
+    opacity: 0.25;
+  }
+  38% {
+    opacity: 1;
+  }
+  50% {
+    transform: translate(calc(var(--ax) * 0.4), calc(var(--ay) * -1.6));
+    opacity: 0.1;
+  }
+  64% {
+    opacity: 0.9;
+  }
+  75% {
+    transform: translate(calc(var(--ax) * -0.6), calc(var(--ay) * -0.5));
+    opacity: 0.2;
+  }
+  86% {
+    opacity: 0.8;
+  }
+}

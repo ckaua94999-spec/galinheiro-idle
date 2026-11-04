@@ -1,0 +1,1027 @@
+/* atendimento e auditoria do painel (cliente/admin/atendimento, cliente/admin/auditoria). Escopo próprio; importado por globals.css. */
+
+/* ================================================================ atendimento */
+
+/* ---------------------------------------------------------------- tela: fila + conversa */
+.admin .atd-grade {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+}
+/* desktop: as duas colunas ocupam a altura da tela; cada uma rola por dentro */
+@media (min-width: 900px) {
+  .admin .atd-tela {
+    display: flex;
+    flex-direction: column;
+    /* topo do celular (60) + respiro do conteúdo (26 + 48) */
+    height: calc(100dvh - 134px);
+    min-height: 560px;
+  }
+  .admin .atd-grade {
+    flex: 1;
+    min-height: 0;
+    /* a fila acompanha a largura (≈ 1/3), sem ficar estreita demais */
+    grid-template-columns: minmax(260px, 34%) minmax(0, 1fr);
+  }
+}
+@media (min-width: 1024px) {
+  .admin .atd-tela {
+    height: calc(100dvh - 74px);
+  }
+}
+/* celular: ou a fila, ou a conversa (em tela cheia, sem as margens do conteúdo) */
+@media (max-width: 899.98px) {
+  .admin .atd-tela[data-aberta='1'] .atd-tela-cabeca,
+  .admin .atd-grade[data-aberta='1'] .atd-fila,
+  .admin .atd-grade:not([data-aberta='1']) .atd-conversa {
+    display: none;
+  }
+  .admin .atd-grade[data-aberta='1'] .atd-conversa {
+    /* altura da barra do topo do painel no celular: 40 px do botão do menu + 2 × 10 px */
+    height: calc(100dvh - 60px);
+    margin: -18px -14px -40px;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+}
+@media (min-width: 768px) and (max-width: 899.98px) {
+  .admin .atd-grade[data-aberta='1'] .atd-conversa {
+    margin: -26px -28px -48px;
+  }
+}
+
+/* ---------------------------------------------------------------- avatar */
+.admin .atd-avatar {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  user-select: none;
+}
+.admin .atd-avatar[data-tamanho='p'] {
+  width: 30px;
+  height: 30px;
+  font-size: 11.5px;
+}
+.admin .atd-avatar[data-tamanho='g'] {
+  width: 44px;
+  height: 44px;
+  font-size: 15px;
+}
+
+/* ---------------------------------------------------------------- fila */
+.admin .atd-fila {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: 0;
+  overflow: hidden;
+  container-type: inline-size;
+}
+.admin .atd-fila-topo {
+  flex: none;
+  padding: 12px;
+  border-bottom: 1px solid var(--adm-borda);
+}
+.admin .atd-segmentos {
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+  border-radius: 11px;
+  background: #eef1f6;
+}
+.admin .atd-segmento {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 34px;
+  padding: 0 8px;
+  border-radius: 8px;
+  color: var(--adm-suave);
+  font-size: 13px;
+  font-weight: 800;
+  transition: background 0.15s, color 0.15s;
+}
+.admin .atd-segmento:hover {
+  color: var(--adm-texto);
+}
+.admin .atd-segmento[aria-pressed='true'] {
+  background: #fff;
+  color: var(--adm-texto);
+  box-shadow: 0 1px 3px rgb(16 24 40 / 0.1);
+}
+.admin .atd-segmento:focus-visible {
+  outline: 2px solid var(--adm-verde);
+  outline-offset: 1px;
+}
+@container (max-width: 300px) {
+  .admin .atd-segmento {
+    gap: 4px;
+    padding: 0 4px;
+    font-size: 12.5px;
+  }
+}
+.admin .atd-segmento-num {
+  min-width: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: #dcfce7;
+  color: #15803d;
+  font-size: 11px;
+  line-height: 18px;
+  font-variant-numeric: tabular-nums;
+}
+.admin .atd-busca {
+  position: relative;
+  margin-top: 10px;
+}
+.admin .atd-busca input[type='search'].adm-input {
+  padding-left: 36px;
+  padding-right: 38px;
+}
+.admin .atd-busca input::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+  display: none;
+}
+.admin .atd-busca-icone {
+  position: absolute;
+  top: 50%;
+  left: 12px;
+  width: 16px;
+  height: 16px;
+  translate: 0 -50%;
+  color: var(--adm-suave);
+  pointer-events: none;
+}
+.admin .atd-busca-limpar {
+  position: absolute;
+  top: 50%;
+  right: 5px;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  translate: 0 -50%;
+  border-radius: 8px;
+  color: var(--adm-suave);
+}
+.admin .atd-busca-limpar:hover {
+  background: #f1f5f9;
+  color: var(--adm-texto);
+}
+.admin .atd-fila-lista {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.admin .atd-fila-vazia {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 26px;
+  color: #cbd5e1;
+}
+.admin .atd-fila-vazia .adm-vazio {
+  padding-top: 8px;
+}
+.admin .atd-fila-aviso {
+  flex: none;
+  padding: 7px 12px;
+  border-top: 1px solid #fde68a;
+  background: #fffbeb;
+  color: #b45309;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.admin .atd-linha {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 11px 14px;
+  border-bottom: 1px solid #eef1f6;
+  background: #fff;
+  text-align: left;
+  transition: background 0.12s;
+}
+.admin .atd-linha:hover {
+  background: #f8fafc;
+}
+.admin .atd-linha:focus-visible {
+  outline: 2px solid var(--adm-verde);
+  outline-offset: -2px;
+}
+.admin .atd-linha-ativa,
+.admin .atd-linha-ativa:hover {
+  background: #f0fdf4;
+  box-shadow: inset 3px 0 0 var(--adm-verde);
+}
+.admin .atd-linha-miolo {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.admin .atd-linha-topo,
+.admin .atd-linha-base {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+}
+.admin .atd-linha-nome {
+  min-width: 0;
+  overflow: hidden;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.admin .atd-linha-tempo {
+  flex: none;
+  color: var(--adm-suave);
+  font-size: 12px;
+  white-space: nowrap;
+}
+.admin .atd-linha-previa {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--adm-suave);
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.admin .atd-linha-autor {
+  color: #475569;
+  font-weight: 800;
+}
+.admin .atd-linha[data-nao-lida] .atd-linha-nome {
+  font-weight: 900;
+}
+.admin .atd-linha[data-nao-lida] .atd-linha-tempo {
+  color: var(--adm-verde);
+  font-weight: 800;
+}
+.admin .atd-linha[data-nao-lida] .atd-linha-previa {
+  color: var(--adm-texto);
+  font-weight: 700;
+}
+.admin .atd-linha-contador {
+  flex: none;
+  display: grid;
+  place-items: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 7px;
+  border-radius: 999px;
+  background: #ef4444;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+.admin .atd-linha-aguardando {
+  flex: none;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: #fef3c7;
+  color: #b45309;
+  font-size: 11.5px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+/* ---------------------------------------------------------------- conversa */
+.admin .atd-conversa {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: 0;
+  overflow: hidden;
+  container-type: inline-size;
+}
+/* coluna da conversa estreita (desktop pequeno): "Ver ficha" vira só o ícone */
+@container (max-width: 560px) {
+  .admin .atd-ficha-rotulo {
+    display: none;
+  }
+  .admin .atd-ficha {
+    width: 34px;
+    padding: 0;
+  }
+}
+.admin .atd-conversa-estado {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 320px;
+  padding: 24px;
+}
+/* desktop: avatar | nome + selo / contatos | ações. celular: ← avatar nome ações, e os contatos numa faixa embaixo */
+.admin .atd-conversa-cabeca {
+  flex: none;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-areas:
+    'avatar titulo acoes'
+    'avatar contatos acoes';
+  align-items: center;
+  column-gap: 12px;
+  row-gap: 2px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--adm-borda);
+  background: #fff;
+}
+.admin .atd-voltar {
+  display: none;
+  grid-area: voltar;
+}
+.admin .atd-conversa-avatar {
+  grid-area: avatar;
+}
+.admin .atd-conversa-titulo {
+  grid-area: titulo;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 8px;
+  min-width: 0;
+}
+.admin .atd-conversa-nome {
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  font-family: var(--font-texto);
+  font-size: 17px;
+  font-weight: 900;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.admin .atd-contatos {
+  grid-area: contatos;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 14px;
+  min-width: 0;
+  font-size: 13px;
+}
+.admin .atd-contatos li {
+  min-width: 0;
+  max-width: 100%;
+}
+.admin .atd-contatos a {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  max-width: 100%;
+  color: var(--adm-suave);
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.admin .atd-contato-texto {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.admin .atd-contatos a:hover {
+  color: var(--adm-azul);
+  text-decoration: underline;
+}
+.admin .atd-contatos a:focus-visible {
+  border-radius: 6px;
+  outline: 2px solid var(--adm-verde);
+  outline-offset: 2px;
+}
+.admin .atd-contatos svg {
+  flex: none;
+  width: 14px;
+  height: 14px;
+}
+/* "Ver ficha": botão ao lado de Resolver no desktop; no celular vira mais um item da faixa de contatos */
+.admin .atd-contato-ficha {
+  display: none;
+}
+.admin .atd-conversa-acoes {
+  grid-area: acoes;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+/* coluna da conversa estreita (desktop pequeno): os contatos descem para uma linha inteira embaixo.
+   Vem antes do bloco do celular, que também casa ali e precisa ganhar (tem o botão de voltar). */
+@container (max-width: 720px) {
+  .admin .atd-conversa-cabeca {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-areas:
+      'avatar titulo acoes'
+      'contatos contatos contatos';
+    row-gap: 8px;
+  }
+}
+@media (max-width: 899.98px) {
+  .admin .atd-conversa-cabeca {
+    grid-template-columns: auto auto minmax(0, 1fr) auto;
+    grid-template-areas:
+      'voltar avatar titulo acoes'
+      'contatos contatos contatos contatos';
+    column-gap: 8px;
+    row-gap: 8px;
+    padding: 8px 12px 10px;
+  }
+  .admin .atd-voltar {
+    display: grid;
+    place-items: center;
+    width: 38px;
+    height: 38px;
+    margin-left: -6px;
+    border-radius: 10px;
+    color: var(--adm-texto);
+  }
+  .admin .atd-voltar:hover {
+    background: #f1f5f9;
+  }
+  .admin .atd-avatar.atd-conversa-avatar {
+    width: 38px;
+    height: 38px;
+    font-size: 13.5px;
+  }
+  .admin .atd-conversa-nome {
+    font-size: 16px;
+  }
+  .admin .atd-ficha {
+    display: none;
+  }
+  .admin .atd-contato-ficha {
+    display: block;
+  }
+  /* faixa de contatos: pílulas que rolam de lado se não couberem */
+  .admin .atd-contatos {
+    flex-wrap: nowrap;
+    gap: 6px;
+    margin: 0 -12px -2px;
+    padding: 0 12px 2px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .admin .atd-contatos li {
+    flex: none;
+    max-width: 62vw;
+  }
+  .admin .atd-contatos a {
+    min-height: 32px;
+    padding: 0 10px;
+    border: 1px solid var(--adm-borda);
+    border-radius: 999px;
+    background: #f8fafc;
+    color: #334155;
+  }
+  .admin .atd-contatos a:hover {
+    text-decoration: none;
+  }
+}
+.admin .atd-voltar:focus-visible {
+  outline: 2px solid var(--adm-verde);
+}
+
+/* ---------------------------------------------------------------- mensagens */
+.admin .atd-mensagens-caixa {
+  position: relative;
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+.admin .atd-mensagens {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 3px;
+  min-height: 0;
+  padding: 10px clamp(12px, 3vw, 28px) 18px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background:
+    radial-gradient(circle at 1px 1px, rgb(100 112 138 / 0.07) 1px, transparent 0) 0 0 / 18px 18px,
+    #f6f8fb;
+}
+.admin .atd-mensagens:focus-visible {
+  outline: 2px solid var(--adm-verde);
+  outline-offset: -2px;
+}
+.admin .atd-mensagens-vazio {
+  margin: auto;
+  color: var(--adm-suave);
+  font-size: 14px;
+}
+.admin .atd-dia {
+  display: flex;
+  justify-content: center;
+  margin: 14px 0 6px;
+}
+.admin .atd-dia span {
+  padding: 3px 11px;
+  border-radius: 999px;
+  background: #e6eaf1;
+  color: #475569;
+  font-size: 12px;
+  font-weight: 800;
+}
+.admin .atd-msg {
+  display: flex;
+  flex-direction: column;
+  max-width: min(80%, 560px);
+}
+.admin .atd-msg[data-autor='membro'] {
+  align-self: flex-start;
+  align-items: flex-start;
+}
+.admin .atd-msg[data-autor='equipe'] {
+  align-self: flex-end;
+  align-items: flex-end;
+}
+.admin .atd-msg[data-inicio] {
+  margin-top: 8px;
+}
+.admin .atd-msg-autor {
+  margin: 0 6px 3px;
+  color: #15803d;
+  font-size: 12px;
+  font-weight: 800;
+}
+.admin .atd-msg-autor-papel {
+  color: var(--adm-suave);
+  font-weight: 700;
+}
+.admin .atd-bolha {
+  min-width: 64px;
+  padding: 7px 12px 5px;
+  border: 1px solid #e3e7ef;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 1px 1px rgb(16 24 40 / 0.04);
+}
+.admin .atd-msg[data-autor='membro'][data-inicio] .atd-bolha {
+  border-top-left-radius: 5px;
+}
+.admin .atd-msg[data-autor='equipe'] .atd-bolha {
+  border-color: #bbf7d0;
+  background: #dcfce7;
+}
+.admin .atd-msg[data-autor='equipe'][data-inicio] .atd-bolha {
+  border-top-right-radius: 5px;
+}
+.admin .atd-msg[data-enviando] {
+  opacity: 0.6;
+}
+.admin .atd-bolha-texto {
+  font-size: 14.5px;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.admin .atd-bolha-rodape {
+  display: block;
+  margin-top: 1px;
+  color: var(--adm-suave);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+.admin .atd-msg[data-autor='equipe'] .atd-bolha-rodape {
+  color: #3f7a52;
+}
+.admin .atd-msg-sistema {
+  align-self: center;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  max-width: min(92%, 520px);
+  margin: 8px 0 4px;
+  padding: 5px 12px;
+  border-radius: 12px;
+  background: #eceff5;
+  color: var(--adm-suave);
+  font-size: 12.5px;
+  line-height: 1.35;
+}
+.admin .atd-msg-sistema time {
+  flex: none;
+  color: #94a3b8;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+.admin .atd-novas {
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  translate: -50% 0;
+  border-radius: 999px;
+  background: var(--adm-verde);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 800;
+  box-shadow: 0 6px 18px rgb(22 163 74 / 0.35);
+}
+.admin .atd-novas:focus-visible {
+  outline: 3px solid #bbf7d0;
+}
+
+/* ---------------------------------------------------------------- resposta */
+.admin .atd-resposta {
+  flex: none;
+  padding: 10px 12px 8px;
+  border-top: 1px solid var(--adm-borda);
+  background: #fff;
+}
+.admin .atd-resposta-aviso {
+  margin-bottom: 8px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: #fef3c7;
+  color: #92400e;
+  font-size: 12.5px;
+  font-weight: 700;
+}
+.admin .atd-resposta-caixa {
+  border: 1px solid #cfd6e2;
+  border-radius: 12px;
+  background: #fff;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.admin .atd-resposta-caixa:focus-within {
+  border-color: var(--adm-verde);
+  box-shadow: 0 0 0 3px rgb(22 163 74 / 0.18);
+}
+.admin .atd-resposta-caixa.atd-resposta-erro {
+  border-color: var(--adm-vermelho);
+  box-shadow: 0 0 0 3px rgb(220 38 38 / 0.14);
+}
+.admin .atd-resposta-campo {
+  display: block;
+  width: 100%;
+  min-height: 44px;
+  max-height: 180px;
+  padding: 10px 12px 4px;
+  border: 0;
+  outline: 0;
+  resize: none;
+  background: transparent;
+  color: var(--adm-texto);
+  font: inherit;
+  font-size: 14.5px;
+  line-height: 1.45;
+}
+.admin .atd-resposta-campo::placeholder {
+  color: #94a3b8;
+}
+.admin .atd-resposta-barra {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 2px 6px 6px;
+}
+.admin .atd-contador {
+  margin-left: auto;
+  color: #94a3b8;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.admin .atd-contador[data-tom='alerta'] {
+  color: var(--adm-ambar);
+  font-weight: 800;
+}
+.admin .atd-contador[data-tom='erro'] {
+  color: var(--adm-vermelho);
+  font-weight: 800;
+}
+.admin .atd-resposta-dica {
+  margin-top: 5px;
+  color: #94a3b8;
+  font-size: 11.5px;
+}
+.admin .atd-resposta-dica kbd {
+  padding: 0 4px;
+  border: 1px solid #d5dbe5;
+  border-bottom-width: 2px;
+  border-radius: 4px;
+  background: #f8fafc;
+  color: #475569;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 800;
+}
+@media (hover: none) {
+  .admin .atd-resposta-dica {
+    display: none;
+  }
+}
+/* celular: a caixa de resposta não fica embaixo da barra de gestos do aparelho (PWA em tela cheia) */
+@media (max-width: 899.98px) {
+  .admin .atd-resposta {
+    padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px));
+  }
+}
+/* iOS amplia a tela ao focar campos com menos de 16 px */
+@media (max-width: 767.98px) {
+  .admin .atd-resposta-campo,
+  .admin .atd-busca input[type='search'].adm-input {
+    font-size: 16px;
+  }
+}
+
+.admin .atd-rapidas {
+  position: relative;
+}
+.admin .atd-rapidas-menu {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 0;
+  z-index: 10;
+  width: min(380px, calc(100vw - 48px));
+  max-height: min(340px, 60dvh);
+  padding: 6px;
+  overflow-y: auto;
+  border: 1px solid var(--adm-borda);
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 14px 34px rgb(15 23 42 / 0.2);
+}
+.admin .atd-rapidas-menu button {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 8px;
+  text-align: left;
+}
+.admin .atd-rapidas-menu button:hover,
+.admin .atd-rapidas-menu button:focus-visible {
+  outline: none;
+  background: #f1f5f9;
+}
+.admin .atd-rapidas-menu strong {
+  font-size: 13px;
+  font-weight: 800;
+}
+.admin .atd-rapidas-menu span {
+  display: -webkit-box;
+  overflow: hidden;
+  color: var(--adm-suave);
+  font-size: 12.5px;
+  line-height: 1.35;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+@media (max-width: 520px) {
+  .admin .atd-rapidas-rotulo,
+  .admin .atd-enviar-rotulo {
+    display: none;
+  }
+}
+
+/* ================================================================ auditoria */
+.admin .aud-total {
+  color: var(--adm-suave);
+  font-size: 13px;
+  font-weight: 700;
+}
+.admin .aud-suave {
+  color: var(--adm-suave);
+}
+.admin .aud-conteudo {
+  transition: opacity 0.15s;
+}
+.admin .aud-trocando {
+  opacity: 0.55;
+}
+
+/* tabela (desktop) e cartões (celular): um ou outro */
+.admin .aud-cartoes {
+  display: none;
+}
+@media (max-width: 767.98px) {
+  .admin .aud-tabela-caixa {
+    display: none;
+  }
+  .admin .aud-cartoes {
+    display: flex;
+    flex-direction: column;
+    margin: 0 -16px;
+  }
+}
+.admin .aud-tabela td {
+  vertical-align: top;
+}
+.admin .aud-tabela th:nth-child(1) {
+  width: 132px;
+}
+.admin .aud-tabela th:nth-child(2) {
+  width: 150px;
+}
+.admin .aud-tabela th:nth-child(3) {
+  width: 200px;
+}
+.admin .aud-tabela th:nth-child(4) {
+  width: 210px;
+}
+.admin .aud-quando {
+  display: flex;
+  flex-direction: column;
+  white-space: nowrap;
+}
+.admin .aud-quando-data {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+.admin .aud-quando-rel {
+  color: var(--adm-suave);
+  font-size: 12px;
+}
+.admin .aud-quem {
+  font-weight: 700;
+}
+
+.admin .aud-acao {
+  --tom: #475569;
+  --tom-fundo: #eef1f6;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+.admin .aud-acao[data-tom='verde'] { --tom: #15803d; --tom-fundo: #dcfce7; }
+.admin .aud-acao[data-tom='azul'] { --tom: #1d4ed8; --tom-fundo: #dbeafe; }
+.admin .aud-acao[data-tom='ambar'] { --tom: #b45309; --tom-fundo: #fef3c7; }
+.admin .aud-acao[data-tom='vermelho'] { --tom: #b91c1c; --tom-fundo: #fee2e2; }
+.admin .aud-acao[data-tom='roxo'] { --tom: #6d28d9; --tom-fundo: #ede9fe; }
+.admin .aud-acao-icone {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  /* não aumenta a altura da linha: o texto da ação fica na mesma linha de base das outras colunas */
+  margin-block: -3px;
+  border-radius: 8px;
+  background: var(--tom-fundo);
+  color: var(--tom);
+}
+.admin .aud-acao-icone svg {
+  width: 15px;
+  height: 15px;
+}
+
+.admin .aud-alvo {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 6px;
+  max-width: 100%;
+  min-width: 0;
+  vertical-align: top;
+}
+.admin .aud-alvo svg {
+  margin-top: 3px;
+}
+.admin .aud-alvo-texto {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.admin .aud-col-alvo {
+  max-width: 240px;
+}
+.admin a.aud-alvo {
+  color: var(--adm-azul);
+  font-weight: 700;
+  text-decoration: none;
+}
+.admin a.aud-alvo:hover {
+  text-decoration: underline;
+}
+.admin a.aud-alvo:focus-visible {
+  border-radius: 4px;
+  outline: 2px solid var(--adm-verde);
+  outline-offset: 2px;
+}
+.admin a.aud-alvo.aud-alvo-popup {
+  color: #6d28d9;
+}
+.admin span.aud-alvo.aud-alvo-popup {
+  color: var(--adm-suave);
+  font-weight: 700;
+}
+.admin .aud-alvo-nota {
+  display: inline-block;
+  padding: 0 6px;
+  white-space: nowrap;
+  vertical-align: 1px;
+  border-radius: 999px;
+  background: #fee2e2;
+  color: #b91c1c;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.admin .aud-detalhes {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.admin .aud-detalhes-resumo {
+  color: #1e293b;
+  font-weight: 700;
+}
+.admin .aud-detalhes-motivo {
+  color: var(--adm-suave);
+  font-size: 13px;
+}
+.admin .aud-detalhes-motivo q {
+  font-style: italic;
+}
+
+/* cartões (celular) */
+.admin .aud-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 16px;
+  border-top: 1px solid #eef1f6;
+}
+.admin .aud-item-topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.admin .aud-item-tempo {
+  flex: none;
+  color: var(--adm-suave);
+  font-size: 12px;
+  font-weight: 700;
+}
+.admin .aud-item-quem {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 4px;
+  min-width: 0;
+  font-size: 14px;
+}
+.admin .aud-item-detalhes {
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: #f8fafc;
+  font-size: 14px;
+}
+.admin .aud-item-data {
+  color: #94a3b8;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* paginação */
+.admin .aud-paginacao {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--adm-borda);
+}
+.admin .aud-paginacao-info,
+.admin .aud-paginacao-pagina {
+  color: var(--adm-suave);
+  font-size: 13px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+@media (max-width: 420px) {
+  .admin .aud-paginacao-rotulo {
+    display: none;
+  }
+}

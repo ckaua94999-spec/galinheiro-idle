@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { criarBancoEmMemoria } from '@/server/db/banco';
+import { MIGRACOES } from '@/server/db/migracoes';
 
 describe('migrations', () => {
   it('aplicam no PGlite e criam as tabelas e funções', async () => {
@@ -48,6 +49,53 @@ describe('migrations', () => {
     // O dono (usuário do servidor) continua com acesso normal.
     expect(await banco.q('select * from contas')).toEqual([]);
     expect((await banco.um<{ ok: boolean }>(`select fn_aposentar(gen_random_uuid(), now()) as ok`))?.ok).toBe(false);
+    await banco.fechar();
+  });
+
+  it('0022 sobre um banco antigo (0001–0021 já aplicadas): codorna, roleta aberta para quem já jogava e PIX pago vira giro', async () => {
+    let contaId = '';
+    const banco = await criarBancoEmMemoria(async (b) => {
+      // aplica até a 0021 numa transação própria (já confirmada), como num banco de produção
+      await b.script('create table if not exists schema_migrations (nome text primary key, aplicada_em timestamptz not null default now())');
+      await b.tx(async (c) => {
+        for (const m of MIGRACOES) {
+          if (m.nome === '0022_sem_dinheiro_real') break;
+          await c.script(m.sql);
+          await c.q('insert into schema_migrations (nome) values ($1)', [m.nome]);
+        }
+      });
+      const conta = (await b.um<{ id: string }>(
+        `insert into contas (tipo, email, senha_hash, nome, telefone) values ('email', 'antigo@exemplo.com', 'x', 'Antigo', '+5511999990000') returning id`,
+      ))!;
+      contaId = conta.id;
+      await b.q(`insert into players (id, config_versao, criado_em) values ($1, '1.0.3', now() - interval '10 days')`, [contaId]);
+      await b.q(`insert into nests (player_id, slot) select $1, g from generate_series(1, 4) g`, [contaId]);
+      await b.q(`insert into inventory (player_id, item) select $1, i from unnest(enum_range(null::item_tipo)) i`, [contaId]);
+      for (const [tabela, status, n] of [['roleta_pix', 'pago', 2], ['roleta_pix', 'aguardando', 1], ['ampliacao_pix', 'pago', 1]] as const) {
+        for (let i = 0; i < n; i++) {
+          await b.q(
+            `insert into ${tabela} (player_id, centavos, status, id_transacao, copia_cola, idempotencia, criado_em, atualizado_em, expira_em)
+             values ($1, 5500, $2, gen_random_uuid()::text, '000201', gen_random_uuid()::text, now(), now(), now() + interval '1 hour')`,
+            [contaId, status],
+          );
+        }
+      }
+    });
+    const p = (await banco.um<{ giros_gratis: number; nivel_galinheiro: number; liberada: boolean }>(
+      'select giros_gratis, nivel_galinheiro, roleta_liberada_em is not null as liberada from players where id = $1',
+      [contaId],
+    ))!;
+    expect(p).toEqual({ giros_gratis: 2, nivel_galinheiro: 2, liberada: true });
+    expect((await banco.um<{ n: number }>('select count(*)::int as n from nests where player_id = $1', [contaId]))?.n).toBe(8);
+    expect(await banco.q(`select status, count(*)::int as n from roleta_pix group by status order by status`)).toEqual([
+      { status: 'expirado', n: 1 },
+      { status: 'usado', n: 2 },
+    ]);
+    // os valores novos dos enums já valem depois da migration
+    await banco.q(`insert into inventory (player_id, item) values ($1, 'ovo_codorna') on conflict do nothing`, [contaId]);
+    const t = await banco.um<{ ok: boolean }>(`select 'LIBERACAO_ROLETA'::transacao_tipo is not null as ok`);
+    expect(t?.ok).toBe(true);
+    expect((await banco.um<{ v: string | null }>('select termos_versao as v from contas where id = $1', [contaId]))?.v).toBeNull();
     await banco.fechar();
   });
 });

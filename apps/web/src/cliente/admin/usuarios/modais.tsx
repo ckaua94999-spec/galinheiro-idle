@@ -7,7 +7,7 @@
 // modal abriu (é o que o admin viu ao decidir; o servidor confere de novo).
 import {
   AdminEditarUsuarioBody, formatarTelefone, mascararTelefone, normalizarTelefone,
-  type AdminCobrancaUsdtDTO, type AdminCodigoRecuperacaoDTO, type AdminConversaDTO, type AdminUsuarioDetalheDTO, type AdminUsuarioLinhaDTO,
+  type AdminCodigoRecuperacaoDTO, type AdminConversaDTO, type AdminUsuarioDetalheDTO, type AdminUsuarioLinhaDTO,
 } from '@galinheiro/api-contract';
 import { ANIMAIS, CONFIG, ITENS, NOME_RARIDADE, NOME_TIPO, TIPOS, tipoDoItem, type Item, type Tipo } from '@galinheiro/game-core';
 import { useMutation, useQueryClient, type QueryClient } from '@tanstack/react-query';
@@ -1005,78 +1005,6 @@ export function ModalDesbloquear({ d: dAtual, aoFechar }: PropsModal) {
   );
 }
 
-// ---------------------------------------------------------------- cobrança PIX ou USDT
-
-export function ModalCobranca({ d: dAtual, aoFechar }: PropsModal) {
-  const [d] = useState(dAtual);
-  const u = d.usuario;
-  const [meio, setMeio] = useState(d.cobranca.meio);
-  const [abertas, setAbertas] = useState(d.cobranca.abertas);
-  const salvar = useAcao(
-    async (escolhido: 'pix' | 'usdt') => (await chamar<{ meio: 'pix' | 'usdt' }>('POST', `/api/admin/usuarios/${u.id}/cobranca`, { corpo: { meio: escolhido }, idempotente: true })).data,
-    (r) => r.meio === 'usdt' ? `${primeiroNome(u.nome)} passa a pagar em USDT` : `${primeiroNome(u.nome)} volta a pagar no PIX`,
-  );
-  const confirmar = useAcao(
-    async (item: AdminCobrancaUsdtDTO) => {
-      await chamar('POST', `/api/admin/usuarios/${u.id}/cobranca-usdt`, { corpo: { cobrancaId: item.id, tipo: item.tipo }, idempotente: true });
-      return item;
-    },
-    (item) => `USDT confirmado: ${fmt.moedas(item.valorUsdtX100)} na ${item.tipo === 'roleta' ? 'roleta' : 'ampliação'}`,
-  );
-  return (
-    <ModalAdm aberto titulo={`Cobrança de ${u.nome}`} aoFechar={aoFechar}>
-      <div className="adm-us-form">
-        <p className="adm-us-texto">
-          Vale para a roleta e para a ampliação do galinheiro. No USDT, o membro vê a rede, o valor, o endereço e o QR da carteira configurada em Pagamentos. A equipe confirma aqui quando o valor chega.
-        </p>
-        <fieldset className="adm-us-opcoes">
-          <legend className="adm-campo-rotulo">Meio</legend>
-          <div className="adm-us-opcoes-grade" data-colunas="2">
-            <label className="adm-us-opcao adm-us-opcao-linha">
-              <input type="radio" name="meio" className="sr-only" checked={meio === 'pix'} onChange={() => setMeio('pix')} />
-              <Banknote className="adm-us-opcao-icone" aria-hidden />
-              <span className="min-w-0">
-                <span className="adm-us-opcao-nome">PIX</span>
-                <span className="adm-us-opcao-sub">QR da gateway de pagamentos.</span>
-              </span>
-            </label>
-            <label className="adm-us-opcao adm-us-opcao-linha">
-              <input type="radio" name="meio" className="sr-only" checked={meio === 'usdt'} onChange={() => setMeio('usdt')} />
-              <Coins className="adm-us-opcao-icone" aria-hidden />
-              <span className="min-w-0">
-                <span className="adm-us-opcao-nome">USDT</span>
-                <span className="adm-us-opcao-sub">{d.cobranca.carteiraPronta ? 'Endereço e QR da carteira.' : 'Falta a carteira em Pagamentos.'}</span>
-              </span>
-            </label>
-          </div>
-        </fieldset>
-        {abertas.length > 0 && (
-          <div className="adm-us-campo-motivo">
-            <p className="adm-campo-rotulo">Aguardando USDT</p>
-            <ul className="adm-us-texto">
-              {abertas.map((item) => (
-                <li key={item.id} className="mb-2 flex items-center justify-between gap-2">
-                  <span>{item.tipo === 'roleta' ? 'Roleta' : 'Ampliação'} · {fmt.moedas(item.valorUsdtX100)} USDT · {item.rede}</span>
-                  <BotaoAdm tamanho="p" disabled={confirmar.isPending} onClick={() => confirmar.mutate(item, { onSuccess: () => setAbertas((lista) => lista.filter((x) => x.id !== item.id)) })}>
-                    Confirmar
-                  </BotaoAdm>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-        <ErroModal texto={(salvar.isError ? mensagemAdmin(salvar.error) : null) ?? (confirmar.isError ? mensagemAdmin(confirmar.error) : null)} />
-        <AcoesModal>
-          <Cancelar aoFechar={aoFechar} />
-          <BotaoAdm variante="primario" disabled={salvar.isPending || meio === d.cobranca.meio} onClick={() => salvar.mutate(meio, { onSuccess: aoFechar })}>
-            {salvar.isPending ? 'Salvando…' : 'Salvar cobrança'}
-          </BotaoAdm>
-        </AcoesModal>
-      </div>
-    </ModalAdm>
-  );
-}
-
 // ---------------------------------------------------------------- bônus de quem entra pelo link
 
 const MAX_BONUS_X100 = 100_000;
@@ -1116,7 +1044,7 @@ export function ModalBonusLink({ d: dAtual, aoFechar }: PropsModal) {
         <p className="adm-us-texto">
           Quem se cadastrar pelo link de <strong>{u.nome}</strong> recebe este bônus. Quem já entrou não muda. O bônus geral hoje é R$ {fmt.moedas(d.afiliacao.bonusGeralX100)}.
         </p>
-        <Campo rotulo="Bônus deste link" erro={tentou ? lido.erro : null} dica="Em reais. 0 deixa o cadastro sem bônus.">
+        <Campo rotulo="Bônus deste link" erro={tentou ? lido.erro : null} dica="Em moedas do jogo. 0 deixa o cadastro sem bônus.">
           <input
             className="adm-input"
             inputMode="decimal"
@@ -1164,7 +1092,7 @@ export function ModalBonusGeral({ d: dAtual, aoFechar }: PropsModal) {
         <p className="adm-us-texto">
           Vale para quem entrar sem convite e para os links que seguem o bônus geral. Um link com valor próprio, como o de um afiliado, continua no valor dele. Quem já recebeu o bônus não muda.
         </p>
-        <Campo rotulo="Bônus geral" erro={tentou ? lido.erro : null} dica="Em reais. Hoje o padrão de quem não tem valor próprio.">
+        <Campo rotulo="Bônus geral" erro={tentou ? lido.erro : null} dica="Em moedas do jogo. Vale para quem entra sem valor próprio no link.">
           <input
             className="adm-input"
             inputMode="decimal"
@@ -1180,49 +1108,6 @@ export function ModalBonusGeral({ d: dAtual, aoFechar }: PropsModal) {
           <BotaoAdm variante="primario" disabled={salvar.isPending} onClick={enviar}>
             <Coins className="h-4 w-4" aria-hidden />
             {salvar.isPending ? 'Salvando…' : 'Salvar bônus geral'}
-          </BotaoAdm>
-        </AcoesModal>
-      </div>
-    </ModalAdm>
-  );
-}
-
-// ---------------------------------------------------------------- bônus inicial no saque
-
-export function ModalBonusSaque({ d: dAtual, aoFechar }: PropsModal) {
-  const [d] = useState(dAtual);
-  const u = d.usuario;
-  const primeiro = primeiroNome(u.nome);
-  const liberar = !d.bonusSaque.liberadoPelaEquipe;
-  const valor = fmt.moedas(d.bonusSaque.recebidoX100);
-  const m = useAcao(
-    async () => (await chamar<{ liberado: boolean }>('POST', `/api/admin/usuarios/${u.id}/bonus-saque`, { corpo: { liberado: liberar }, idempotente: true })).data,
-    () => (liberar ? `Bônus de ${primeiro} liberado para saque` : `Bônus de ${primeiro} voltou a exigir a roleta`),
-  );
-  return (
-    <ModalAdm aberto titulo={liberar ? `Liberar bônus de ${u.nome}` : `Exigir a roleta de ${u.nome}`} aoFechar={aoFechar}>
-      <div className="adm-us-form">
-        <p className="adm-us-texto">
-          {liberar ? (
-            <>
-              Liberar o bônus inicial de <strong>R$ {valor}</strong> para saque? <strong>{u.nome}</strong> poderá sacar esse valor sem PIX da roleta pago e sem ter girado.
-            </>
-          ) : d.bonusSaque.liberadoPeloPlano ? (
-            <>
-              Tirar a liberação da equipe? O bônus de <strong>R$ {valor}</strong> continua sacável enquanto <strong>{u.nome}</strong> tiver um PIX da roleta pago ou um animal comprado no galinheiro.
-            </>
-          ) : (
-            <>
-              Voltar a exigir a roleta? O bônus inicial de <strong>R$ {valor}</strong> deixa de entrar no saque até o PIX da roleta ser pago e o giro feito.
-            </>
-          )}
-        </p>
-        <ErroModal texto={m.isError ? mensagemAdmin(m.error) : null} />
-        <AcoesModal>
-          <Cancelar aoFechar={aoFechar} />
-          <BotaoAdm variante={liberar ? 'primario' : undefined} disabled={m.isPending} onClick={() => m.mutate(undefined, { onSuccess: aoFechar })}>
-            <Banknote className="h-4 w-4" aria-hidden />
-            {m.isPending ? 'Salvando…' : liberar ? 'Liberar para saque' : 'Exigir a roleta'}
           </BotaoAdm>
         </AcoesModal>
       </div>

@@ -15,7 +15,7 @@ import { useSessaoAdmin } from '../ShellAdmin';
 import { BotaoAdm, Cartao, Carregando, Vazio, mensagemAdmin } from '../ui';
 import { useAgoraLento, useCaminhoDaLista, type AcaoFicha } from './comum';
 import {
-  ModalAnimal, ModalBloquear, ModalBonusGeral, ModalBonusLink, ModalBonusSaque, ModalCobranca, ModalCodigo, ModalDesbloquear, ModalExcluir, ModalMensagem, ModalNivel, ModalOvos, ModalPerfil, ModalSaldo,
+  ModalAnimal, ModalBloquear, ModalBonusGeral, ModalBonusLink, ModalCodigo, ModalDesbloquear, ModalExcluir, ModalMensagem, ModalNivel, ModalOvos, ModalPerfil, ModalSaldo,
   ModalSessoes, ModalTickets,
 } from './modais';
 import {
@@ -148,10 +148,8 @@ export function TelaUsuario({ id }: { id: string }) {
       {modal?.tipo === 'codigo' && <ModalCodigo d={d} aoFechar={fechar} />}
       {modal?.tipo === 'bloquear' && !proprio && <ModalBloquear d={d} aoFechar={fechar} />}
       {modal?.tipo === 'desbloquear' && <ModalDesbloquear d={d} aoFechar={fechar} />}
-      {modal?.tipo === 'bonus-saque' && <ModalBonusSaque d={d} aoFechar={fechar} />}
       {modal?.tipo === 'bonus-link' && <ModalBonusLink d={d} aoFechar={fechar} />}
       {modal?.tipo === 'bonus-geral' && <ModalBonusGeral d={d} aoFechar={fechar} />}
-      {modal?.tipo === 'cobranca' && <ModalCobranca d={d} aoFechar={fechar} />}
       {modal?.tipo === 'mensagem' && <ModalMensagem d={d} aoFechar={fechar} />}
       {modal?.tipo === 'excluir' && !proprio && <ModalExcluir d={d} aoFechar={fechar} aoExcluir={aoExcluir} />}
       {ajustarTickets && <ModalTickets d={d} aoFechar={fecharTickets} />}

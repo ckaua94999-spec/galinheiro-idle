@@ -58,6 +58,7 @@ export async function GET(req: NextRequest) {
             telefone: `+55${DDDS[sorte(DDDS.length)]}9${String(10_000_000 + sorte(89_999_999))}`,
             email: `${usuario}.${randomUUID().slice(0, 6)}@exemplo.com`,
             senha: randomUUID(),
+            aceitouTermos: true,
             convite: convidou?.codigo,
           },
           t0,

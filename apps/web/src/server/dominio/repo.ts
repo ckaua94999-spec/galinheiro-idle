@@ -14,7 +14,7 @@ import {
 
 export type TipoTransacao =
   | 'BONUS_INICIAL' | 'VENDA_OVOS' | 'GIRO_ROLETA' | 'UPGRADE_NINHO' | 'AJUSTE_SUPORTE' | 'COMISSAO_INDICACAO' | 'COMPRA_TICKET'
-  | 'SAQUE' | 'SAQUE_ESTORNO';
+  | 'LIBERACAO_ROLETA' | 'APOSTA_RINHA' | 'PREMIO_RINHA';
 export type OrigemEntidade = 'ROLETA' | 'BOAS_VINDAS' | 'SUPORTE' | 'INTERCAMBIO';
 
 const d = (ms: number): Date => new Date(ms);
@@ -60,10 +60,15 @@ export async function lerInventario(c: Consulta, id: string): Promise<Inventario
   ));
 }
 
+/** Upsert: jogadores de antes da codorna não têm a linha do ovo_codorna no estoque. */
 export async function creditarOvos(c: Consulta, id: string, item: Item, qtd: number, agoraMs: number): Promise<void> {
   await c.q(
-    `update inventory set quantidade = quantidade + $3, total_coletado = total_coletado + $3, atualizado_em = $4
-      where player_id = $1 and item = $2`,
+    `insert into inventory as inv (player_id, item, quantidade, total_coletado, atualizado_em)
+     values ($1, $2, $3::int, $3::int, $4)
+     on conflict (player_id, item) do update
+        set quantidade = inv.quantidade + excluded.quantidade,
+            total_coletado = inv.total_coletado + excluded.total_coletado,
+            atualizado_em = excluded.atualizado_em`,
     [id, item, qtd, d(agoraMs)],
   );
 }

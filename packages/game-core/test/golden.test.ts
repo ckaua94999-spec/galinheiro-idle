@@ -5,6 +5,7 @@ import {
   ehUltimoCiclo, efeitosDoTier, faixaDe, formatarMoedas, formatarTimer, formatarTimerCurto, iniciarCiclo,
   inicioDoProximoCiclo, nomePadrao, rotacaoFinal, setorSobPonteiro, sortearOvos, sortearRoleta, tierDe,
   validarNome, valorVendaX100, vidaEm, vidaExibida, type Rng, type Tier,
+  ANIMAIS, FAIXAS_ROLETA, GALOS, lutarRinha, premioRinhaX100, retornoMedioRinhaPct,
 } from '../src';
 
 const fixo = (valores: number[]): Rng => {
@@ -133,7 +134,7 @@ describe('roleta (Apêndice D)', () => {
   });
 
   it('frequências (400 mil giros) dentro de ±0,2 p.p.', () => {
-    const cont = { galinha: 0, pato: 0, ganso: 0, avestruz: 0 };
+    const cont = { codorna: 0, galinha: 0, pato: 0, ganso: 0, avestruz: 0 };
     let s = 42;
     const prng: Rng = { int: (n) => { s = (s * 48271) % 2147483647; return s % n; } };
     const N = 400_000;
@@ -153,6 +154,13 @@ describe('economia (Apêndice D)', () => {
     expect(() => valorVendaX100({ ovo_galinha: 1.5 })).toThrow();
     expect(formatarMoedas(123450)).toMatch(/^1\.234,50$/);
     expect(capacidade(32)).toBe(128);
+  });
+  it('codorna: 0,35 por ovo, é o animal de boas-vindas e não sai na roleta', () => {
+    expect(ANIMAIS.codorna.precoOvoX100).toBe(35);
+    expect(valorVendaX100({ ovo_codorna: 4 })).toBe(140);
+    expect(CONFIG.animalBoasVindas).toBe('codorna');
+    expect(CONFIG.roleta.liberacaoX100).toBe(1_200);
+    expect(FAIXAS_ROLETA.some((f) => f.tipo === 'codorna')).toBe(false);
   });
   it('dias restantes', () => {
     expect(diasRestantes(VIDA_UTIL, 0)).toBe(90);
@@ -195,5 +203,36 @@ describe('tempo', () => {
     expect(formatarTimer(-5)).toBe('00:00:00');
     expect(formatarTimerCurto(5 * MS_HORA + 12 * 60_000)).toBe('05:12');
     expect(formatarTimerCurto(42 * 60_000 + 10_000)).toBe('42:10');
+  });
+});
+
+describe('rinha de galo (moedas do jogo)', () => {
+  let semente = 7;
+  const prng: Rng = { int: (n) => { semente = (semente * 48271) % 2147483647; return semente % n; } };
+  it('a casa leva vantagem em todos os galos', () => {
+    for (const g of GALOS) expect(retornoMedioRinhaPct(g)).toBeLessThan(100);
+    expect(retornoMedioRinhaPct('favorito')).toBe(88);
+    expect(premioRinhaX100(1_000, 'brigao')).toBe(2_200);
+    expect(premioRinhaX100(333, 'favorito')).toBe(532);
+  });
+  it('o resultado vem só do sorteio e a luta termina com o perdedor no chão', () => {
+    expect(lutarRinha('favorito', fixo([5_499, 0])).venceu).toBe(true);
+    expect(lutarRinha('favorito', fixo([5_500, 0])).venceu).toBe(false);
+    for (let i = 0; i < 2_000; i++) {
+      const g = GALOS[i % GALOS.length]!;
+      const r = lutarRinha(g, prng);
+      expect(r.venceu).toBe(r.rngValor < CONFIG.rinha.galos[g].chanceBp);
+      const fim = r.golpes.at(-1)!;
+      expect(r.venceu ? fim.vidaRival : fim.vidaJogador).toBe(0);
+      expect(r.venceu ? fim.vidaJogador : fim.vidaRival).toBeGreaterThan(0);
+      expect(r.golpes.length).toBeLessThanOrEqual(15);
+      for (const x of r.golpes) expect(x.dano).toBeGreaterThanOrEqual(0);
+    }
+  });
+  it('frequência de vitórias bate com a chance anunciada', () => {
+    const N = 100_000;
+    let v = 0;
+    for (let i = 0; i < N; i++) if (lutarRinha('azarao', prng).venceu) v++;
+    expect(Math.abs(v / N - 0.15)).toBeLessThan(0.005);
   });
 });

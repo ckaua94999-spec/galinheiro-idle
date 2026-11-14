@@ -1,8 +1,8 @@
 # Galinheiro Idle
 
-Jogo **idle/colecionável de fazenda** em PWA, todo em português do Brasil. O jogador cuida de galinhas, patos, gansos e avestruzes, coleta ovos, vende no mercado, gira a roleta para ganhar novos animais e amplia o galinheiro.
+Jogo **idle/colecionável de fazenda** em PWA, todo em português do Brasil. O jogador começa com uma codorna, junta moedas vendendo os ovos dela, libera a roleta para ganhar galinhas, patos, gansos e avestruzes, amplia o galinheiro e pode apostar moedas do jogo na rinha de galo.
 
-> **Sem dinheiro real.** Toda a economia é interna (moedas do jogo). Não há compras, anúncios nem qualquer forma de pagamento.
+> **Sem dinheiro real.** Toda a economia é interna (moedas do jogo). Não há compras, depósitos, saques, PIX, cripto, anúncios nem qualquer forma de pagamento. Moedas, ovos, tickets e animais não valem dinheiro.
 
 ---
 
@@ -16,6 +16,7 @@ Jogo **idle/colecionável de fazenda** em PWA, todo em português do Brasil. O j
 - [Arquitetura](#arquitetura)
 - [PWA](#pwa)
 - [Painel administrador](#painel-administrador)
+- [Codorna, roleta, rinha e termos](#codorna-roleta-rinha-e-termos)
 - [Convites e afiliação](#convites-e-afiliação)
 - [Intercâmbio e cupons](#intercâmbio-e-cupons)
 - [Ferramentas de desenvolvimento](#ferramentas-de-desenvolvimento)
@@ -160,7 +161,8 @@ Todas as respostas usam o mesmo envelope:
 |---|---|
 | Autenticação | `auth/cadastrar`, `auth/entrar`, `auth/redefinir`, `auth/sair`, `auth/sessao` |
 | Estado | `state` (com ETag), `me`, `players`, `config`, `health` |
-| Jogo | `collect`, `collect-all`, `sell`, `spin`, `upgrade-nest`, `entities`, `entities/[id]`, `retirements/ack`, `tutorial`, `transactions` |
+| Jogo | `collect`, `collect-all`, `sell`, `roleta/liberar`, `spin`, `upgrade-nest`, `rinha` (GET histórico, POST luta), `entities`, `entities/[id]`, `retirements/ack`, `tutorial`, `transactions` |
+| Termos | `termos` (aceite da versão atual por quem já tem conta; o cadastro exige `aceitouTermos: true`) |
 | Popups e atendimento | `avisos`, `avisos/[id]/visto`, `avisos/[id]/clique`, `suporte` |
 | Convites | `convites`, `convites/[codigo]` (público) e o link curto `/c/[codigo]` (fora do `/v1`) |
 | Intercâmbio e cupons | `intercambio`, `intercambio/comprar`, `intercambio/trocar`, `cupons/resgatar` |
@@ -207,6 +209,8 @@ As **migrations rodam automaticamente na subida**, dentro de um *advisory lock* 
 | `0007_afiliados` | Convites e afiliação: `convite_codigo`, `indicado_por` e `indicado_em` em `contas`; `afiliados_config` (taxas, linha única); `comissoes` (cada comissão paga); tipo de transação `COMISSAO_INDICACAO`. |
 | `0008_intercambio` | Intercâmbio e cupons: `tickets` em `players` e o extrato `tickets_movimentos`; `intercambio_config` (linha única); `intercambio_ofertas` (com a tabela inicial); `cupons` e `cupons_resgates`; transação `COMPRA_TICKET` e origem de animal `INTERCAMBIO`. |
 | `0009_painel` | Login próprio do painel: contas do tipo `operador` (com `usuario` único), que assinam as ações do painel sem serem membros; chaves de idempotência passam a referenciar `contas`. |
+| `0010`–`0021` | **Histórico.** Tabelas de uma versão antiga com PIX, USDT e saque (`saques`, `roleta_pix`, `ampliacao_pix`, `pagamentos_config`) e colunas ligadas a elas. O código não lê nem grava mais nada nelas; ficam só como registro. |
+| `0022_sem_dinheiro_real` | Codorna (`animal_tipo`/`item_tipo`), transações `LIBERACAO_ROLETA`, `APOSTA_RINHA` e `PREMIO_RINHA`, `players.roleta_liberada_em` (quem já jogava fica com a roleta aberta), aceite dos termos em `contas` e a tabela `rinhas`. PIX pagos e não usados viram giro grátis ou ampliação; cobranças abertas expiram; bônus de cadastro padrão vai a 0. |
 
 Em desenvolvimento, migrations novas também são aplicadas sem reiniciar o servidor (no *hot reload*).
 
@@ -284,6 +288,16 @@ Em desenvolvimento há atalhos: **Ajustes › Desenvolvimento › Tornar esta co
 
 ---
 
+## Codorna, roleta, rinha e termos
+
+| Peça | Como funciona |
+|---|---|
+| Codorna | Animal de boas-vindas de toda conta nova (`CONFIG.animalBoasVindas`). Ovo vale **0,35** moeda. Não sai na roleta. |
+| Roleta trancada | Conta nova começa com `0` moedas e a roleta trancada. Vendendo os ovos da codorna, o membro junta **12 moedas** (`CONFIG.roleta.liberacaoX100`) e paga a liberação uma vez (`POST /roleta/liberar`); ela já vem com o primeiro giro grátis. Depois, cada giro custa `CONFIG.roleta.custoX100` (55 moedas). Com 2 ovos por dia, a codorna leva umas duas semanas e meia para juntar as 12 moedas; o tutorial explica a trava. |
+| Ampliação | `CONFIG.galinheiro.custoUpgradeX100` (25 moedas) por nível, debitados do saldo. |
+| Rinha de galo | Minijogo de aposta **só com moedas do jogo**, aberto depois da liberação da roleta e com os termos aceitos. Três galos (`CONFIG.rinha.galos`): Favorito 55% × 1,6, Brigão 40% × 2,2 e Azarão 15% × 5. A casa leva vantagem: retorno médio de 88%, 88% e 75%, mostrado na tela antes da aposta. Um único sorteio no servidor (`rngValor < chanceBp`) decide; os golpes (`lutarRinha` no game-core) só encenam o resultado. Aposta de 1 a 50 moedas. Cada luta fica em `rinhas` com as duas transações. |
+| Termos de uso | Texto em `cliente/termos/TextoTermos.tsx`, página pública `/termos`. O cadastro exige a caixa marcada (`aceitouTermos`). Quem já tem conta, ou quando `TERMOS_VERSAO` (api-contract) muda, vê o aceite por cima do jogo antes de continuar. O texto é um rascunho: revise com um advogado antes de publicar. |
+
 ## Convites e afiliação
 
 > **Tudo em moedas do jogo.** As comissões são pagas pelo jogo, em moedas do jogo: ninguém deposita, saca ou converte nada em dinheiro, e o indicado não perde nada. Não há bônus de cadastro.
@@ -356,18 +370,18 @@ O navegador pode ser apontado pela variável `CHROME`. Os erros do console e as 
 pnpm test
 ```
 
-São **109 testes** (Vitest):
+São **121 testes** (Vitest):
 
 | Pacote | Arquivo | Testes | Cobertura |
 |---|---|---|---|
-| `game-core` | `test/golden.test.ts` | 49 | *Golden tests* do GDD (Apêndice D): vida e tiers, ciclos (último ciclo encurtado, janela de graça de 4 h, ovos em {1,2,3}), roleta (faixas, ângulos, frequências em 400 mil giros com margem de ±0,2 p.p.), economia, validação e filtro de nomes, formatos de tempo |
-| `web` | `test/banco.test.ts` | 2 | Migrations aplicadas no PGlite e **blindagem `anon`/`authenticated`** |
-| `web` | `test/dominio.test.ts` | 15 | Fluxo do jogo: conta inicial do membro, coleta e ciclo de 24 h, venda, roleta, saldo e ninhos, coletar todos, renomear, aposentadoria aos 90 dias, extrato paginado, invariantes de integridade, `fn_vida` igual ao `vidaEm` do game-core, janela de graça, cadastro (e-mail/telefone repetidos), login, redefinição de senha, contas antigas recusadas, faixas da roleta |
-| `web` | `test/rotas.test.ts` | 11 | Rotas HTTP: 401 com envelope, ETag do `/state`, `Idempotency-Key` ausente, repetida e conflitante, **coletas concorrentes** (só uma credita), payload inválido, `/entities/[id]`, cadastro (cookie `httpOnly`, código de recuperação, telefone repetido/inválido), sessão de convidado recusada, config pública |
+| `game-core` | `test/golden.test.ts` | 53 | *Golden tests* do GDD (Apêndice D): vida e tiers, ciclos (último ciclo encurtado, janela de graça de 4 h, ovos em {1,2,3}), roleta (faixas, ângulos, frequências em 400 mil giros com margem de ±0,2 p.p.), economia, validação e filtro de nomes, formatos de tempo |
+| `web` | `test/banco.test.ts` | 3 | Migrations aplicadas no PGlite, **blindagem `anon`/`authenticated`** e a 0022 sobre um banco antigo (PIX pago vira giro, roleta aberta para quem já jogava) |
+| `web` | `test/dominio.test.ts` | 17 | Fluxo do jogo: conta inicial (codorna, 0 moedas, roleta trancada), liberação da roleta, giro e ampliação pagos em moedas, rinha (bloqueio, termos, prêmio pela tabela, saldo = extrato), coleta e ciclo de 24 h, venda, roleta, saldo e ninhos, coletar todos, renomear, aposentadoria aos 90 dias, extrato paginado, invariantes de integridade, `fn_vida` igual ao `vidaEm` do game-core, janela de graça, cadastro (e-mail/telefone repetidos), login, redefinição de senha, contas antigas recusadas, faixas da roleta |
+| `web` | `test/rotas.test.ts` | 12 | Rotas HTTP: 401 com envelope, ETag do `/state`, `Idempotency-Key` ausente, repetida e conflitante, **coletas concorrentes** (só uma credita), payload inválido, `/entities/[id]`, cadastro (cookie `httpOnly`, código de recuperação, telefone repetido/inválido), sessão de convidado recusada, config pública |
 | `web` | `test/cadastro.test.ts` | 5 | Telefone brasileiro (normalização E.164, DDDs, celular/fixo, máscara) e mensagens do schema de cadastro |
 | `web` | `test/painel-login.test.ts` | 4 | Login próprio do painel: usuário e senha do ambiente (hash com `:`), cookie `httpOnly`/`Strict`/12 h, erro genérico, token do painel recusado no jogo, ações assinadas pelo operador (auditoria, idempotência, nome da equipe no atendimento), sessão que cai ao trocar a senha, saída, e a conta do jogo com papel de admin ainda entrando |
 | `web` | `test/admin.test.ts` | 7 | Painel: 403 para jogador comum e acesso por `ADMIN_EMAILS`; busca, ficha e edição; ajuste de saldo **idempotente** e sem saldo negativo; bloqueio derruba a sessão e mostra o motivo no login; atendimento ida e volta com contadores; popups ("uma vez", público por contas, cliques); séries e projeções dos gráficos |
-| `web` | `test/afiliados.test.ts` | 5 | Convites e afiliação: código e link curto, conferência pública, cadastro com convite (e convite inválido), comissões de 10%/4%/2% em três níveis com saldo = extrato, bloqueado fora da corrente, teto diário, programa pausado, taxas pelo painel (auditadas), ranking, rede do membro e bloco da ficha |
+| `web` | `test/afiliados.test.ts` | 6 | Convites e afiliação: código e link curto, conferência pública, cadastro com convite (e convite inválido), comissões de 10%/4%/2% em três níveis com saldo = extrato, bloqueado fora da corrente, teto diário, programa pausado, taxas pelo painel (auditadas), ranking, rede do membro e bloco da ficha |
 | `web` | `test/intercambio.test.ts` | 3 | Intercâmbio e cupons: resgate (uma vez por membro, limite de usos, pausado e vencido), trocas por ovos e por animal (sem tickets, sem ninho, oferta pausada, intercâmbio fechado), compra com moedas (desligada, limite diário, saldo), regra "sem lucro" no preço, nas ofertas e nas comissões, ajuste na ficha, extrato dos tickets e auditoria |
 | `web` | `test/projecoes.test.ts` | 8 | Datas no horário de Brasília, regressão linear e faixa, **resistência a picos**, acumulado e saldo projetados, potencial de ovos pelas regras do `game-core` (humor, cansaço, fim da vida) |
 
@@ -422,7 +436,7 @@ Configure também um cron chamando `/api/cron/tick` com `Authorization: Bearer <
 - **Cabeçalhos** (`next.config.ts`): `X-Content-Type-Options`, `X-Frame-Options: DENY`, `Referrer-Policy`, `Permissions-Policy` (câmera, microfone, geolocalização e pagamento desligados). Em produção, também **HSTS** e **CSP** restrita a `'self'` (`frame-ancestors 'none'`, `form-action 'self'` etc.; imagens também de `https:`, para as imagens dos popups). O `X-Powered-By` é removido.
 - **Painel administrador:** só para admins (403 para os demais), toda ação auditada, ajustes de saldo/ovos/animais idempotentes, e nenhum admin pode bloquear, excluir ou rebaixar a si mesmo. Links de popup aceitam só caminhos do jogo ou `https://`, e os externos abrem com `noopener`.
 - **Cookie `__Host-`** em produção: exige `Secure` e `Path=/` e proíbe `Domain`, de modo que subdomínios não conseguem sobrescrever a sessão. O cookie também é `httpOnly`.
-- **Sem dinheiro real:** não há loja paga, anúncios nem meios de pagamento. As comissões de afiliação são moedas do jogo pagas pelo próprio jogo; nada pode ser sacado ou convertido.
+- **Sem dinheiro real:** não há loja paga, depósito, saque, gateway de pagamento nem anúncios. Roleta, ampliação e rinha cobram moedas do jogo; as comissões de afiliação são moedas do jogo pagas pelo próprio jogo; nada pode ser comprado, sacado ou convertido. As tabelas antigas de PIX e saque ficam só como histórico (migrations 0010–0021).
 - **Sorteio no servidor:** RNG e regras ficam só no servidor, e os ovos pendentes não são expostos.
 - **Banco blindado:** RLS sem políticas e acesso revogado para `anon`/`authenticated` (migration `0004`).
 - **Exclusão de conta:** o jogador pode apagar a conta e todos os dados em Ajustes (`DELETE /api/v1/me`).

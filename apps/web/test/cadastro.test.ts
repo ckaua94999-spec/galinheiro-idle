@@ -30,15 +30,15 @@ describe('telefone brasileiro', () => {
 });
 
 describe('CadastrarBody', () => {
-  const ok = { nome: 'Ana Souza', telefone: '(11) 98765-4321', email: 'Ana@Exemplo.com', senha: 'senha-forte-123' };
-  const motivo = (dados: Record<string, string>) => {
+  const ok = { nome: 'Ana Souza', telefone: '(11) 98765-4321', email: 'Ana@Exemplo.com', senha: 'senha-forte-123', aceitouTermos: true };
+  const motivo = (dados: Record<string, unknown>) => {
     const r = CadastrarBody.safeParse(dados);
     return r.success ? null : r.error.issues[0]?.message;
   };
 
   it('aceita e normaliza (nome sem espaços sobrando, telefone E.164, e-mail minúsculo)', () => {
     const r = CadastrarBody.parse({ ...ok, nome: '  Ana   Souza ' });
-    expect(r).toEqual({ nome: 'Ana Souza', telefone: '+5511987654321', email: 'ana@exemplo.com', senha: 'senha-forte-123' });
+    expect(r).toEqual({ nome: 'Ana Souza', telefone: '+5511987654321', email: 'ana@exemplo.com', senha: 'senha-forte-123', aceitouTermos: true });
     expect(motivo({ ...ok, nome: "Ana-Lú D'Ávila" })).toBeNull();
   });
 
@@ -48,5 +48,7 @@ describe('CadastrarBody', () => {
     expect(motivo({ ...ok, telefone: '9999' })).toMatch(/^Telefone inválido/);
     expect(motivo({ ...ok, email: 'ana@' })).toBe('E-mail inválido.');
     expect(motivo({ ...ok, senha: 'curta' })).toBe('A senha precisa de pelo menos 8 caracteres.');
+    expect(motivo({ ...ok, aceitouTermos: false })).toBe('Para criar a conta, leia e aceite os termos de uso.');
+    expect(motivo({ nome: ok.nome, telefone: ok.telefone, email: ok.email, senha: ok.senha })).toBe('Para criar a conta, leia e aceite os termos de uso.');
   });
 });

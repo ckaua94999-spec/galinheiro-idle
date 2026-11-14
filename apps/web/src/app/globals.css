@@ -3,6 +3,7 @@
 @import "./estilos/cenario.css";
 @import "./estilos/animais.css";
 @import "./estilos/animais-galinha.css";
+@import "./estilos/animais-codorna.css";
 @import "./estilos/animais-pato.css";
 @import "./estilos/animais-ganso.css";
 @import "./estilos/animais-avestruz.css";
@@ -23,6 +24,7 @@
 @import "./estilos/admin-afiliados.css";
 @import "./estilos/jogo-intercambio.css";
 @import "./estilos/admin-intercambio.css";
+@import "./estilos/jogo-rinha.css";
 
 /* Tokens do design system (docs/DIRECAO_DE_ARTE.md, seção 2). Viram utilitários do Tailwind.
    "static": todas as variáveis saem no CSS mesmo sem uso detectado (estilos inline usam var(--color-…)). */

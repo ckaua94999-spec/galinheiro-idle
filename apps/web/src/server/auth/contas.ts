@@ -1,6 +1,6 @@
 // Casos de uso de conta. Só membros cadastrados jogam: nome, telefone (E.164, único), e-mail (único) e senha.
 // O hash (scrypt) roda fora das transações para não segurar travas.
-import type { ContaDTO } from '@galinheiro/api-contract';
+import { TERMOS_VERSAO, type ContaDTO, type TermosAceitosDTO } from '@galinheiro/api-contract';
 import type { Rng } from '@galinheiro/game-core';
 import type { Banco, Consulta } from '../db/banco';
 import { ErroDominio, ehViolacaoUnica } from '../erros';
@@ -27,6 +27,8 @@ export interface DadosCadastro {
   senha: string;
   /** código de convite de quem convidou (opcional) */
   convite?: string;
+  /** o formulário só envia com a caixa dos termos marcada (CadastrarBody exige true) */
+  aceitouTermos: true;
 }
 
 /** Membro completo = conta com e-mail e senha + nome + telefone (contas antigas não passam). */
@@ -34,7 +36,7 @@ export const ehMembro = (l: { tipo: string; nome: string | null; telefone: strin
   l.tipo === 'email' && !!l.nome && !!l.telefone;
 
 /**
- * Cadastra um membro já com o galinheiro (bônus, ninhos e galinha de boas-vindas). Devolve o código de
+ * Cadastra um membro já com o galinheiro (bônus, ninhos e codorna de boas-vindas) e o aceite dos termos. Devolve o código de
  * recuperação (mostrado uma única vez ao jogador).
  */
 export async function cadastrarMembro(
@@ -51,9 +53,10 @@ export async function cadastrarMembro(
       );
       if (ja) throw new ErroDominio(ja.email === dados.email ? 'EMAIL_EM_USO' : 'TELEFONE_EM_USO');
       const l = (await c.um<LinhaConta>(
-        `insert into contas (tipo, email, senha_hash, codigo_recuperacao_hash, nome, telefone, criado_em, atualizado_em)
-         values ('email', $1, $2, $3, $4, $5, $6, $6) returning *`,
-        [dados.email, senhaHash, codigoHash, dados.nome, dados.telefone, new Date(agoraMs)],
+        `insert into contas (tipo, email, senha_hash, codigo_recuperacao_hash, nome, telefone, termos_versao, termos_aceitos_em,
+           criado_em, atualizado_em)
+         values ('email', $1, $2, $3, $4, $5, $6, $7, $7, $7) returning *`,
+        [dados.email, senhaHash, codigoHash, dados.nome, dados.telefone, TERMOS_VERSAO, new Date(agoraMs)],
       ))!;
       if (dados.convite) await vincularIndicacao(c, l.id, dados.convite, agoraMs);
       await criarJogador(c, l.id, agoraMs, rng);
@@ -100,6 +103,21 @@ export async function redefinirSenha(
     [conta.id, senhaHash, codigoHash],
   ))!;
   return { contaId: conta.id, versao: l.sessao_versao, codigoRecuperacao };
+}
+
+/** Aceite dos termos por quem já tem conta. Recusa uma versão que não é a atual (a tela ficou aberta durante a troca). */
+export async function aceitarTermos(c: Consulta, contaId: string, versao: string, agoraMs: number): Promise<TermosAceitosDTO> {
+  if (versao !== TERMOS_VERSAO) {
+    throw new ErroDominio('TERMOS_PENDENTES', { versaoAtual: TERMOS_VERSAO }, 'Os termos foram atualizados. Leia a versão nova e aceite de novo.');
+  }
+  const agora = new Date(agoraMs);
+  await c.q(
+    `update contas set termos_versao = $2, termos_aceitos_em = $3, atualizado_em = $3
+      where id = $1 and termos_versao is distinct from $2`,
+    [contaId, TERMOS_VERSAO, agora],
+  );
+  const l = await c.um<{ termos_aceitos_em: Date }>('select termos_aceitos_em from contas where id = $1', [contaId]);
+  return { versao: TERMOS_VERSAO, aceitosEm: new Date(l?.termos_aceitos_em ?? agora).toISOString() };
 }
 
 export async function excluirConta(c: Consulta, contaId: string): Promise<void> {

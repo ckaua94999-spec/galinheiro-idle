@@ -1,9 +1,10 @@
 // Leituras: coleção, detalhe do animal, extrato e configuração pública.
-import type {
-  ConfigPublicaDTO, EntityDetalheDTO, ListaEntidades, ListaTransacoes,
+import {
+  TERMOS_VERSAO, type ConfigPublicaDTO, type EntityDetalheDTO, type ListaEntidades, type ListaTransacoes,
 } from '@galinheiro/api-contract';
 import {
-  ANIMAIS, CONFIG, CONFIG_VERSAO, FAIXAS_ROLETA, TIERS, efeitosDoTier, idadeEmDias, type Tier,
+  ANIMAIS, CONFIG, CONFIG_VERSAO, FAIXAS_ROLETA, GALOS, TIERS, chanceRinhaPct, efeitosDoTier, idadeEmDias,
+  retornoMedioRinhaPct, type Tier,
 } from '@galinheiro/game-core';
 import type { Consulta } from '../db/banco';
 import { ErroDominio } from '../erros';
@@ -118,6 +119,7 @@ export function configPublica(vapidPublicKey: string | null, relogioAjustavel: b
     galinheiro: { ...CONFIG.galinheiro },
     roleta: {
       custoX100: CONFIG.roleta.custoX100,
+      liberacaoX100: CONFIG.roleta.liberacaoX100,
       chances: FAIXAS_ROLETA.map((f) => ({
         tipo: f.tipo,
         raridade: ANIMAIS[f.tipo].raridade,
@@ -129,6 +131,18 @@ export function configPublica(vapidPublicKey: string | null, relogioAjustavel: b
     animais: { ...ANIMAIS },
     ciclo: { baseH: CONFIG.ciclo.baseH, janelaGracaH: CONFIG.ciclo.janelaGracaH, tiers },
     vida: { vidaUtilDias: CONFIG.vida.vidaUtilMs / 86_400_000 },
+    rinha: {
+      apostaMinX100: CONFIG.rinha.apostaMinX100,
+      apostaMaxX100: CONFIG.rinha.apostaMaxX100,
+      galos: GALOS.map((galo) => ({
+        galo,
+        nome: CONFIG.rinha.galos[galo].nome,
+        chancePct: chanceRinhaPct(galo),
+        premioPct: CONFIG.rinha.galos[galo].premioPct,
+        retornoMedioPct: retornoMedioRinhaPct(galo),
+      })),
+    },
+    termos: { versao: TERMOS_VERSAO },
     push: { vapidPublicKey },
     dev: { relogioAjustavel },
   };

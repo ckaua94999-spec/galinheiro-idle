@@ -30,7 +30,7 @@ const txt = (v: unknown): string | null => (typeof v === 'string' && v.trim() ? 
 /** sinal visível: "+" para crédito, "−" (menos tipográfico) para débito */
 const sinal = (v: number): string => (v > 0 ? '+' : v < 0 ? '−' : '');
 
-const ESPECIE: Record<string, string> = { galinha: 'Galinha', pato: 'Pato', ganso: 'Ganso', avestruz: 'Avestruz' };
+const ESPECIE: Record<string, string> = { codorna: 'Codorna', galinha: 'Galinha', pato: 'Pato', ganso: 'Ganso', avestruz: 'Avestruz' };
 
 const CAMPOS_USUARIO: Record<string, string> = { nome: 'Nome', telefone: 'Telefone', email: 'E-mail', papel: 'Papel' };
 const PAPEL: Record<string, string> = { admin: 'administrador', jogador: 'jogador' };

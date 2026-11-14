@@ -6,7 +6,7 @@ import { fmt } from '../ui';
 const texto = (v: unknown): string | undefined => (typeof v === 'string' && v.trim() ? v.trim() : undefined);
 const numero = (v: unknown): number | undefined => (typeof v === 'number' && Number.isFinite(v) ? v : undefined);
 const ehItem = (v: unknown): v is Item => typeof v === 'string' && /^ovo_(galinha|pato|ganso|avestruz)$/.test(v);
-const ehTipo = (v: unknown): v is Tipo => v === 'galinha' || v === 'pato' || v === 'ganso' || v === 'avestruz';
+const ehTipo = (v: unknown): v is Tipo => v === 'codorna' || v === 'galinha' || v === 'pato' || v === 'ganso' || v === 'avestruz';
 
 /** "ovos de pato" */
 export const nomeOvos = (item: Item, n = 2): string => `${n === 1 ? 'ovo' : 'ovos'} de ${NOME_TIPO[tipoDoItem(item)].toLowerCase()}`;
@@ -23,8 +23,11 @@ export const NOME_TRANSACAO: Record<TipoTransacao, string> = {
   AJUSTE_SUPORTE: 'Ajuste da equipe',
   COMISSAO_INDICACAO: 'Comissão de indicação',
   COMPRA_TICKET: 'Compra de tickets',
-  SAQUE: 'Saque PIX',
-  SAQUE_ESTORNO: 'Saque devolvido',
+  SAQUE: 'Saque (sistema antigo)',
+  SAQUE_ESTORNO: 'Saque devolvido (sistema antigo)',
+  LIBERACAO_ROLETA: 'Liberação da roleta',
+  APOSTA_RINHA: 'Aposta na rinha',
+  PREMIO_RINHA: 'Prêmio da rinha',
 };
 
 export function descreverTransacao(t: TransacaoDTO): { titulo: string; detalhe?: string } {

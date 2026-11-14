@@ -8,7 +8,7 @@ export const AGORA_FICTICIO = Date.parse('2026-10-05T12:00:00Z');
 const H = 3_600_000;
 const D = 24 * H;
 
-const NOMES: Record<Tipo, string> = { galinha: 'Jujuba', pato: 'Patolino', ganso: 'Duquesa', avestruz: 'Estrela' };
+const NOMES: Record<Tipo, string> = { codorna: 'Pitoco', galinha: 'Jujuba', pato: 'Patolino', ganso: 'Duquesa', avestruz: 'Estrela' };
 const VIDA_POR_TIER: Record<Tier, number> = { feliz: 92, neutro: 63, cansado: 38, triste: 12 };
 
 export interface OpcoesEntidade {
@@ -65,7 +65,7 @@ export function entidadeFicticia(o: OpcoesEntidade = {}): EntityDTO {
 }
 
 /** Estado completo fictício (HUD, abas, telas). */
-export function estadoFicticio(parcial: { moedasX100?: number; nivel?: number; tutorialEtapa?: number; entidades?: EntityDTO[] } = {}): StateDTO & { _versao: number } {
+export function estadoFicticio(parcial: { moedasX100?: number; nivel?: number; tutorialEtapa?: number; entidades?: EntityDTO[]; roletaLiberada?: boolean } = {}): StateDTO & { _versao: number } {
   const nivel = parcial.nivel ?? 2;
   const capacidade = nivel * 4;
   const entidades = parcial.entidades ?? [
@@ -90,13 +90,14 @@ export function estadoFicticio(parcial: { moedasX100?: number; nivel?: number; t
       criadoEm: new Date(AGORA_FICTICIO - 30 * D).toISOString(),
       tickets: 6,
       girosGratis: 0,
+      roletaLiberada: parcial.roletaLiberada ?? true,
     },
-    inventario: { ovo_galinha: 14, ovo_pato: 5, ovo_ganso: 2, ovo_avestruz: 1 },
+    inventario: { ovo_codorna: 0, ovo_galinha: 14, ovo_pato: 5, ovo_ganso: 2, ovo_avestruz: 1 },
     ninhos: Array.from({ length: capacidade }, (_, i) => ({ slot: i + 1, entityId: entidades.find((e) => e.slotId === i + 1)?.id ?? null })),
     entidades,
     aposentadoriasNaoVistas: [],
     resumo: { prontos: entidades.filter((e) => e.pronto).length, proximoProntoEm: null, valorInventarioX100: 14 * 120 + 5 * 180 + 2 * 250 + 400 },
     config: { versao: 'galeria' },
-    conta: { email: 'ana@exemplo.com', nome: 'Ana Souza', telefone: '+5511987654321', admin: false },
+    conta: { email: 'ana@exemplo.com', nome: 'Ana Souza', telefone: '+5511987654321', admin: false, termosPendentes: false },
   };
 }

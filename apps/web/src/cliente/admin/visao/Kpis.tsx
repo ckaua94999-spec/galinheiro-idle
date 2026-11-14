@@ -9,6 +9,7 @@ import { Kpi, fmt } from '../ui';
 
 const ICONE = 'h-[18px] w-[18px]';
 const ESPECIES = [
+  ['codorna', 'Codornas'],
   ['galinha', 'Galinhas'],
   ['pato', 'Patos'],
   ['ganso', 'Gansos'],

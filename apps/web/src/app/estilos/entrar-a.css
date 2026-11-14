@@ -1358,7 +1358,7 @@
   animation: none;
 }
 
-/* selo PIX: contorno verde-escuro → aro de ouro → esmalte verde, recortados em hexágono alongado */
+/* selo IDLE: contorno verde-escuro → aro de ouro → esmalte verde, recortados em hexágono alongado */
 .cena-a .ca-selo-caixa {
   position: relative;
   z-index: 1;

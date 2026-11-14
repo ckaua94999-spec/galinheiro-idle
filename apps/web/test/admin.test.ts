@@ -38,7 +38,7 @@ async function membro(nome: string): Promise<Membro> {
   const email = `${nome.toLowerCase().replace(/\s/g, '')}${seq}@exemplo.com`;
   const m = await cadastrarMembro(
     banco,
-    { nome, telefone: `+55219${String(70_000_000 + seq).padStart(8, '0')}`, email, senha: 'senha-forte-123' },
+    { nome, telefone: `+55219${String(70_000_000 + seq).padStart(8, '0')}`, email, senha: 'senha-forte-123', aceitouTermos: true },
     Date.now(),
     rng,
   );
@@ -61,6 +61,8 @@ const json = async (r: Response) => (await r.json()) as { ok: boolean; data: any
 beforeAll(async () => {
   banco = await criarBancoEmMemoria();
   usarBancoNosTestes(banco);
+  // estes testes partem do bônus de cadastro de 50 moedas (o padrão agora é 0: o membro novo junta com a codorna)
+  await banco.q('update afiliados_config set bonus_geral_x100 = 5000 where id = 1');
   admin = await membro('Chefe Admin');
   ana = await membro('Ana Lima');
   bia = await membro('Bia Rocha');
@@ -76,7 +78,7 @@ describe('acesso ao painel', () => {
     expect((await getResumo(req(null, 'GET', '/api/admin/resumo'))).status).toBe(401);
     const r = await json(await getResumo(req(admin, 'GET', '/api/admin/resumo')));
     expect(r.data.pessoas.membros).toBe(3);
-    expect(r.data.economia.animaisAtivos.galinha).toBe(3);
+    expect(r.data.economia.animaisAtivos.codorna).toBe(3);
     process.env.ADMIN_EMAILS = ` ${bia.email.toUpperCase()} `;
     try {
       expect((await getResumo(req(bia, 'GET', '/api/admin/resumo'))).status).toBe(200);
@@ -132,12 +134,12 @@ describe('gestão de usuários', () => {
     const r = await postBloquear(req(admin, 'POST', `/api/admin/usuarios/${bia.id}/bloquear`, { corpo: { motivo: 'Comportamento abusivo' } }), params({ id: bia.id }));
     expect(r.status).toBe(200);
     expect((await getState(req(bia, 'GET', '/api/v1/state'))).status).toBe(401);
-    const login = await json(await postEntrar(req(null, 'POST', '/api/v1/auth/entrar', { corpo: { email: bia.email, senha: 'senha-forte-123' } })));
+    const login = await json(await postEntrar(req(null, 'POST', '/api/v1/auth/entrar', { corpo: { email: bia.email, senha: 'senha-forte-123', aceitouTermos: true } })));
     expect(login.error).toMatchObject({ code: 'CONTA_BLOQUEADA', message: 'Sua conta está bloqueada: Comportamento abusivo' });
     const proprio = await postBloquear(req(admin, 'POST', `/api/admin/usuarios/${admin.id}/bloquear`, { corpo: { motivo: 'teste' } }), params({ id: admin.id }));
     expect((await json(proprio)).error?.code).toBe('ACESSO_NEGADO');
     await postDesbloquear(req(admin, 'POST', `/api/admin/usuarios/${bia.id}/desbloquear`), params({ id: bia.id }));
-    const de = await postEntrar(req(null, 'POST', '/api/v1/auth/entrar', { corpo: { email: bia.email, senha: 'senha-forte-123' } }));
+    const de = await postEntrar(req(null, 'POST', '/api/v1/auth/entrar', { corpo: { email: bia.email, senha: 'senha-forte-123', aceitouTermos: true } }));
     expect(de.status).toBe(200);
     // o bloqueio derrubou a sessão antiga: segue com o cookie do novo login
     bia.cookie = de.headers.get('set-cookie')!.split(';')[0]!;

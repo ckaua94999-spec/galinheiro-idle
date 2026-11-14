@@ -6,7 +6,7 @@
 import type { AdminListaConversasDTO, AdminSessaoDTO, SessaoDTO } from '@galinheiro/api-contract';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
-  ArrowLeftRight, Gamepad2, LayoutDashboard, LogOut, Megaphone, Menu, MessagesSquare, Network, Percent, ScrollText, TicketPercent, Users, Wallet, X,
+  ArrowLeftRight, Gamepad2, LayoutDashboard, LogOut, Megaphone, Menu, MessagesSquare, Network, Percent, ScrollText, TicketPercent, Users, X,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -27,7 +27,6 @@ const ITENS = [
   // tickets do jogo: a tabela de trocas (ovos e animais) e os códigos que dão tickets
   { href: '/admin/intercambio', rotulo: 'Intercâmbio', Icone: ArrowLeftRight },
   { href: '/admin/cupons', rotulo: 'Cupons', Icone: TicketPercent },
-  { href: '/admin/pagamentos', rotulo: 'Pagamentos', Icone: Wallet },
   { href: '/admin/atendimento', rotulo: 'Atendimento', Icone: MessagesSquare, contador: true },
   { href: '/admin/popups', rotulo: 'Popups', Icone: Megaphone },
   { href: '/admin/auditoria', rotulo: 'Auditoria', Icone: ScrollText },
@@ -60,7 +59,7 @@ function Marca() {
       <span className="leading-tight">
         <span className="adm-marca-nome">Galinheiro</span>
         <span className="adm-marca-sub">
-          <span className="adm-marca-pix">PIX</span> Administração
+          <span className="adm-marca-selo">IDLE</span> Administração
         </span>
       </span>
     </Link>

@@ -52,7 +52,7 @@ export async function resumo(c: Consulta, agoraMs: number): Promise<AdminResumoD
             (select count(*) from spins s join contas c on c.id = s.player_id where ${diaSql('s.criado_em')} = $1::date and ${MEMBRO}) as giros`,
     [hoje],
   ))!;
-  const animais = { galinha: 0, pato: 0, ganso: 0, avestruz: 0 } as Record<Tipo, number>;
+  const animais: Record<Tipo, number> = { codorna: 0, galinha: 0, pato: 0, ganso: 0, avestruz: 0 };
   for (const l of await c.q<{ tipo: Tipo; n: unknown }>(
     `select e.tipo, count(*) as n from entities e join contas c on c.id = e.player_id where e.status = 'ativo' and ${MEMBRO} group by e.tipo`,
   )) {

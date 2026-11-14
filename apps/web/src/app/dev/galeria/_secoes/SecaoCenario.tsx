@@ -15,7 +15,7 @@ import { lancarRajadaNinho, planejarColetarTodos } from '@/cliente/useAcoes';
 import { Exemplo, Moldura } from '../_Moldura';
 import { AGORA_FICTICIO, entidadeFicticia } from '../_mock';
 
-const ITEM: Record<EntityDTO['tipo'], Item> = { galinha: 'ovo_galinha', pato: 'ovo_pato', ganso: 'ovo_ganso', avestruz: 'ovo_avestruz' };
+const ITEM: Record<EntityDTO['tipo'], Item> = { codorna: 'ovo_codorna', galinha: 'ovo_galinha', pato: 'ovo_pato', ganso: 'ovo_ganso', avestruz: 'ovo_avestruz' };
 // Ninhos sempre em obra na galeria (para ver o andaime parado na captura).
 const OBRA_FIXA = [15, 16];
 

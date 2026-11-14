@@ -1,0 +1,17 @@
+/* Estilos: codorna (molde da galinha). Importado por globals.css.
+ * Ritmo um pouco mais rápido que o da galinha (bicho miúdo): respiração 2,2 s, piscar 4,3 s, ação 6,3 s.
+ * Ação: a mesma bicada da galinha; o penacho acompanha a cabeça. Feliz: bate a asa em vez da cauda. */
+
+.especie-codorna {
+  --br-base: 2.2s;
+  --pisca-base: 4.3s;
+  --acao-base: 6.3s;
+  --anim-cabeca: gal-bicar;
+  --anim-cauda: gal-cauda;
+  --pivo-cauda: 5% 60%;
+  --pivo-asa-e: 5% 8%;
+}
+.especie-codorna.humor-feliz {
+  --anim-cauda: none;
+  --anim-asa-e: gal-bate-asa;
+}

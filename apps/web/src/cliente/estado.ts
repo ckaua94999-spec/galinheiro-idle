@@ -3,8 +3,8 @@
 'use client';
 
 import type {
-  AmpliarResposta, ColetarResposta, ColetarTodosResposta, EntityDTO, GirarResposta, PlayerDTO, Preferencias,
-  StateDTO, VenderResposta,
+  AmpliarResposta, ColetarResposta, ColetarTodosResposta, EntityDTO, Galo, GirarResposta, LiberarRoletaResposta, PlayerDTO,
+  Preferencias, RinhaResposta, StateDTO, TermosAceitosDTO, VenderResposta,
 } from '@galinheiro/api-contract';
 import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
 import { chamar, type RespostaApi } from './api';
@@ -131,8 +131,7 @@ export function useVender() {
 export function useGirar() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (cobrancaId?: string) =>
-      chamar<GirarResposta>('POST', '/spin', { corpo: cobrancaId ? { cobrancaId } : {}, idempotente: true }),
+    mutationFn: () => chamar<GirarResposta>('POST', '/spin', { corpo: {}, idempotente: true }),
     onSuccess: (r) => {
       const nova = r.data.entity;
       aplicarNoEstado(qc, r, (e) => ({
@@ -156,7 +155,7 @@ export function useGirar() {
 export function useAmpliar() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (cobrancaId: string) => chamar<AmpliarResposta>('POST', '/upgrade-nest', { corpo: { cobrancaId }, idempotente: true }),
+    mutationFn: () => chamar<AmpliarResposta>('POST', '/upgrade-nest', { corpo: {}, idempotente: true }),
     onSuccess: (r) => {
       aplicarNoEstado(qc, r, (e) => ({
         ...e,
@@ -164,6 +163,53 @@ export function useAmpliar() {
         ninhos: [...e.ninhos, ...r.data.novosSlots.map((slot) => ({ slot, entityId: null }))],
       }));
       void qc.invalidateQueries({ queryKey: ['extrato'] });
+    },
+  });
+}
+
+/** Liberação da roleta do membro novo: paga com moedas e já ganha o primeiro giro. */
+export function useLiberarRoleta() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => chamar<LiberarRoletaResposta>('POST', '/roleta/liberar', { idempotente: true }),
+    onSuccess: (r) => {
+      aplicarNoEstado(qc, r, (e) => ({
+        ...e,
+        player: { ...e.player, moedasX100: r.data.saldoX100, girosGratis: r.data.girosGratis, roletaLiberada: true },
+      }));
+      void qc.invalidateQueries({ queryKey: ['extrato'] });
+    },
+  });
+}
+
+/**
+ * Uma luta na rinha (moedas do jogo). Na hora só sai a aposta do saldo: o prêmio e o histórico entram quando a
+ * luta termina na tela (concluirRinha), senão o HUD contaria o final antes do nocaute.
+ */
+export function useLutarRinha() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (corpo: { galo: Galo; apostaX100: number }) => chamar<RinhaResposta>('POST', '/rinha', { corpo, idempotente: true }),
+    onSuccess: (r) => {
+      aplicarNoEstado(qc, r, (e) => ({ ...e, player: { ...e.player, moedasX100: r.data.saldoX100 - r.data.rinha.premioX100 } }));
+      void qc.invalidateQueries({ queryKey: ['extrato'] });
+    },
+  });
+}
+
+/** Fim da luta na tela: o prêmio entra no saldo e o histórico recarrega. */
+export function concluirRinha(qc: QueryClient, saldoX100: number): void {
+  aplicarNoEstado(qc, null, (e) => ({ ...e, player: { ...e.player, moedasX100: saldoX100 } }));
+  void qc.invalidateQueries({ queryKey: ['rinha'] });
+}
+
+/** Aceite dos termos de uso (contas que ainda não aceitaram a versão atual). */
+export function useAceitarTermos() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (versao: string) => chamar<TermosAceitosDTO>('POST', '/termos', { corpo: { versao, aceito: true }, idempotente: true }),
+    onSuccess: () => {
+      aplicarNoEstado(qc, null, (e) => ({ ...e, conta: { ...e.conta, termosPendentes: false } }));
     },
   });
 }

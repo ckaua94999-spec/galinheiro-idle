@@ -12,7 +12,7 @@ import {
 import {
   ArrowLeftRight, ArrowUpRight, Ban, Banknote, Bird, CalendarDays, ChevronDown, ChevronUp, Clock, Coins, Egg, ExternalLink, Gift, Hammer, Hourglass, KeyRound,
   Layers, Lock, LockOpen, LogOut, Mail, MessageSquarePlus, MessagesSquare, Network, Pencil, Ticket, TicketPercent, Phone, Plus, Minus, ReceiptText,
-  ScrollText, Send, ShieldCheck, ShoppingCart, SlidersHorizontal, Sparkles, Trash, TriangleAlert, UserRound, UserRoundCog, Warehouse, Wrench,
+  ScrollText, Send, ShieldCheck, ShoppingCart, SlidersHorizontal, Sparkles, Swords, Trash, Trophy, TriangleAlert, UserRound, UserRoundCog, Warehouse, Wrench,
   type LucideIcon,
 } from 'lucide-react';
 import Link from 'next/link';
@@ -244,33 +244,13 @@ export function SecaoEconomia({ d, abrir, className }: PropsSecao) {
 
       <div className="adm-us-subtitulo">
         <h3>
-          Bônus inicial no saque <span>· R$ {fmt.moedas(d.bonusSaque.recebidoX100)}</span>
+          Termos de uso <span>· {d.termos.versao ? `versão ${d.termos.versao}` : 'pendentes'}</span>
         </h3>
-        <BotaoAdm tamanho="p" onClick={() => abrir({ tipo: 'bonus-saque' })}>
-          <Banknote className="h-4 w-4" aria-hidden />
-          {d.bonusSaque.liberadoPelaEquipe ? 'Exigir a roleta' : 'Liberar para saque'}
-        </BotaoAdm>
       </div>
       <p className="adm-us-texto">
-        {d.bonusSaque.liberadoPelaEquipe
-          ? 'Liberado pela equipe. Este membro saca o bônus sem PIX da roleta.'
-          : d.bonusSaque.liberadoPeloPlano
-            ? 'Já liberado pelo jogo: há um PIX da roleta pago ou um animal comprado ainda no galinheiro.'
-            : 'Bloqueado. Só entra no saque depois do PIX da roleta pago e do giro, ou se a equipe liberar aqui.'}
-      </p>
-
-      <div className="adm-us-subtitulo">
-        <h3>
-          Cobrança <span>· {d.cobranca.meio === 'usdt' ? 'USDT' : 'PIX'}</span>
-        </h3>
-        <BotaoAdm tamanho="p" onClick={() => abrir({ tipo: 'cobranca' })}>
-          <Banknote className="h-4 w-4" aria-hidden /> Alterar
-        </BotaoAdm>
-      </div>
-      <p className="adm-us-texto">
-        {d.cobranca.meio === 'usdt'
-          ? `Roleta e ampliação mostram endereço, valor e QR em USDT.${d.cobranca.carteiraPronta ? '' : ' A carteira ainda não está configurada em Pagamentos.'}${d.cobranca.abertas.length ? ` ${d.cobranca.abertas.length === 1 ? 'Há 1 cobrança' : `Há ${d.cobranca.abertas.length} cobranças`} aguardando confirmação.` : ''}`
-          : 'Roleta e ampliação cobram no PIX da gateway escolhida em Pagamentos.'}
+        {d.termos.aceitosEm
+          ? `Aceitos em ${new Date(d.termos.aceitosEm).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })}.`
+          : 'Ainda não aceitou. O jogo pede o aceite antes de continuar.'}
       </p>
 
       <div className="adm-us-subtitulo">
@@ -785,6 +765,9 @@ const ICONE_TRANSACAO: Record<TransacaoDTO['tipo'], ReactNode> = {
   COMPRA_TICKET: <Ticket className="h-4 w-4" />,
   SAQUE: <Banknote className="h-4 w-4" />,
   SAQUE_ESTORNO: <Banknote className="h-4 w-4" />,
+  LIBERACAO_ROLETA: <IconeRoleta className="h-5 w-5" />,
+  APOSTA_RINHA: <Swords className="h-4 w-4" />,
+  PREMIO_RINHA: <Trophy className="h-4 w-4" />,
 };
 
 function VerMais({ total, abertos, aoAlternar, rotulo = 'Mostrar todas' }: { total: number; abertos: boolean; aoAlternar: () => void; rotulo?: string }) {

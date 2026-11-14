@@ -7,9 +7,9 @@ import { formatarTelefone, type ConfigPublicaDTO, type Preferencias } from '@gal
 import { CONFIG_VERSAO } from '@galinheiro/game-core';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
-  Banknote, Bell, BellOff, ChevronRight, Clapperboard, Clock, Download, FastForward, Headphones, LogOut, Mail, Megaphone,
+  Bell, BellOff, ChevronRight, Clapperboard, Clock, Download, FastForward, Headphones, LogOut, Mail, Megaphone,
   MessagesSquare, Music, Phone, RotateCcw, Share, ShieldCheck, Smartphone, Sparkles, SquarePlus, Trash2, UserRound,
-  Vibrate, Volume2, Wrench,
+  ScrollText, Vibrate, Volume2, Wrench,
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import Link from 'next/link';
@@ -326,11 +326,11 @@ export function TelaAjustes() {
             </span>
             <ChevronRight className="linha-ajuste-seta" strokeWidth={3} aria-hidden />
           </Link>
-          <Link href="/saque" className="linha-ajuste">
-            <Azulejo Icone={Banknote} cor="madeira" />
+          <Link href="/termos" className="linha-ajuste">
+            <Azulejo Icone={ScrollText} cor="madeira" />
             <span className="linha-ajuste-texto">
-              <span className="linha-ajuste-titulo block">Sacar no PIX</span>
-              <span className="linha-ajuste-desc block">Taxa de R$ 5,00 + 4% em cima do valor. Nos 3 primeiros dias, só o bônus do cadastro sai na hora</span>
+              <span className="linha-ajuste-titulo block">Termos de uso</span>
+              <span className="linha-ajuste-desc block">As regras do jogo. Moedas e animais não valem dinheiro</span>
             </span>
             <ChevronRight className="linha-ajuste-seta" strokeWidth={3} aria-hidden />
           </Link>

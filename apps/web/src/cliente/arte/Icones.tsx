@@ -17,6 +17,7 @@ const OVO_D = 'M20 3C30 3 37 17.5 37 28.5C37 39.5 29.5 45.3 20 45.3C10.5 45.3 3 
 const OVO_SOMBRA_D = 'M34.6 23.5C35.6 35.5 29.6 42.8 20 42.8C14.2 42.8 9.6 40.4 7.4 36.4C12.2 39.2 18.6 39.6 24 37C30 34 33.6 29 34.6 23.5Z';
 
 const CORES_OVO: Record<Tipo, { sombra: string; contorno: string }> = {
+  codorna: { sombra: '#b89a7a', contorno: '#5c3a1e' },
   galinha: { sombra: '#c98a5a', contorno: '#7a4a22' },
   pato: { sombra: '#5f93b8', contorno: '#1f4a63' },
   ganso: { sombra: '#9d93c9', contorno: '#4a4570' },
@@ -28,11 +29,23 @@ const PINTAS: [number, number, number][] = [
   [24, 15, 1.7], [28.5, 24, 1.3], [19.5, 30, 1.6], [11.5, 25, 1.1], [27, 35, 1.4], [15, 37.5, 1], [21.5, 21.5, 0.9], [31, 30.5, 0.8],
 ];
 
+// Manchas do ovo de codorna (marrom-escuras, maiores e irregulares): [cx, cy, r]
+const PINTAS_CODORNA: [number, number, number][] = [
+  [24, 13, 2.2], [14, 21, 2.6], [27.5, 25, 1.8], [19, 31, 2.4], [30, 33, 1.5], [11, 33.5, 1.6], [22.5, 39.5, 1.9], [17.5, 15.5, 1.1],
+];
+
 export function Ovo({ tipo, className, titulo }: { tipo: Tipo; className?: string; titulo?: string }) {
   const c = CORES_OVO[tipo];
   return (
     <svg viewBox="0 0 40 48" className={className} {...a11y(titulo)}>
       <path d={OVO_D} fill={`url(#gi-icones-ovo-${tipo})`} stroke={c.contorno} strokeWidth={5} paintOrder="stroke" strokeLinejoin="round" />
+      {tipo === 'codorna' && (
+        <g fill="#5c3a1e" opacity={0.78}>
+          {PINTAS_CODORNA.map(([x, y, r]) => (
+            <ellipse key={`${x}-${y}`} cx={x} cy={y} rx={r * 1.25} ry={r} />
+          ))}
+        </g>
+      )}
       {tipo === 'avestruz' && (
         <g fill="#a8641c" opacity={0.72}>
           {PINTAS.map(([x, y, r]) => (

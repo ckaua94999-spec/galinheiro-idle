@@ -1,0 +1,750 @@
+/* Rinha de galo (telas/TelaRinha.tsx, rinha/*), a roleta trancada do membro novo (TelaRoleta: PainelLiberacao) e
+   os termos de uso (telas/TelaTermos.tsx, componentes/PortaoTermos.tsx). Tudo com moedas do jogo.
+   Importado por globals.css. Só transform/opacity animam; o estado base é o final (reduzir movimento cai nele). */
+
+@layer components {
+  /* ================================================================ roleta trancada */
+  .roleta-caixa[data-trancada] {
+    opacity: 0.55 !important;
+    filter: grayscale(0.6);
+    pointer-events: none;
+  }
+  .roleta-trava {
+    width: 100%;
+    margin-top: 8px;
+    padding: 14px 14px 16px;
+    display: grid;
+    gap: 12px;
+  }
+  .roleta-trava-cabeca {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .roleta-trava-codorna {
+    flex: none;
+    width: 64px;
+    height: 64px;
+  }
+  .roleta-trava-codorna > svg {
+    width: 100%;
+    height: 100%;
+  }
+  .roleta-trava-titulo {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--font-titulo);
+    font-size: 21px;
+    line-height: 1.1;
+    color: #fff;
+    --contorno-cor: #5a3a00;
+  }
+  .roleta-trava-cadeado {
+    width: 20px;
+    height: 20px;
+    color: #ffc93c;
+  }
+  .roleta-trava-texto {
+    margin-top: 2px;
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1.35;
+    color: var(--color-texto-suave);
+  }
+  .roleta-trava-vender {
+    justify-self: center;
+  }
+
+  /* ================================================================ cartão da Loja */
+  .rinha-loja {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 104px;
+    margin-top: 14px;
+    padding: 10px 12px 10px 10px;
+    color: var(--color-texto);
+    text-decoration: none;
+    -webkit-tap-highlight-color: transparent;
+    transition: translate var(--t-solta) var(--ease-elastico);
+  }
+  .rinha-loja:active {
+    translate: 0 2px;
+    transition-duration: var(--t-press);
+  }
+  .rinha-loja:focus-visible {
+    outline: 3px solid var(--color-compra-escura);
+    outline-offset: 3px;
+  }
+  .rinha-loja-janela {
+    position: relative;
+    flex: none;
+    width: 88px;
+    height: 82px;
+  }
+  .rinha-loja-ceu {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    border-radius: 16px;
+    border: 3px solid #6e1208;
+    background: linear-gradient(180deg, #ffb27a 0%, #ff6a3d 55%, #c8321e 100%);
+    box-shadow:
+      inset 0 3px 0 rgb(255 255 255 / 0.35),
+      inset 0 -10px 0 rgb(110 60 20 / 0.45);
+  }
+  .rinha-loja-galo {
+    position: absolute;
+    bottom: 2px;
+    width: 52px;
+    height: 52px;
+  }
+  .rinha-loja-galo-a {
+    left: -2px;
+    animation: gi-rinha-encara 1.6s var(--ease-senoide) infinite;
+  }
+  .rinha-loja-galo-b {
+    right: -2px;
+    animation: gi-rinha-encara-b 1.6s var(--ease-senoide) infinite;
+  }
+  .rinha-loja-texto {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+  .rinha-loja-titulo {
+    font-family: var(--font-titulo);
+    font-size: 20px;
+    line-height: 1.05;
+  }
+  .rinha-loja-desc {
+    font-size: 13.5px;
+    font-weight: 700;
+    line-height: 1.3;
+    color: var(--color-texto-suave);
+    text-wrap: pretty;
+  }
+  .botao.rinha-loja-seta {
+    width: 40px;
+    height: 40px;
+    min-height: 40px;
+  }
+
+  /* ================================================================ tela */
+  .rinha-tela > .tela-cabeca {
+    margin-bottom: 10px;
+  }
+  .rinha-trancada {
+    display: grid;
+    justify-items: center;
+    gap: 6px;
+    padding: 22px 16px;
+    text-align: center;
+    font-weight: 700;
+    color: var(--color-texto-suave);
+  }
+  .rinha-trancada-icone {
+    width: 40px;
+    height: 40px;
+    color: #c27c00;
+  }
+  .rinha-trancada-titulo {
+    font-family: var(--font-titulo);
+    font-size: 21px;
+    color: var(--color-texto);
+  }
+
+  /* arena: picadeiro de terra batida com cerca e platéia de feno */
+  .rinha-arena {
+    position: relative;
+    overflow: hidden;
+    border-radius: 22px;
+    border: 3px solid #3b200c;
+    background:
+      radial-gradient(120% 60% at 50% 0%, #ffd9a0 0%, transparent 60%),
+      linear-gradient(180deg, #8fd0ff 0%, #c5e8ff 34%, #e9c48a 34.5%, #d9a466 70%, #b97c45 100%);
+    box-shadow:
+      0 4px 0 #3b200c,
+      inset 0 3px 0 rgb(255 255 255 / 0.4);
+    padding: 10px 10px 8px;
+  }
+  .rinha-arena[data-tremor] {
+    animation: gi-rinha-tremor 0.34s steps(6) both;
+  }
+  .rinha-arena-chao {
+    position: absolute;
+    left: 6%;
+    right: 6%;
+    bottom: 26px;
+    height: 46%;
+    border-radius: 50%;
+    background: radial-gradient(closest-side, #f0cf96 0%, #d8a868 70%, transparent 100%);
+    border: 3px dashed rgb(110 60 20 / 0.35);
+  }
+  .rinha-vidas {
+    position: relative;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 8px;
+  }
+  .rinha-vida {
+    display: grid;
+    gap: 3px;
+    min-width: 0;
+  }
+  .rinha-vida[data-lado='rival'] {
+    text-align: right;
+  }
+  .rinha-vida[data-lado='rival'] .barra {
+    scale: -1 1;
+  }
+  .rinha-vida-nome {
+    font-size: 12.5px;
+    font-weight: 900;
+    color: #fff;
+    --contorno-cor: #3b200c;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .rinha-vida .barra-preenchimento {
+    transition: width 0.25s var(--ease-suave, ease-out);
+  }
+  .rinha-vs {
+    font-family: var(--font-titulo);
+    font-size: 22px;
+    color: #ffc93c;
+    --contorno-cor: #6e1208;
+  }
+  .rinha-ringue {
+    position: relative;
+    height: 168px;
+  }
+  .rinha-galo {
+    position: absolute;
+    bottom: 4px;
+    width: 46%;
+    max-width: 170px;
+    aspect-ratio: 1;
+  }
+  .rinha-galo[data-lado='jogador'] {
+    left: 2%;
+  }
+  .rinha-galo[data-lado='rival'] {
+    right: 2%;
+  }
+  .rinha-galo-arte {
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+  }
+  .rinha-galo:not([data-acao]) .rinha-galo-arte {
+    animation: gi-rinha-ginga 0.9s var(--ease-senoide) infinite;
+  }
+  .rinha-galo[data-lado='rival']:not([data-acao]) .rinha-galo-arte {
+    animation-delay: -0.45s;
+  }
+  /* estocada: recua, avança até o meio e volta */
+  .rinha-galo[data-lado='jogador'][data-acao='ataca'] {
+    animation: gi-rinha-ataca-d 0.62s cubic-bezier(0.3, 0, 0.2, 1) both;
+  }
+  .rinha-galo[data-lado='rival'][data-acao='ataca'] {
+    animation: gi-rinha-ataca-e 0.62s cubic-bezier(0.3, 0, 0.2, 1) both;
+  }
+  .rinha-galo[data-lado='jogador'][data-acao='apanha'] {
+    animation: gi-rinha-apanha-d 0.6s ease-out both;
+  }
+  .rinha-galo[data-lado='rival'][data-acao='apanha'] {
+    animation: gi-rinha-apanha-e 0.6s ease-out both;
+  }
+  .rinha-galo[data-acao='apanha'] .rinha-galo-arte {
+    animation: gi-rinha-pisca 0.6s steps(2) both;
+  }
+  .rinha-galo[data-acao='desvia'] {
+    animation: gi-rinha-desvia 0.6s var(--ease-elastico, ease-out) both;
+  }
+  .rinha-galo[data-lado='jogador'][data-acao='cai'] {
+    animation: gi-rinha-cai-d 0.9s cubic-bezier(0.5, 0, 0.8, 0.6) both;
+  }
+  .rinha-galo[data-lado='rival'][data-acao='cai'] {
+    animation: gi-rinha-cai-e 0.9s cubic-bezier(0.5, 0, 0.8, 0.6) both;
+  }
+  .rinha-galo[data-acao='cai'] .rinha-galo-arte {
+    filter: grayscale(0.7);
+  }
+  .rinha-galo[data-acao='vence'] {
+    animation: gi-rinha-vence 0.8s var(--ease-elastico, ease-out) 2 both;
+  }
+
+  /* impacto no galo que apanhou: estouro, penas e o número de dano subindo */
+  .rinha-impacto {
+    position: absolute;
+    bottom: 58px;
+    width: 0;
+    height: 0;
+    pointer-events: none;
+  }
+  .rinha-impacto[data-lado='rival'] {
+    right: 30%;
+  }
+  .rinha-impacto[data-lado='jogador'] {
+    left: 30%;
+  }
+  .rinha-estouro {
+    position: absolute;
+    left: -38px;
+    top: -38px;
+    width: 76px;
+    height: 76px;
+    background: conic-gradient(from 10deg, #fff6b0 0 8%, transparent 8% 14%, #ffd23f 14% 24%, transparent 24% 32%, #fff6b0 32% 42%, transparent 42% 50%, #ffd23f 50% 60%, transparent 60% 68%, #fff6b0 68% 78%, transparent 78% 86%, #ffd23f 86% 96%, transparent 96%);
+    -webkit-mask: radial-gradient(closest-side, #000 30%, transparent 100%);
+    mask: radial-gradient(closest-side, #000 30%, transparent 100%);
+    animation: gi-rinha-estouro 0.42s ease-out 0.18s both;
+  }
+  .rinha-estouro[data-critico] {
+    left: -56px;
+    top: -56px;
+    width: 112px;
+    height: 112px;
+    background: conic-gradient(from 10deg, #ff5a48 0 8%, transparent 8% 14%, #ffd23f 14% 24%, transparent 24% 32%, #ff5a48 32% 42%, transparent 42% 50%, #ffd23f 50% 60%, transparent 60% 68%, #ff5a48 68% 78%, transparent 78% 86%, #ffd23f 86% 96%, transparent 96%);
+  }
+  .rinha-penas > i {
+    position: absolute;
+    left: -5px;
+    top: -9px;
+    width: 10px;
+    height: 18px;
+    border-radius: 50% 50% 50% 50% / 70% 70% 30% 30%;
+    background: #fff4e2;
+    border: 2px solid #8a4a22;
+    animation: gi-rinha-pena 0.9s ease-out 0.2s both;
+  }
+  .rinha-penas > i:nth-child(1) { --dx: -38px; --dy: -46px; --r: -80deg; }
+  .rinha-penas > i:nth-child(2) { --dx: 34px; --dy: -52px; --r: 120deg; }
+  .rinha-penas > i:nth-child(3) { --dx: -22px; --dy: -70px; --r: 200deg; background: #ffb73d; }
+  .rinha-penas > i:nth-child(4) { --dx: 26px; --dy: -24px; --r: -160deg; background: #d8432f; }
+  .rinha-dano {
+    position: absolute;
+    left: 50%;
+    top: -64px;
+    translate: -50% 0;
+    display: grid;
+    justify-items: center;
+    font-family: var(--font-titulo);
+    font-size: 30px;
+    line-height: 1;
+    color: #fff;
+    --contorno-cor: #b42318;
+    white-space: nowrap;
+    animation: gi-rinha-dano 0.85s ease-out 0.2s both;
+  }
+  .rinha-dano small {
+    font-size: 15px;
+    color: #ffd23f;
+  }
+  .rinha-dano-critico {
+    font-size: 40px;
+  }
+  .rinha-dano-desvio {
+    font-size: 20px;
+    --contorno-cor: #1868d0;
+  }
+  .rinha-ko {
+    position: absolute;
+    left: 50%;
+    top: 30%;
+    translate: -50% -50%;
+    font-family: var(--font-titulo);
+    font-size: 44px;
+    color: #ffd23f;
+    --contorno-cor: #6e1208;
+    animation: gi-tela-pop 0.5s var(--ease-elastico, ease-out) both;
+  }
+  .rinha-ko[data-fim='derrota'] {
+    color: #fff;
+    --contorno-cor: #3b200c;
+  }
+  .rinha-narracao {
+    position: relative;
+    min-height: 1.4em;
+    margin-top: 4px;
+    text-align: center;
+    font-size: 14px;
+    font-weight: 900;
+    color: #3b200c;
+  }
+  .rinha-pular {
+    display: flex;
+    margin: 10px auto 0;
+    gap: 6px;
+  }
+
+  /* resultado */
+  .rinha-resultado {
+    margin-top: 12px;
+    padding: 16px;
+    text-align: center;
+  }
+  .rinha-resultado-titulo {
+    font-family: var(--font-titulo);
+    font-size: 26px;
+    color: #fff;
+    --contorno-cor: #3b200c;
+  }
+  .rinha-resultado[data-venceu] .rinha-resultado-titulo {
+    color: #ffd23f;
+    --contorno-cor: #5a3a00;
+  }
+  .rinha-resultado-valor {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 4px;
+    font-family: var(--font-titulo);
+    font-size: 30px;
+    color: #b42318;
+  }
+  .rinha-resultado[data-venceu] .rinha-resultado-valor {
+    color: #1d7a14;
+  }
+  .rinha-resultado-sorteio {
+    margin-top: 4px;
+    font-size: 12px;
+    font-weight: 800;
+    color: var(--color-texto-suave);
+  }
+
+  /* escolha do galo e da aposta */
+  .rinha-secao {
+    margin-top: 14px;
+    padding: 14px;
+  }
+  .rinha-secao-titulo {
+    font-family: var(--font-titulo);
+    font-size: 19px;
+    margin-bottom: 10px;
+  }
+  .rinha-galos {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+  }
+  .rinha-opcao {
+    display: grid;
+    justify-items: center;
+    align-content: start;
+    gap: 2px;
+    padding: 8px 6px 10px;
+    border-radius: 16px;
+    border: 3px solid #e6c88e;
+    background: #fffaf0;
+    color: var(--color-texto);
+    text-align: center;
+    cursor: pointer;
+    transition: translate 0.12s, border-color 0.12s;
+  }
+  .rinha-opcao[aria-checked='true'] {
+    border-color: #1868d0;
+    background: #eaf4ff;
+    box-shadow: 0 0 0 2px #1868d0;
+    translate: 0 -2px;
+  }
+  .rinha-opcao:focus-visible {
+    outline: 3px solid var(--color-compra-escura);
+    outline-offset: 2px;
+  }
+  .rinha-opcao-arte {
+    width: 64px;
+    height: 64px;
+  }
+  .rinha-opcao-nome {
+    font-family: var(--font-titulo);
+    font-size: 16px;
+  }
+  .rinha-opcao-dado {
+    font-size: 12px;
+    font-weight: 800;
+    color: var(--color-texto-suave);
+  }
+  .rinha-opcao-dado b {
+    font-size: 14px;
+    color: var(--color-texto);
+  }
+  .rinha-opcao-desc {
+    margin-top: 4px;
+    font-size: 11.5px;
+    font-weight: 700;
+    line-height: 1.25;
+    color: var(--color-texto-suave);
+  }
+  .rinha-aposta {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+  }
+  .rinha-aposta-valor {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 5ch;
+    justify-content: center;
+    font-family: var(--font-titulo);
+    font-size: 32px;
+  }
+  .rinha-fichas {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 10px;
+  }
+  .rinha-ficha {
+    min-width: 48px;
+    height: 36px;
+    padding: 0 10px;
+    border-radius: 999px;
+    border: 2px solid #c27c00;
+    background: linear-gradient(180deg, #fff1a8, #ffc93c);
+    font-weight: 900;
+    color: #5a3a00;
+    cursor: pointer;
+  }
+  .rinha-ficha[aria-pressed='true'] {
+    box-shadow: 0 0 0 3px #1868d0;
+  }
+  .rinha-ficha:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+  .rinha-saldo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    margin-top: 10px;
+    font-size: 13.5px;
+    font-weight: 800;
+    color: var(--color-texto-suave);
+  }
+  .rinha-conta {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-top: 10px;
+  }
+  .rinha-conta > div {
+    padding: 8px;
+    border-radius: 12px;
+    background: rgb(201 154 85 / 0.14);
+    text-align: center;
+  }
+  .rinha-conta dt {
+    font-size: 12px;
+    font-weight: 800;
+    color: var(--color-texto-suave);
+  }
+  .rinha-conta dd {
+    font-family: var(--font-titulo);
+    font-size: 20px;
+  }
+  .rinha-lutar {
+    margin-top: 14px;
+  }
+  .rinha-aviso {
+    margin-top: 10px;
+    font-size: 12.5px;
+    font-weight: 700;
+    line-height: 1.4;
+    text-align: center;
+    color: var(--color-texto-suave);
+  }
+  .rinha-historico {
+    display: grid;
+    gap: 4px;
+  }
+  .rinha-historico > li {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 8px;
+    border-radius: 10px;
+    background: rgb(180 35 24 / 0.08);
+    font-weight: 800;
+    color: #b42318;
+  }
+  .rinha-historico > li[data-venceu] {
+    background: rgb(29 122 20 / 0.1);
+    color: #1d7a14;
+  }
+  .rinha-historico-total {
+    margin-top: 8px;
+    font-size: 12.5px;
+    font-weight: 800;
+    color: var(--color-texto-suave);
+    text-align: center;
+  }
+
+  /* ================================================================ termos de uso */
+  .termos-texto {
+    display: grid;
+    gap: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.5;
+    color: var(--color-texto);
+  }
+  .termos-texto h2 {
+    margin-top: 6px;
+    font-family: var(--font-titulo);
+    font-size: 17px;
+  }
+  .termos-texto ul {
+    display: grid;
+    gap: 6px;
+    padding-left: 1.2em;
+    list-style: disc;
+  }
+  .termos-portao {
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    display: grid;
+    place-items: center;
+    padding: 16px;
+    background: rgb(43 26 15 / 0.72);
+  }
+  .termos-portao-caixa {
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    width: 100%;
+    max-width: 30rem;
+    max-height: min(86vh, 720px);
+    padding: 16px;
+  }
+  .termos-portao-titulo {
+    font-family: var(--font-titulo);
+    font-size: 22px;
+    margin-bottom: 8px;
+  }
+  .termos-portao-rolagem {
+    overflow: auto;
+    padding-right: 4px;
+    overscroll-behavior: contain;
+  }
+  .termos-aceite {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-top: 12px;
+    font-size: 14px;
+    font-weight: 800;
+    line-height: 1.35;
+    cursor: pointer;
+  }
+  .termos-aceite[data-erro] {
+    color: #b42318;
+  }
+  .termos-link {
+    color: var(--color-compra-escura);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+  .termos-aceite input {
+    flex: none;
+    width: 22px;
+    height: 22px;
+    margin-top: 1px;
+    accent-color: #1868d0;
+  }
+}
+
+@keyframes gi-rinha-ginga {
+  0%, 100% { translate: 0 0; rotate: 0deg; }
+  50% { translate: 0 -3px; rotate: -2deg; }
+}
+@keyframes gi-rinha-encara {
+  0%, 100% { translate: 0 0; }
+  50% { translate: 4px -2px; }
+}
+@keyframes gi-rinha-encara-b {
+  0%, 100% { translate: 0 0; }
+  50% { translate: -4px -2px; }
+}
+@keyframes gi-rinha-ataca-d {
+  0% { translate: 0 0; rotate: 0deg; }
+  22% { translate: -14px 0; rotate: -6deg; }
+  48% { translate: 52% -18px; rotate: 10deg; }
+  62% { translate: 46% -6px; rotate: 4deg; }
+  100% { translate: 0 0; rotate: 0deg; }
+}
+@keyframes gi-rinha-ataca-e {
+  0% { translate: 0 0; rotate: 0deg; }
+  22% { translate: 14px 0; rotate: 6deg; }
+  48% { translate: -52% -18px; rotate: -10deg; }
+  62% { translate: -46% -6px; rotate: -4deg; }
+  100% { translate: 0 0; rotate: 0deg; }
+}
+@keyframes gi-rinha-apanha-d {
+  0%, 30% { translate: 0 0; rotate: 0deg; }
+  45% { translate: -22px -6px; rotate: -14deg; }
+  70% { translate: -8px 0; rotate: -4deg; }
+  100% { translate: 0 0; rotate: 0deg; }
+}
+@keyframes gi-rinha-apanha-e {
+  0%, 30% { translate: 0 0; rotate: 0deg; }
+  45% { translate: 22px -6px; rotate: 14deg; }
+  70% { translate: 8px 0; rotate: 4deg; }
+  100% { translate: 0 0; rotate: 0deg; }
+}
+@keyframes gi-rinha-pisca {
+  0%, 30% { opacity: 1; }
+  40%, 60% { opacity: 0.35; }
+  100% { opacity: 1; }
+}
+@keyframes gi-rinha-desvia {
+  0%, 25% { translate: 0 0; }
+  45% { translate: 0 -34px; }
+  100% { translate: 0 0; }
+}
+@keyframes gi-rinha-cai-d {
+  0% { translate: 0 0; rotate: 0deg; }
+  100% { translate: -10px 22px; rotate: -88deg; }
+}
+@keyframes gi-rinha-cai-e {
+  0% { translate: 0 0; rotate: 0deg; }
+  100% { translate: 10px 22px; rotate: 88deg; }
+}
+@keyframes gi-rinha-vence {
+  0%, 100% { translate: 0 0; scale: 1; }
+  40% { translate: 0 -26px; scale: 1.08 0.94; }
+  60% { translate: 0 0; scale: 0.94 1.06; }
+}
+@keyframes gi-rinha-tremor {
+  0% { translate: 0 0; }
+  20% { translate: -6px 3px; }
+  40% { translate: 6px -3px; }
+  60% { translate: -4px 2px; }
+  80% { translate: 3px -1px; }
+  100% { translate: 0 0; }
+}
+@keyframes gi-rinha-estouro {
+  0% { scale: 0.2; opacity: 0; }
+  30% { scale: 1.1; opacity: 1; }
+  100% { scale: 1.4; opacity: 0; }
+}
+@keyframes gi-rinha-pena {
+  0% { translate: 0 0; rotate: 0deg; opacity: 0; }
+  15% { opacity: 1; }
+  100% { translate: var(--dx) var(--dy); rotate: var(--r); opacity: 0; }
+}
+@keyframes gi-rinha-dano {
+  0% { translate: -50% 10px; scale: 0.4; opacity: 0; }
+  25% { translate: -50% -6px; scale: 1.15; opacity: 1; }
+  70% { translate: -50% -16px; scale: 1; opacity: 1; }
+  100% { translate: -50% -30px; scale: 1; opacity: 0; }
+}

@@ -12,8 +12,8 @@ import { Exemplo, Moldura } from '../_Moldura';
 import { AGORA_FICTICIO, entidadeFicticia, type OpcoesEntidade } from '../_mock';
 
 const H = 3_600_000;
-const RARIDADE_DO_TIPO = { galinha: 'comum', pato: 'raro', ganso: 'epico', avestruz: 'lendario' } as const;
-const NOMES: Record<Tipo, string> = { galinha: 'Jujuba', pato: 'Patolino', ganso: 'Duquesa', avestruz: 'Estrela' };
+const RARIDADE_DO_TIPO = { codorna: 'comum', galinha: 'comum', pato: 'raro', ganso: 'epico', avestruz: 'lendario' } as const;
+const NOMES: Record<Tipo, string> = { codorna: 'Pitoco', galinha: 'Jujuba', pato: 'Patolino', ganso: 'Duquesa', avestruz: 'Estrela' };
 
 type Variante = 'pronto' | 'aguardando' | 'ultimo-ciclo' | 'ultimo-dia' | 'triste' | 'aposentado';
 

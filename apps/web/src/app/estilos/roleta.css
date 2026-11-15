@@ -642,29 +642,6 @@ html.reduzir-movimento .roda-onda {
     display: inline-grid;
   }
 }
-.roleta-pix-qr {
-  display: block;
-  width: min(240px, 70vw);
-  height: auto;
-  margin: 12px auto 0;
-  background: #fff;
-  border-radius: 12px;
-  padding: 8px;
-}
-.roleta-pix-codigo {
-  margin-top: 10px;
-  max-height: 4.5em;
-  overflow: auto;
-  padding: 8px 10px;
-  border-radius: 10px;
-  background: rgba(0, 0, 0, 0.06);
-  font-size: 12px;
-  line-height: 1.35;
-  word-break: break-all;
-  cursor: text;
-  user-select: text;
-  -webkit-user-select: text;
-}
 .roleta-botao[aria-busy='true'] {
   cursor: progress;
 }

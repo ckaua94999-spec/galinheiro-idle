@@ -29,7 +29,7 @@ async function membro(nome: string): Promise<Membro> {
   seq++;
   const m = await cadastrarMembro(
     banco,
-    { nome, telefone: `+55419${String(60_000_000 + seq).padStart(8, '0')}`, email: `troca${seq}@exemplo.com`, senha: 'senha-forte-123' },
+    { nome, telefone: `+55419${String(60_000_000 + seq).padStart(8, '0')}`, email: `troca${seq}@exemplo.com`, senha: 'senha-forte-123', aceitouTermos: true },
     Date.now(),
     rng,
   );
@@ -67,6 +67,8 @@ async function extratoBate(m: Membro) {
 beforeAll(async () => {
   banco = await criarBancoEmMemoria();
   usarBancoNosTestes(banco);
+  // estes testes partem do bônus de cadastro de 50 moedas (o padrão agora é 0: o membro novo junta com a codorna)
+  await banco.q('update afiliados_config set bonus_geral_x100 = 5000 where id = 1');
   admin = await membro('Chefe Trocas');
   await banco.q(`update contas set papel = 'admin' where id = $1`, [admin.id]);
 });

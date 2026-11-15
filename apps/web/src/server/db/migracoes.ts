@@ -990,6 +990,173 @@ alter table ampliacao_pix add column if not exists usdt_x100 integer;
 alter table ampliacao_pix add column if not exists usdt_rede text;
 `;
 
+/**
+ * Sem dinheiro real. A roleta e a ampliação passam a custar moedas do jogo, e o saque some. As tabelas de PIX, USDT
+ * e saque ficam como histórico: nada novo é gravado nelas. Quem já tinha pago um PIX e não usou recebe o que
+ * pagou (giro grátis ou ampliação).
+ *
+ * Junto: a codorna (animal de boas-vindas, fora da roleta), a liberação da roleta para membros novos, o aceite dos
+ * termos de uso e a rinha de galo (aposta só com moedas do jogo).
+ *
+ * Os valores novos dos enums não são usados como enum nesta migration (só via ::text): um valor criado numa
+ * transação ainda aberta não pode ser usado nela.
+ */
+const M0022_SEM_DINHEIRO_REAL = `
+alter type animal_tipo add value if not exists 'codorna' before 'galinha';
+alter type item_tipo add value if not exists 'ovo_codorna' before 'ovo_galinha';
+alter type transacao_tipo add value if not exists 'LIBERACAO_ROLETA';
+alter type transacao_tipo add value if not exists 'APOSTA_RINHA';
+alter type transacao_tipo add value if not exists 'PREMIO_RINHA';
+
+alter table transactions drop constraint transactions_sinal_ck;
+alter table transactions add constraint transactions_sinal_ck check (
+     (tipo::text in ('BONUS_INICIAL', 'VENDA_OVOS', 'COMISSAO_INDICACAO', 'SAQUE_ESTORNO', 'PREMIO_RINHA') and valor_x100 > 0)
+  or (tipo::text in ('GIRO_ROLETA', 'UPGRADE_NINHO', 'COMPRA_TICKET', 'SAQUE', 'LIBERACAO_ROLETA', 'APOSTA_RINHA') and valor_x100 < 0)
+  or  tipo::text = 'AJUSTE_SUPORTE'
+);
+
+alter table entities drop constraint entities_tipo_raridade_mvp_ck;
+alter table entities add constraint entities_tipo_raridade_mvp_ck check (
+     (tipo::text = 'codorna' and raridade = 'comum')
+  or (tipo = 'galinha'  and raridade = 'comum')
+  or (tipo = 'pato'     and raridade = 'raro')
+  or (tipo = 'ganso'    and raridade = 'epico')
+  or (tipo = 'avestruz' and raridade = 'lendario')
+);
+
+-- Roleta trancada para membros novos. Quem já jogava antes desta versão continua com ela aberta.
+alter table players add column if not exists roleta_liberada_em timestamptz;
+update players set roleta_liberada_em = criado_em where roleta_liberada_em is null;
+
+-- PIX pagos e ainda não usados: o giro vira giro grátis e a ampliação entra agora.
+update players p set giros_gratis = p.giros_gratis + x.n, versao = p.versao + 1
+  from (select player_id, count(*)::int as n from roleta_pix where status = 'pago' group by player_id) x
+ where x.player_id = p.id;
+update roleta_pix set status = 'usado', atualizado_em = now() where status = 'pago';
+with pendentes as (
+  select player_id, count(*)::int as n from ampliacao_pix where status = 'pago' group by player_id
+), ampliados as (
+  update players p set nivel_galinheiro = least(32, p.nivel_galinheiro + pendentes.n), versao = p.versao + 1
+    from pendentes
+   where pendentes.player_id = p.id
+  returning p.id, p.nivel_galinheiro
+)
+insert into nests (player_id, slot, criado_em)
+select a.id, g, now() from ampliados a, generate_series(1, a.nivel_galinheiro * 4) g
+on conflict do nothing;
+update ampliacao_pix set status = 'usado', atualizado_em = now() where status = 'pago';
+-- cobranças abertas não serão mais confirmadas
+update roleta_pix set status = 'expirado', atualizado_em = now() where status = 'aguardando';
+update ampliacao_pix set status = 'expirado', atualizado_em = now() where status = 'aguardando';
+
+-- Bônus de cadastro padrão: zero (o membro novo junta as moedas com a codorna). O painel ainda pode mudar.
+alter table afiliados_config alter column bonus_geral_x100 set default 0;
+update afiliados_config set bonus_geral_x100 = 0;
+
+-- Termos de uso: versão aceita e quando. Null = ainda não aceitou (o jogo pede ao abrir).
+alter table contas add column if not exists termos_versao text;
+alter table contas add column if not exists termos_aceitos_em timestamptz;
+alter table contas drop constraint if exists contas_termos_ck;
+alter table contas add constraint contas_termos_ck check ((termos_versao is null) = (termos_aceitos_em is null));
+
+-- Rinha de galo: cada luta, com a aposta, o sorteio e a encenação dos golpes.
+create table if not exists rinhas (
+  id                   uuid        primary key default gen_random_uuid(),
+  player_id            uuid        not null references players (id) on delete cascade,
+  galo                 text        not null check (galo in ('favorito', 'brigao', 'azarao')),
+  aposta_x100          bigint      not null check (aposta_x100 > 0),
+  premio_x100          bigint      not null check (premio_x100 >= 0),
+  venceu               boolean     not null,
+  rng_valor            integer     not null check (rng_valor between 0 and 9999),
+  chance_bp            integer     not null check (chance_bp between 1 and 9999),
+  premio_pct           integer     not null check (premio_pct > 100),
+  golpes               jsonb       not null,
+  aposta_transacao_id  uuid        not null unique references transactions (id) on delete cascade,
+  premio_transacao_id  uuid        unique references transactions (id) on delete cascade,
+  config_versao        text        not null,
+  criado_em            timestamptz not null,
+  constraint rinhas_resultado_ck check (
+       (venceu and premio_x100 > 0 and premio_transacao_id is not null and rng_valor < chance_bp)
+    or (not venceu and premio_x100 = 0 and premio_transacao_id is null and rng_valor >= chance_bp)
+  )
+);
+create index if not exists rinhas_player_ix on rinhas (player_id, criado_em desc);
+alter table rinhas enable row level security;
+-- a 0012 criou esta tabela sem RLS (fica como histórico, mas também fechada para a API REST automática)
+alter table pagamentos_config enable row level security;
+`;
+
+/** Chuva de Ovos: caça-níquel de cascata com moedas do jogo. Guarda o resumo de cada jogada (os quadros só vão na resposta). */
+const M0023_CHUVA_DE_OVOS = `
+alter type transacao_tipo add value if not exists 'APOSTA_CHUVA';
+alter type transacao_tipo add value if not exists 'PREMIO_CHUVA';
+
+alter table transactions drop constraint transactions_sinal_ck;
+alter table transactions add constraint transactions_sinal_ck check (
+     (tipo::text in ('BONUS_INICIAL', 'VENDA_OVOS', 'COMISSAO_INDICACAO', 'SAQUE_ESTORNO', 'PREMIO_RINHA', 'PREMIO_CHUVA') and valor_x100 > 0)
+  or (tipo::text in ('GIRO_ROLETA', 'UPGRADE_NINHO', 'COMPRA_TICKET', 'SAQUE', 'LIBERACAO_ROLETA', 'APOSTA_RINHA', 'APOSTA_CHUVA') and valor_x100 < 0)
+  or  tipo::text = 'AJUSTE_SUPORTE'
+);
+
+create table if not exists chuva_jogadas (
+  id                   uuid        primary key default gen_random_uuid(),
+  player_id            uuid        not null references players (id) on delete cascade,
+  aposta_x100          bigint      not null check (aposta_x100 > 0),
+  premio_x100          bigint      not null check (premio_x100 >= 0),
+  rodadas_gratis       integer     not null check (rodadas_gratis >= 0),
+  maior_multiplicador  integer     not null check (maior_multiplicador >= 1),
+  bateu_teto           boolean     not null,
+  aposta_transacao_id  uuid        not null unique references transactions (id) on delete cascade,
+  premio_transacao_id  uuid        unique references transactions (id) on delete cascade,
+  config_versao        text        not null,
+  criado_em            timestamptz not null,
+  constraint chuva_premio_ck check ((premio_x100 > 0) = (premio_transacao_id is not null))
+);
+create index if not exists chuva_jogadas_player_ix on chuva_jogadas (player_id, criado_em desc);
+alter table chuva_jogadas enable row level security;
+`;
+
+/**
+ * Ovos-Bomba: caça-níquel de bombas presas, com moedas do jogo. As bombas ficam de um giro para o outro, então cada
+ * jogador tem um tabuleiro por valor de aposta (bombas_estado). bombas_jogadas guarda o resumo de cada giro.
+ */
+const M0024_OVOS_BOMBA = `
+alter type transacao_tipo add value if not exists 'APOSTA_BOMBAS';
+alter type transacao_tipo add value if not exists 'PREMIO_BOMBAS';
+
+alter table transactions drop constraint transactions_sinal_ck;
+alter table transactions add constraint transactions_sinal_ck check (
+     (tipo::text in ('BONUS_INICIAL', 'VENDA_OVOS', 'COMISSAO_INDICACAO', 'SAQUE_ESTORNO', 'PREMIO_RINHA', 'PREMIO_CHUVA', 'PREMIO_BOMBAS') and valor_x100 > 0)
+  or (tipo::text in ('GIRO_ROLETA', 'UPGRADE_NINHO', 'COMPRA_TICKET', 'SAQUE', 'LIBERACAO_ROLETA', 'APOSTA_RINHA', 'APOSTA_CHUVA', 'APOSTA_BOMBAS') and valor_x100 < 0)
+  or  tipo::text = 'AJUSTE_SUPORTE'
+);
+
+create table if not exists bombas_estado (
+  player_id      uuid        not null references players (id) on delete cascade,
+  aposta_x100    bigint      not null check (aposta_x100 > 0),
+  bombas         jsonb       not null default '[]'::jsonb,
+  seq            integer     not null default 1 check (seq >= 1),
+  atualizado_em  timestamptz not null,
+  primary key (player_id, aposta_x100)
+);
+alter table bombas_estado enable row level security;
+
+create table if not exists bombas_jogadas (
+  id                   uuid        primary key default gen_random_uuid(),
+  player_id            uuid        not null references players (id) on delete cascade,
+  aposta_x100          bigint      not null check (aposta_x100 > 0),
+  premio_x100          bigint      not null check (premio_x100 >= 0),
+  explosoes            integer     not null check (explosoes >= 0),
+  aposta_transacao_id  uuid        not null unique references transactions (id) on delete cascade,
+  premio_transacao_id  uuid        unique references transactions (id) on delete cascade,
+  config_versao        text        not null,
+  criado_em            timestamptz not null,
+  constraint bombas_premio_ck check ((premio_x100 > 0) = (premio_transacao_id is not null))
+);
+create index if not exists bombas_jogadas_player_ix on bombas_jogadas (player_id, criado_em desc);
+alter table bombas_jogadas enable row level security;
+`;
+
 export const MIGRACOES: readonly Migracao[] = [
   { nome: '0001_init', sql: M0001_INIT },
   { nome: '0002_funcoes', sql: M0002_FUNCOES },
@@ -1012,4 +1179,7 @@ export const MIGRACOES: readonly Migracao[] = [
   { nome: '0019_saque_gateway', sql: M0019_SAQUE_GATEWAY },
   { nome: '0020_bonus_cadastro', sql: M0020_BONUS_CADASTRO },
   { nome: '0021_cobranca_usdt', sql: M0021_COBRANCA_USDT },
+  { nome: '0022_sem_dinheiro_real', sql: M0022_SEM_DINHEIRO_REAL },
+  { nome: '0023_chuva_de_ovos', sql: M0023_CHUVA_DE_OVOS },
+  { nome: '0024_ovos_bomba', sql: M0024_OVOS_BOMBA },
 ];

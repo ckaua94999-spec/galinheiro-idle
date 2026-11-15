@@ -13,7 +13,7 @@ import { FiguraAnimal, type Detalhe, type Humor } from '@/cliente/arte/Animal';
 import { Olhos, Piscada, Sobrancelhas, type CiliosOlho, type CoresRosto, type DefOlho } from '@/cliente/arte/animais/comum';
 import { Exemplo, Moldura } from '../_Moldura';
 
-const TIPOS: Tipo[] = ['galinha', 'pato', 'ganso', 'avestruz'];
+const TIPOS: Tipo[] = ['codorna', 'galinha', 'pato', 'ganso', 'avestruz'];
 const HUMORES: Humor[] = ['feliz', 'neutro', 'cansado', 'triste', 'surpresa', 'aposentado'];
 const TAMANHOS = [32, 72, 110, 144, 220] as const;
 

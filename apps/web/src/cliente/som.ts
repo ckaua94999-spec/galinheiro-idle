@@ -142,9 +142,47 @@ export const som = {
     if (raridade === 'lendario') [0, 4, 7].forEach((s) => tom({ freq: semitom(1046.5, s), dur: 1.2, vol: 0.07, atraso: 0.8 }));
   },
   erro: () => tom({ freq: 240, freqFinal: 150, dur: 0.24, vol: 0.2, tipo: 'triangle' }),
+  /** Rinha: pancada seca (o crítico estala mais forte e mais grave). */
+  golpe: (critico = false) => {
+    ruido(critico ? 0.16 : 0.09, critico ? 0.55 : 0.4, critico ? 700 : 1400, 0, 2);
+    tom({ freq: critico ? 160 : 220, freqFinal: 70, dur: critico ? 0.2 : 0.12, vol: critico ? 0.32 : 0.22, tipo: 'triangle' });
+  },
+  /** Chuva de Ovos: casca estalando (fica mais aguda a cada cascata). */
+  estouro: (n = 0) => {
+    ruido(0.07, 0.32, 2400 + n * 260, 0, 1.6);
+    tom({ freq: semitom(660, n), freqFinal: semitom(1250, n), dur: 0.09, vol: 0.16, tipo: 'triangle' });
+  },
+  /** Chuva de Ovos: grade caindo (um "tum" grave). */
+  queda: () => tom({ freq: 180, freqFinal: 90, dur: 0.12, vol: 0.14, tipo: 'sine' }),
+  /** Chuva de Ovos: nota da cascata (sobe um degrau do acorde a cada cascata seguida). */
+  sobe: (n = 0) => {
+    const grau = [0, 4, 7, 12, 16, 19, 24][Math.min(n, 6)]!;
+    tom({ freq: semitom(523.25, grau), dur: 0.16, vol: 0.2, tipo: 'triangle' });
+    tom({ freq: semitom(1046.5, grau), dur: 0.1, vol: 0.07, tipo: 'sine', atraso: 0.03 });
+  },
+  /** Prêmio no fim da jogada: 0 = pequeno (plim), 1 = bom (três notas), 2 = grande (fanfarra). */
+  premio: (nivel: 0 | 1 | 2 = 0) => {
+    const notas = nivel === 2 ? [0, 4, 7, 12, 16, 19, 24] : nivel === 1 ? [0, 7, 12] : [12];
+    notas.forEach((n, i) => tom({ freq: semitom(659.25, n), dur: nivel === 2 ? 0.2 : 0.14, vol: 0.17, tipo: 'triangle', atraso: i * 0.07 }));
+    if (nivel === 2) [0, 4, 7].forEach((n) => tom({ freq: semitom(1318.5, n), dur: 0.9, vol: 0.06, atraso: 0.5 }));
+  },
+  /** Rinha: o galo corta o ar na investida. */
+  zunido: () => ruido(0.11, 0.16, 3400, 0, 0.8),
+  /** Rinha: gongo de início e de nocaute. */
+  gongo: () => {
+    tom({ freq: 392, freqFinal: 380, dur: 0.7, vol: 0.2, tipo: 'triangle' });
+    tom({ freq: 784, freqFinal: 770, dur: 0.5, vol: 0.08, tipo: 'sine' });
+    ruido(0.05, 0.3, 1800, 0, 1);
+  },
+  /** Rinha: o galo vencedor canta ("có-có-ri-cóó"). */
+  cantar: () => [0, 0.14, 0.28].forEach((a, i) => tom({ freq: 700 + i * 120, freqFinal: i === 2 ? 1300 : 900, dur: i === 2 ? 0.5 : 0.12, vol: 0.12, tipo: 'square', atraso: a })),
   aposentadoria: () => [7, 4, 0, 4, 7, 12].forEach((s, i) => tom({ freq: semitom(392, s), dur: 0.35, vol: 0.1, tipo: 'sine', atraso: i * 0.18 })),
   voz: (tipo: Tipo) => {
     switch (tipo) {
+      case 'codorna': // "piu-piu" agudo e curto
+        tom({ freq: 1700, freqFinal: 2100, dur: 0.06, vol: 0.1, tipo: 'square' });
+        tom({ freq: 1800, freqFinal: 2300, dur: 0.07, vol: 0.1, tipo: 'square', atraso: 0.1 });
+        break;
       case 'galinha': // "cocó"
         tom({ freq: 900, freqFinal: 650, dur: 0.09, vol: 0.13, tipo: 'square' });
         tom({ freq: 1100, freqFinal: 700, dur: 0.12, vol: 0.13, tipo: 'square', atraso: 0.12 });

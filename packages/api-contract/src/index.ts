@@ -1,12 +1,12 @@
 // Contrato da API /api/v1 (GDD seção 9): tipos dos DTOs + schemas zod das entradas.
 import { z } from 'zod';
-import type { Inventario, Item, Raridade, Tier, Tipo } from '@galinheiro/game-core';
+import { CONFIG, CONFIG_BOMBAS, CONFIG_CHUVA, GALOS, ehApostaBombas, formatarMoedas } from '@galinheiro/game-core';
+import type { BombaPresa, Galo, Golpe, Inventario, Item, Raridade, ResultadoBombas, ResultadoChuva, Tier, Tipo } from '@galinheiro/game-core';
 import { normalizarTelefone } from './telefone';
 
 export { formatarTelefone, mascararTelefone, normalizarTelefone } from './telefone';
-export { cpfValido, digitosCpf, formatarCpf, mascararCpf } from './cpf';
 
-export type { Inventario, Item, Raridade, Tier, Tipo };
+export type { BombaPresa, Galo, Golpe, Inventario, Item, Raridade, ResultadoBombas, ResultadoChuva, Tier, Tipo };
 
 // ---------------------------------------------------------------- envelopes
 export type CodigoErro =
@@ -19,8 +19,7 @@ export type CodigoErro =
   | 'ACESSO_NEGADO' | 'CONTA_BLOQUEADA' | 'CONVITE_INVALIDO'
   | 'TICKETS_INSUFICIENTES' | 'INTERCAMBIO_FECHADO' | 'COMPRA_DESLIGADA' | 'LIMITE_DIARIO' | 'OFERTA_INDISPONIVEL'
   | 'CUPOM_INVALIDO' | 'CUPOM_JA_USADO' | 'CUPOM_ESGOTADO'
-  | 'CPF_INVALIDO' | 'SAQUE_INDISPONIVEL' | 'SAQUE_EM_ANDAMENTO'
-  | 'PIX_INDISPONIVEL' | 'USDT_INDISPONIVEL' | 'PAGAMENTO_PENDENTE';
+  | 'ROLETA_BLOQUEADA' | 'ROLETA_JA_LIBERADA' | 'TERMOS_PENDENTES' | 'RINHA_BLOQUEADA' | 'CHUVA_BLOQUEADA' | 'BOMBAS_BLOQUEADA';
 
 export interface Envelope<T> { ok: true; data: T; serverTime: string; stateVersion?: number }
 export interface EnvelopeErro {
@@ -43,8 +42,10 @@ export interface PlayerDTO {
   criadoEm: string;
   /** tickets do Intercâmbio (vales do jogo trocados por ovos ou animais) */
   tickets: number;
-  /** giros da roleta ganhos em cupom; cada um entra sem PIX */
+  /** giros grátis (cupom ou liberação da roleta); cada um não cobra moedas */
   girosGratis: number;
+  /** A roleta começa trancada: abre quando o membro paga a liberação com as moedas da codorna. */
+  roletaLiberada: boolean;
 }
 
 export interface EntityDTO {
@@ -94,8 +95,11 @@ export interface StateDTO {
   conta: ContaDTO;
 }
 
-/** Conta do membro. `telefone` em E.164 (+55…); só o próprio dono recebe estes dados. `admin` libera o /admin. */
-export interface ContaDTO { email: string; nome: string; telefone: string; admin: boolean }
+/**
+ * Conta do membro. `telefone` em E.164 (+55…); só o próprio dono recebe estes dados. `admin` libera o /admin.
+ * `termosPendentes`: o membro ainda não aceitou a versão atual dos termos de uso (o jogo pede antes de continuar).
+ */
+export interface ContaDTO { email: string; nome: string; telefone: string; admin: boolean; termosPendentes: boolean }
 
 export interface Eventos { aposentadorias: EntityDTO[] }
 
@@ -134,12 +138,17 @@ export interface AmpliarResposta {
 export interface ListaEntidades { itens: EntityDTO[]; total: number; proximoCursor: string | null }
 export interface TransacaoDTO {
   id: string;
-  tipo: 'BONUS_INICIAL' | 'VENDA_OVOS' | 'GIRO_ROLETA' | 'UPGRADE_NINHO' | 'AJUSTE_SUPORTE' | 'COMISSAO_INDICACAO' | 'COMPRA_TICKET' | 'SAQUE' | 'SAQUE_ESTORNO';
+  tipo: TipoTransacaoDTO;
   valorX100: number;
   saldoAposX100: number;
   detalhes: Record<string, unknown>;
   criadoEm: string;
 }
+/** SAQUE e SAQUE_ESTORNO só aparecem em extratos antigos: o jogo não tem mais saque. */
+export type TipoTransacaoDTO =
+  | 'BONUS_INICIAL' | 'VENDA_OVOS' | 'GIRO_ROLETA' | 'UPGRADE_NINHO' | 'AJUSTE_SUPORTE' | 'COMISSAO_INDICACAO' | 'COMPRA_TICKET'
+  | 'SAQUE' | 'SAQUE_ESTORNO' | 'LIBERACAO_ROLETA' | 'APOSTA_RINHA' | 'PREMIO_RINHA' | 'APOSTA_CHUVA' | 'PREMIO_CHUVA'
+  | 'APOSTA_BOMBAS' | 'PREMIO_BOMBAS';
 export interface ListaTransacoes { itens: TransacaoDTO[]; proximoCursor: string | null }
 
 export interface ConfigPublicaDTO {
@@ -147,6 +156,7 @@ export interface ConfigPublicaDTO {
   galinheiro: { nivelMax: number; ninhosPorNivel: number; custoUpgradeX100: number };
   roleta: {
     custoX100: number;
+    liberacaoX100: number;
     chances: { tipo: Tipo; raridade: Raridade; pct: number; grauInicio: number; largura: number }[];
   };
   animais: Record<Tipo, { raridade: Raridade; precoOvoX100: number; fatorPct: number }>;
@@ -156,6 +166,14 @@ export interface ConfigPublicaDTO {
     tiers: Record<Tier, { acimaDe: number; multPct: number; atrasoH: number; chanceTresOvosPct: number }>;
   };
   vida: { vidaUtilDias: number };
+  rinha: {
+    apostaMinX100: number;
+    apostaMaxX100: number;
+    galos: { galo: Galo; nome: string; chancePct: number; premioPct: number; retornoMedioPct: number }[];
+  };
+  chuva: { apostaMinX100: number; apostaMaxX100: number; retornoPct: number };
+  bombas: { apostasX100: number[]; retornoPct: number };
+  termos: { versao: string };
   push: { vapidPublicKey: string | null };
   dev: { relogioAjustavel: boolean };
 }
@@ -173,7 +191,7 @@ export type Preferencias = z.infer<typeof PreferenciasSchema>;
 export const PREFERENCIAS_PADRAO: Preferencias = PreferenciasSchema.parse({});
 
 // ---------------------------------------------------------------- entradas (zod)
-const itemSchema = z.enum(['ovo_galinha', 'ovo_pato', 'ovo_ganso', 'ovo_avestruz']);
+const itemSchema = z.enum(['ovo_codorna', 'ovo_galinha', 'ovo_pato', 'ovo_ganso', 'ovo_avestruz']);
 
 export const CollectBody = z.object({ entityId: z.uuid() });
 
@@ -197,7 +215,7 @@ export const PatchMeBody = z.object({
 
 export const EntitiesQuery = z.object({
   status: z.enum(['ativo', 'expirado', 'todos']).default('ativo'),
-  tipo: z.enum(['galinha', 'pato', 'ganso', 'avestruz']).optional(),
+  tipo: z.enum(['codorna', 'galinha', 'pato', 'ganso', 'avestruz']).optional(),
   raridade: z.enum(['comum', 'raro', 'epico', 'lendario']).optional(),
   pronto: z.enum(['true', 'false']).optional(),
   ordenar: z.enum(['slot', 'raridade', 'vida', 'proximoRendimento', 'nome', 'chegada']).default('slot'),
@@ -243,8 +261,15 @@ const conviteOpcional = z
   .transform((s) => (s ? normalizarConvite(s) : '') || undefined)
   .pipe(z.string().regex(CODIGO_CONVITE, 'Código de convite inválido.').optional());
 
-/** Cadastro de membro: nome, telefone (BR), e-mail e senha — tudo obrigatório; o convite é opcional. */
-export const CadastrarBody = z.object({ nome: nomeMembro, telefone, email, senha, convite: conviteOpcional });
+/** Versão atual dos termos de uso. Mudou o texto? Suba a versão: todo membro aceita de novo ao abrir o jogo. */
+export const TERMOS_VERSAO = '2026-11-14';
+const aceitouTermos = z.literal(true, { error: 'Para criar a conta, leia e aceite os termos de uso.' });
+
+/** Cadastro de membro: nome, telefone (BR), e-mail, senha e o aceite dos termos — tudo obrigatório; o convite é opcional. */
+export const CadastrarBody = z.object({ nome: nomeMembro, telefone, email, senha, convite: conviteOpcional, aceitouTermos });
+/** Aceite dos termos por quem já tem conta (a versão evita aceitar um texto que mudou enquanto a tela estava aberta). */
+export const AceitarTermosBody = z.object({ versao: z.string().max(20), aceito: z.literal(true) });
+export interface TermosAceitosDTO { versao: string; aceitosEm: string }
 export const EntrarEmailBody = z.object({ email, senha: z.string().min(1, 'Digite a senha.').max(128) });
 export const RedefinirSenhaBody = z.object({
   email,
@@ -292,8 +317,8 @@ export interface AdminSessaoDTO {
   usuario: string | null;
 }
 const motivo = z.string().trim().min(3, 'Explique o motivo (mínimo 3 caracteres).').max(300, 'Motivo muito longo.');
-const ITENS_OVO = ['ovo_galinha', 'ovo_pato', 'ovo_ganso', 'ovo_avestruz'] as const;
-const TIPOS_ANIMAL = ['galinha', 'pato', 'ganso', 'avestruz'] as const;
+const ITENS_OVO = ['ovo_codorna', 'ovo_galinha', 'ovo_pato', 'ovo_ganso', 'ovo_avestruz'] as const;
+const TIPOS_ANIMAL = ['codorna', 'galinha', 'pato', 'ganso', 'avestruz'] as const;
 
 export interface AdminUsuarioLinhaDTO {
   id: string;
@@ -375,54 +400,22 @@ export interface AdminUsuarioDetalheDTO {
     /** Bônus de quem entra sem valor próprio no link, ou sem convite. */
     bonusGeralX100: number;
   };
-  /** Bônus que este membro recebeu no cadastro. A equipe libera na ficha; o plano libera sozinho. */
-  bonusSaque: { liberadoPelaEquipe: boolean; liberadoPeloPlano: boolean; recebidoX100: number };
-  /** Como este membro paga a roleta e a ampliação. */
-  cobranca: {
-    meio: 'pix' | 'usdt';
-    /** Há carteira USDT configurada em Pagamentos. */
-    carteiraPronta: boolean;
-    abertas: AdminCobrancaUsdtDTO[];
-  };
-}
-
-export interface AdminCobrancaUsdtDTO {
-  id: string;
-  tipo: 'roleta' | 'ampliacao';
-  centavos: number;
-  valorUsdtX100: number;
-  rede: string;
-  criadoEm: string;
+  /** Termos de uso: versão aceita e quando (null = ainda não aceitou). */
+  termos: { versao: string | null; aceitosEm: string | null };
 }
 
 export const AdminEditarUsuarioBody = z
   .object({ nome: nomeMembro.optional(), telefone: telefone.optional(), email: email.optional(), papel: z.enum(['jogador', 'admin']).optional() })
   .refine((o) => Object.values(o).some((v) => v !== undefined), 'Nada para alterar.');
 export const AdminBloquearBody = z.object({ motivo });
-export const AdminBonusSaqueBody = z.object({ liberado: z.boolean() });
 const bonusCadastroX100 = z
   .number()
   .int('Use centavos inteiros.')
   .min(0, 'O bônus não pode ser negativo.')
-  .max(100_000, 'O máximo é R$ 1.000,00.');
+  .max(100_000, 'O máximo é 1.000,00 moedas.');
 /** Null volta a usar o bônus geral. */
 export const AdminBonusLinkBody = z.object({ bonusX100: bonusCadastroX100.nullable() });
 export const AdminBonusGeralBody = z.object({ bonusX100: bonusCadastroX100 });
-export const AdminCobrancaBody = z.object({ meio: z.enum(['pix', 'usdt']) });
-export const AdminConfirmarUsdtBody = z.object({
-  cobrancaId: z.uuid(),
-  tipo: z.enum(['roleta', 'ampliacao']),
-});
-export const AdminUsdtConfigBody = z.object({
-  rede: z.enum(['TRC20', 'ERC20', 'BEP20']),
-  endereco: z.string().trim().max(128).refine((s) => s === '' || /^[A-Za-z0-9]{20,128}$/.test(s), 'Endereço USDT inválido.'),
-  cotacaoCentavos: z.number().int().min(100, 'Mínimo de R$ 1,00 por USDT.').max(100_000, 'Máximo de R$ 1.000,00 por USDT.'),
-});
-/** Centésimos de USDT (100 = 1,00) para um preço em centavos de real, arredondando para cima. */
-export function valorUsdtX100(centavos: number, cotacaoCentavos: number): number {
-  if (cotacaoCentavos <= 0) return 0;
-  return Math.ceil((centavos * 100) / cotacaoCentavos);
-}
 export const AdminAjusteSaldoBody = z.object({
   valorX100: z
     .number()
@@ -523,7 +516,7 @@ export interface AdminResumoDTO {
     ovosEstoque: number;
     ovosColetadosHoje: number;
     girosHoje: number;
-    animaisAtivos: Record<'galinha' | 'pato' | 'ganso' | 'avestruz', number>;
+    animaisAtivos: Record<Tipo, number>;
   };
   suporte: { abertas: number; naoLidas: number };
   popupsAtivos: number;
@@ -852,62 +845,62 @@ export const AdminAjusteTicketsBody = z.object({
   motivo,
 });
 
-// ---------------------------------------------------------------- saque PIX (LofyPay)
-export type StatusSaque = 'processando' | 'pago' | 'falhou';
-export interface SaqueDTO {
+// ---------------------------------------------------------------- roleta, ampliação e rinha (só moedas do jogo)
+export const SpinBody = z.object({}).strict();
+export const AmpliarBody = z.object({}).strict();
+export interface LiberarRoletaResposta { saldoX100: number; girosGratis: number; transacaoId: string }
+
+const { apostaMinX100, apostaMaxX100 } = CONFIG.rinha;
+export const RinhaBody = z.object({
+  galo: z.enum(GALOS as [Galo, ...Galo[]], { error: 'Escolha um galo.' }),
+  apostaX100: z
+    .number()
+    .int('Use centavos de moeda inteiros.')
+    .min(apostaMinX100, `A aposta mínima é ${formatarMoedas(apostaMinX100)} moeda.`)
+    .max(apostaMaxX100, `A aposta máxima é ${formatarMoedas(apostaMaxX100)} moedas.`),
+});
+export interface RinhaDTO {
   id: string;
-  /** Valor debitado do saldo. */
-  centavos: number;
-  taxaCentavos: number;
-  /** O que segue para o PIX, depois da taxa. */
-  liquidoCentavos: number;
-  cpfMascarado: string;
-  status: StatusSaque;
+  galo: Galo;
+  apostaX100: number;
+  /** 0 na derrota; na vitória, a aposta × prêmio (a aposta volta junto) */
+  premioX100: number;
+  venceu: boolean;
+  /** sorteio de 0 a 9999; vitória quando fica abaixo da chance do galo × 100 */
+  rngValor: number;
+  golpes: Golpe[];
   criadoEm: string;
 }
-export interface ListaSaquesDTO {
-  itens: SaqueDTO[];
-  /** Menor valor debitado do saldo. O PIX recebe pelo menos o mínimo líquido. */
-  minimoCentavos: number;
-  taxaFixaCentavos: number;
-  /** 400 = 4%. */
-  taxaPercentualBp: number;
-  /** Quanto pode sair agora. Sem plano, o bônus fica de fora. Venda de ovos das últimas 24 h também fica de fora. */
-  disponivelCentavos: number;
-  bonusBloqueadoCentavos: number;
-  /** Vendas de ovos das últimas 24 h que ainda não entram no saque. Só nos 3 primeiros dias da conta. */
-  rendimentosBloqueadosCentavos: number;
-  /** Nos 3 primeiros dias, o rendimento das galinhas espera 24 h. Depois disso entra na hora. */
-  carenciaRendimento: boolean;
-  planoAtivo: boolean;
-  /** Bônus que este membro recebeu no cadastro. É o valor travado no saque até o plano. */
-  bonusCentavos: number;
+export interface RinhaResposta { rinha: RinhaDTO; saldoX100: number }
+export interface HistoricoRinhaDTO {
+  itens: Omit<RinhaDTO, 'golpes'>[];
+  /** só as lutas listadas */
+  apostadoX100: number;
+  ganhoX100: number;
 }
-export interface SaqueCriadoDTO { saque: SaqueDTO; saldoX100: number }
-export const SaqueBody = z.object({
-  centavos: z.number().int().min(100, 'O mínimo é R$ 1,00.').max(100_000_00, 'Valor acima do limite.'),
-  cpf: z.string().trim().min(11, 'Informe o CPF.').max(14),
-  nome: z.string().trim().min(3, 'Informe o nome completo.').max(80, 'Nome muito longo.'),
-});
 
-// ---------------------------------------------------------------- giro da roleta pago com PIX
-export type StatusCobrancaRoleta = 'aguardando' | 'pago' | 'usado' | 'expirado' | 'falhou';
-export interface CobrancaRoletaDTO {
-  id: string;
-  centavos: number;
-  status: StatusCobrancaRoleta;
-  copiaCola: string;
-  qrDataUrl: string;
-  expiraEm: string;
-  meio: 'pix' | 'usdt';
-  /** Rede do USDT (TRC20, ERC20, BEP20). Null no PIX. */
-  rede: string | null;
-  /** Centésimos de USDT. Null no PIX. */
-  valorUsdtX100: number | null;
-}
-export const ConsultaCobrancaRoleta = z.object({ id: z.uuid() });
-export const SpinBody = z.object({ cobrancaId: z.uuid().optional() });
-export const AmpliarBody = z.object({ cobrancaId: z.uuid().optional() });
+// ---------------------------------------------------------------- Chuva de Ovos (caça-níquel, moedas do jogo)
+export const ChuvaBody = z.object({
+  apostaX100: z
+    .number()
+    .int('Use centavos de moeda inteiros.')
+    .min(CONFIG_CHUVA.apostaMinX100, `A aposta mínima é ${formatarMoedas(CONFIG_CHUVA.apostaMinX100)} moeda.`)
+    .max(CONFIG_CHUVA.apostaMaxX100, `A aposta máxima é ${formatarMoedas(CONFIG_CHUVA.apostaMaxX100)} moedas.`),
+});
+/** Uma jogada: todos os quadros da cascata (giro pago + rodadas grátis) e o saldo no fim. */
+export interface ChuvaResposta { id: string; resultado: ResultadoChuva; saldoX100: number }
+
+// ---------------------------------------------------------------- Ovos-Bomba (caça-níquel de bombas presas, moedas do jogo)
+export const BombasBody = z.object({
+  apostaX100: z
+    .number()
+    .int()
+    .refine(ehApostaBombas, `Escolha uma das apostas: ${CONFIG_BOMBAS.apostasX100.map((a) => formatarMoedas(a).replace(/,00$/, '')).join(', ')}.`),
+});
+/** Um giro: o roteiro inteiro (grade, bombas, explosões, linhas) e o saldo no fim. */
+export interface BombasResposta { id: string; resultado: ResultadoBombas; saldoX100: number }
+/** Bombas presas em cada tabuleiro do jogador (um por valor de aposta; a chave é a aposta em centavos). */
+export interface BombasEstadoDTO { tabuleiros: Record<string, BombaPresa[]> }
 
 // ---------------------------------------------------------------- notificações push
 export const PushAssinaturaBody = z.object({

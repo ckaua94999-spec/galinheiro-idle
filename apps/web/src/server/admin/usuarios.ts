@@ -7,15 +7,13 @@ import { excluirConta } from '../auth/contas';
 import { gerarCodigoRecuperacao, gerarHash, normalizarCodigo } from '../auth/senha';
 import type { Consulta } from '../db/banco';
 import { extrato } from '../dominio/colecao';
-import { situacaoBonusSaque } from '../dominio/saque';
 import { COLS_ENTIDADE, iso, paraEntityDTO, type LinhaEntidade } from '../dominio/linhas';
-import { criarAnimal, incrementarVersao, lerInventario, menorSlotLivre, movimentarSaldo, travarJogador } from '../dominio/repo';
+import { creditarOvos, criarAnimal, incrementarVersao, lerInventario, menorSlotLivre, movimentarSaldo, travarJogador } from '../dominio/repo';
 import { ErroDominio, ehViolacaoUnica } from '../erros';
 import { auditar, ehAdmin, emailsAdmin } from './acesso';
 import { MEMBRO, diaSql } from './painel';
 import { diaBr, somarDias } from './projecoes';
 import { afiliacaoDe } from './afiliados';
-import { cobrancasUsdtAbertas, lerConfigUsdt } from '../pagamentos/usdt';
 import { movimentosDeTickets } from '../dominio/intercambio';
 
 const n = (v: unknown): number => Number(v ?? 0);
@@ -208,12 +206,13 @@ export async function detalheUsuario(c: Consulta, id: string, agoraMs: number): 
     auditoria: await acoesSobre(c, 'where a.alvo_conta_id = $1', [id], 30),
     tickets: { saldo: n((await c.um<{ t: unknown }>('select tickets as t from players where id = $1', [id]))?.t), movimentos: await movimentosDeTickets(c, id) },
     afiliacao: await afiliacaoDe(c, id),
-    bonusSaque: await situacaoBonusSaque(c, id),
-    cobranca: {
-      meio: (await c.um<{ cobranca: string }>('select cobranca from contas where id = $1', [id]))?.cobranca === 'usdt' ? 'usdt' : 'pix',
-      carteiraPronta: !!(await lerConfigUsdt(c)).endereco,
-      abertas: await cobrancasUsdtAbertas(c, id),
-    },
+    termos: await (async () => {
+      const t = await c.um<{ termos_versao: string | null; termos_aceitos_em: Date | null }>(
+        'select termos_versao, termos_aceitos_em from contas where id = $1',
+        [id],
+      );
+      return { versao: t?.termos_versao ?? null, aceitosEm: t?.termos_aceitos_em ? iso(t.termos_aceitos_em) : null };
+    })(),
   };
 }
 
@@ -286,45 +285,6 @@ export async function novoCodigoRecuperacao(c: Consulta, adminId: string, id: st
   return codigo;
 }
 
-/** Libera ou trava de novo o bônus inicial no saque, sem exigir PIX da roleta. */
-export async function definirBonusSaque(c: Consulta, adminId: string, id: string, liberado: boolean): Promise<boolean> {
-  const j = await travarJogador(c, id);
-  if (!j) throw new ErroDominio('JOGADOR_NAO_ENCONTRADO');
-  await c.q('update players set bonus_saque_liberado = $2, atualizado_em = now() where id = $1', [id, liberado]);
-  await auditar(c, adminId, liberado ? 'liberar_bonus_saque' : 'bloquear_bonus_saque', id, { liberado });
-  return liberado;
-}
-
-/** PIX ou USDT nas próximas cobranças de roleta e ampliação deste membro. */
-export async function definirCobranca(c: Consulta, adminId: string, id: string, meio: 'pix' | 'usdt'): Promise<'pix' | 'usdt'> {
-  await linhaUsuario(c, id);
-  const antes = await c.um<{ cobranca: string }>('select cobranca from contas where id = $1', [id]);
-  await c.q('update contas set cobranca = $2, atualizado_em = now() where id = $1', [id, meio]);
-  await auditar(c, adminId, 'definir_cobranca', id, { de: antes?.cobranca ?? 'pix', para: meio });
-  return meio;
-}
-
-const TABELA_COBRANCA = { roleta: 'roleta_pix', ampliacao: 'ampliacao_pix' } as const;
-
-/** Marca uma cobrança USDT como paga. A roleta ou a ampliação segue no próximo toque do membro. */
-export async function confirmarCobrancaUsdt(
-  c: Consulta, adminId: string, id: string, cobrancaId: string, tipo: 'roleta' | 'ampliacao', agoraMs: number,
-): Promise<void> {
-  await linhaUsuario(c, id);
-  const tabela = TABELA_COBRANCA[tipo];
-  const linha = await c.um<{ id: string; status: string; provedor: string; centavos: number; usdt_x100: unknown }>(
-    `select id, status, provedor, centavos, usdt_x100 from ${tabela} where id = $1 and player_id = $2 for update`,
-    [cobrancaId, id],
-  );
-  if (!linha) throw new ErroDominio('NAO_ENCONTRADO', undefined, 'Cobrança não encontrada.');
-  if (linha.provedor !== 'usdt') throw new ErroDominio('PAYLOAD_INVALIDO', undefined, 'Esta cobrança não é em USDT.');
-  if (linha.status !== 'aguardando') return;
-  await c.q(`update ${tabela} set status = 'pago', atualizado_em = $2 where id = $1`, [cobrancaId, new Date(agoraMs)]);
-  await auditar(c, adminId, 'confirmar_usdt', id, {
-    tipo, cobrancaId, centavos: Number(linha.centavos), valorUsdtX100: Number(linha.usdt_x100 ?? 0),
-  });
-}
-
 /** Valor que os próximos cadastros pelo link deste membro recebem. Null volta a seguir o bônus geral. */
 export async function definirBonusLink(c: Consulta, adminId: string, id: string, bonusX100: number | null): Promise<number | null> {
   await linhaUsuario(c, id);
@@ -351,11 +311,8 @@ export async function ajustarOvos(c: Consulta, adminId: string, id: string, item
   if (!j) throw new ErroDominio('JOGADOR_NAO_ENCONTRADO');
   const atual = await c.um<{ quantidade: number }>('select quantidade from inventory where player_id = $1 and item = $2', [id, item]);
   if (n(atual?.quantidade) + quantidade < 0) throw new ErroDominio('ESTOQUE_INSUFICIENTE', undefined, 'O estoque ficaria negativo.');
-  await c.q(
-    `update inventory set quantidade = quantidade + $3, total_coletado = total_coletado + $3, atualizado_em = $4
-      where player_id = $1 and item = $2`,
-    [id, item, quantidade, new Date(agoraMs)],
-  );
+  // upsert: contas de antes da codorna não têm a linha do ovo_codorna (débito só passa com a linha existente)
+  await creditarOvos(c, id, item, quantidade, agoraMs);
   await incrementarVersao(c, id, agoraMs);
   await auditar(c, adminId, 'ajustar_ovos', id, { item, quantidade, motivo });
 }

@@ -36,7 +36,7 @@ const ANIMAIS: { slot: number; tipo: Tipo; vida: number; faltaH: number; nome?: 
 
 async function semear(c: Consulta, id: string, agora: number): Promise<void> {
   const d = (ms: number) => new Date(ms);
-  await c.q('update players set nivel_galinheiro = $2, tutorial_etapa = 8 where id = $1', [id, NIVEL]);
+  await c.q('update players set nivel_galinheiro = $2, tutorial_etapa = 8, roleta_liberada_em = now() where id = $1', [id, NIVEL]);
   await c.q(
     'insert into nests (player_id, slot, criado_em) select $1, g, $2 from generate_series(5, $3::int) g on conflict do nothing',
     [id, d(agora), NIVEL * 4],
@@ -89,6 +89,7 @@ export async function GET(req: NextRequest) {
         telefone: `+55119${String(rngServidor.int(100_000_000)).padStart(8, '0')}`,
         email: `demo-${randomUUID().slice(0, 8)}@galinheiro.dev`,
         senha: randomUUID(),
+        aceitouTermos: true,
       },
       agora,
       rngServidor,

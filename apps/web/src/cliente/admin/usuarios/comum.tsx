@@ -22,10 +22,8 @@ export type AcaoFicha =
   | { tipo: 'codigo' }
   | { tipo: 'bloquear' }
   | { tipo: 'desbloquear' }
-  | { tipo: 'bonus-saque' }
   | { tipo: 'bonus-link' }
   | { tipo: 'bonus-geral' }
-  | { tipo: 'cobranca' }
   | { tipo: 'mensagem' }
   | { tipo: 'excluir' };
 
@@ -137,7 +135,7 @@ export function useAgoraLento(intervaloMs = 30_000): number {
 }
 
 /**
- * Moedas digitadas em reais do jogo → centavos. Aceita "12,50", "12,5", "1.234,56", "12.50" e "1234".
+ * Moedas do jogo digitadas → centavos. Aceita "12,50", "12,5", "1.234,56", "12.50" e "1234".
  * Devolve null se não for um número válido (letras, mais de 2 casas decimais, vazio).
  */
 export function lerMoedas(texto: string): number | null {

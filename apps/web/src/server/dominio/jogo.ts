@@ -1,8 +1,8 @@
 // Casos de uso do jogo (GDD 7.6). Cada função roda dentro de uma transação aberta pela camada HTTP.
 import { randomUUID } from 'node:crypto';
 import type {
-  AmpliarResposta, ColetaDTO, ColetarResposta, ColetarTodosResposta, EntityDTO, GirarResposta, PlayerDTO,
-  Preferencias, StateDTO, VenderResposta,
+  AmpliarResposta, ColetaDTO, ColetarResposta, ColetarTodosResposta, EntityDTO, GirarResposta, LiberarRoletaResposta,
+  PlayerDTO, Preferencias, StateDTO, VenderResposta,
 } from '@galinheiro/api-contract';
 import { PREFERENCIAS_PADRAO, PreferenciasSchema } from '@galinheiro/api-contract';
 import {
@@ -71,7 +71,7 @@ export async function estado(c: Consulta, contaId: string, agoraMs: number, rng:
       where player_id = $1 and status = 'expirado' and expirado_em > $2 order by expirado_em`,
     [contaId, jogador.aposentadorias_vistas_ate],
   );
-  const conta = await c.um<LinhaContaDTO>('select email, nome, telefone, papel from contas where id = $1', [contaId]);
+  const conta = await c.um<LinhaContaDTO>('select email, nome, telefone, papel, termos_versao from contas where id = $1', [contaId]);
   // atividade do dia no horário de Brasília (UTC−3): base do DAU/WAU/MAU e da projeção de pessoas
   await c.q(
     `insert into atividade_diaria (conta_id, dia) values ($1, (($2::timestamptz at time zone 'UTC') - interval '3 hours')::date)
@@ -221,10 +221,33 @@ export async function vender(
 }
 
 // ---------------------------------------------------------------- roleta
-export async function girar(
-  c: Consulta, contaId: string, agoraMs: number, rng: Rng, cobrancaId?: string,
-): Promise<ResultadoCaso<GirarResposta>> {
+/**
+ * Liberação da roleta (membro novo): paga uma vez `CONFIG.roleta.liberacaoX100` com as moedas da codorna e já
+ * ganha o primeiro giro. Quem jogava antes desta regra começou com a roleta aberta (migration 0022).
+ */
+export async function liberarRoleta(c: Consulta, contaId: string, agoraMs: number): Promise<ResultadoCaso<LiberarRoletaResposta>> {
   const jogador = await exigirJogador(c, contaId);
+  if (jogador.roleta_liberada_em) throw new ErroDominio('ROLETA_JA_LIBERADA');
+  const custo = CONFIG.roleta.liberacaoX100;
+  if (jogador.moedas_x100 < custo) {
+    throw new ErroDominio('SALDO_INSUFICIENTE', { faltamX100: custo - jogador.moedas_x100 });
+  }
+  const { transacaoId, saldoAposX100 } = await movimentarSaldo(c, contaId, -custo, 'LIBERACAO_ROLETA', { girosGratis: 1 }, agoraMs);
+  const p = (await c.um<{ giros_gratis: number }>(
+    `update players set roleta_liberada_em = $2, giros_gratis = giros_gratis + 1, atualizado_em = $2
+      where id = $1 returning giros_gratis`,
+    [contaId, d(agoraMs)],
+  ))!;
+  const versao = await incrementarVersao(c, contaId, agoraMs);
+  return { versao, data: { saldoX100: saldoAposX100, girosGratis: p.giros_gratis, transacaoId } };
+}
+
+/** Giro da roleta: usa um giro grátis se houver, senão cobra `CONFIG.roleta.custoX100` moedas do jogo. */
+export async function girar(c: Consulta, contaId: string, agoraMs: number, rng: Rng): Promise<ResultadoCaso<GirarResposta>> {
+  const jogador = await exigirJogador(c, contaId);
+  if (!jogador.roleta_liberada_em) {
+    throw new ErroDominio('ROLETA_BLOQUEADA', { liberacaoX100: CONFIG.roleta.liberacaoX100 });
+  }
   const aposentadorias = await reconciliar(c, contaId, agoraMs);
   const ocupados = await contarAtivos(c, contaId);
   if (ocupados >= jogador.capacidade) {
@@ -232,60 +255,39 @@ export async function girar(
   }
   const custo = CONFIG.roleta.custoX100;
   const agora = d(agoraMs);
-  let cobranca: { id: string; centavos: number } | null = null;
   let girosGratis = jogador.giros_gratis ?? 0;
-  const usarCupom = !cobrancaId && girosGratis > 0;
-  if (usarCupom) {
-    const atualizado = await c.um<{ giros_gratis: number }>(
-      `update players set giros_gratis = giros_gratis - 1, atualizado_em = $2
-        where id = $1 and giros_gratis > 0
-        returning giros_gratis`,
-      [contaId, agora],
-    );
-    if (!atualizado) throw new ErroDominio('PAGAMENTO_PENDENTE');
-    girosGratis = atualizado.giros_gratis;
-  } else {
-    cobranca = cobrancaId
-      ? await c.um<{ id: string; centavos: number }>(
-        `select id, centavos from roleta_pix
-          where player_id = $1 and id = $2 and status = 'pago' and centavos = $3
-          for update`,
-        [contaId, cobrancaId, custo],
-      )
-      : await c.um<{ id: string; centavos: number }>(
-        `select id, centavos from roleta_pix
-          where player_id = $1 and status = 'pago' and centavos = $2
-          order by criado_em
-          limit 1
-          for update`,
-        [contaId, custo],
-      );
-    if (!cobranca) throw new ErroDominio('PAGAMENTO_PENDENTE');
-    const consumida = await c.um<{ id: string }>(
-      `update roleta_pix set status = 'usado', atualizado_em = $2 where id = $1 and status = 'pago' returning id`,
-      [cobranca.id, agora],
-    );
-    if (!consumida) throw new ErroDominio('PAGAMENTO_PENDENTE');
+  const gratis = girosGratis > 0;
+  if (!gratis && jogador.moedas_x100 < custo) {
+    throw new ErroDominio('SALDO_INSUFICIENTE', { faltamX100: custo - jogador.moedas_x100 });
   }
   const slot = await menorSlotLivre(c, contaId);
   if (slot === null) throw new ErroDominio('SEM_NINHO_LIVRE', { ocupados, capacidade: jogador.capacidade });
 
   const spinId = randomUUID();
   const { rngValor, tipo, raridade } = sortearRoleta(rng);
+  let transacaoId: string | null = null;
+  let saldoAposX100 = jogador.moedas_x100;
+  if (gratis) {
+    girosGratis = (await c.um<{ giros_gratis: number }>(
+      'update players set giros_gratis = giros_gratis - 1, atualizado_em = $2 where id = $1 returning giros_gratis',
+      [contaId, agora],
+    ))!.giros_gratis;
+  } else {
+    ({ transacaoId, saldoAposX100 } = await movimentarSaldo(c, contaId, -custo, 'GIRO_ROLETA', { spinId, tipo }, agoraMs));
+  }
   const linha = await criarAnimal(c, contaId, tipo, slot, agoraMs, rng, 'ROLETA');
   const angulo = Math.round(anguloResultado(rngValor) * 1000) / 1000;
   await c.q(
-    `insert into spins (id, player_id, cobranca_id, entity_id, custo_x100, rng_valor, tipo, raridade, angulo_graus,
+    `insert into spins (id, player_id, transacao_id, entity_id, custo_x100, rng_valor, tipo, raridade, angulo_graus,
        config_versao, criado_em, giro_gratis)
      values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
-    [spinId, contaId, cobranca?.id ?? null, linha.id, cobranca?.centavos ?? custo, rngValor, tipo, raridade, angulo, CONFIG_VERSAO, agora, usarCupom],
+    [spinId, contaId, transacaoId, linha.id, custo, rngValor, tipo, raridade, angulo, CONFIG_VERSAO, agora, gratis],
   );
-  const saldoAposX100 = jogador.moedas_x100;
   const versao = await incrementarVersao(c, contaId, agoraMs);
   return {
     versao,
     data: {
-      giro: { id: spinId, rngValor, anguloResultado: angulo, tipo, raridade, custoX100: usarCupom ? 0 : custo },
+      giro: { id: spinId, rngValor, anguloResultado: angulo, tipo, raridade, custoX100: gratis ? 0 : custo },
       entity: paraEntityDTO(linha, agoraMs),
       saldoX100: saldoAposX100,
       girosGratis,
@@ -296,37 +298,18 @@ export async function girar(
 }
 
 // ---------------------------------------------------------------- loja
-export async function ampliar(
-  c: Consulta, contaId: string, agoraMs: number, cobrancaId?: string,
-): Promise<ResultadoCaso<AmpliarResposta>> {
+export async function ampliar(c: Consulta, contaId: string, agoraMs: number): Promise<ResultadoCaso<AmpliarResposta>> {
   const jogador = await exigirJogador(c, contaId);
   if (jogador.nivel_galinheiro >= CONFIG.galinheiro.nivelMax) {
     throw new ErroDominio('GALINHEIRO_NO_MAXIMO', { nivel: jogador.nivel_galinheiro });
   }
   const custo = CONFIG.galinheiro.custoUpgradeX100;
-  const cobranca = cobrancaId
-    ? await c.um<{ id: string }>(
-      `select id from ampliacao_pix
-        where player_id = $1 and id = $2 and status = 'pago' and centavos = $3
-        for update`,
-      [contaId, cobrancaId, custo],
-    )
-    : await c.um<{ id: string }>(
-      `select id from ampliacao_pix
-        where player_id = $1 and status = 'pago' and centavos = $2
-        order by criado_em
-        limit 1
-        for update`,
-      [contaId, custo],
-    );
-  if (!cobranca) throw new ErroDominio('PAGAMENTO_PENDENTE');
-  const agora = d(agoraMs);
-  const consumida = await c.um<{ id: string }>(
-    `update ampliacao_pix set status = 'usado', atualizado_em = $2 where id = $1 and status = 'pago' returning id`,
-    [cobranca.id, agora],
+  if (jogador.moedas_x100 < custo) {
+    throw new ErroDominio('SALDO_INSUFICIENTE', { faltamX100: custo - jogador.moedas_x100 });
+  }
+  const { transacaoId, saldoAposX100 } = await movimentarSaldo(
+    c, contaId, -custo, 'UPGRADE_NINHO', { nivelDe: jogador.nivel_galinheiro, nivelPara: jogador.nivel_galinheiro + 1 }, agoraMs,
   );
-  if (!consumida) throw new ErroDominio('PAGAMENTO_PENDENTE');
-  const saldoAposX100 = jogador.moedas_x100;
   const p = (await c.um<{ nivel_galinheiro: number; capacidade: number }>(
     'update players set nivel_galinheiro = nivel_galinheiro + 1 where id = $1 returning nivel_galinheiro, capacidade',
     [contaId],
@@ -340,7 +323,7 @@ export async function ampliar(
   const novosSlots = Array.from({ length: CONFIG.galinheiro.ninhosPorNivel }, (_, i) => de + i);
   return {
     versao,
-    data: { nivelGalinheiro: p.nivel_galinheiro, capacidade: p.capacidade, novosSlots, saldoX100: saldoAposX100, transacaoId: cobranca.id },
+    data: { nivelGalinheiro: p.nivel_galinheiro, capacidade: p.capacidade, novosSlots, saldoX100: saldoAposX100, transacaoId },
   };
 }
 

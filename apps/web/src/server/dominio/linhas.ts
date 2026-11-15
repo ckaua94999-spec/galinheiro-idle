@@ -1,5 +1,5 @@
 // Linhas do banco -> DTOs da API.
-import type { ContaDTO, EntityDTO, PlayerDTO, TransacaoDTO } from '@galinheiro/api-contract';
+import { TERMOS_VERSAO, type ContaDTO, type EntityDTO, type PlayerDTO, type TransacaoDTO } from '@galinheiro/api-contract';
 import {
   ANIMAIS, ITENS, diasRestantes, inventarioVazio, tierDe, vidaEm,
   type Inventario, type Item, type Raridade, type Tier, type Tipo,
@@ -19,7 +19,7 @@ export interface LinhaEntidade {
   nome: string;
   tipo: Tipo;
   raridade: Raridade;
-  origem: 'ROLETA' | 'BOAS_VINDAS' | 'SUPORTE';
+  origem: EntityDTO['origem'];
   status: 'ativo' | 'expirado';
   nascimento: Date;
   expiracao: Date;
@@ -39,7 +39,7 @@ export interface LinhaEntidade {
 }
 
 export const COLS_JOGADOR = `id, apelido, moedas_x100, nivel_galinheiro, capacidade, tutorial_etapa,
-  aposentadorias_vistas_ate, preferencias, versao, criado_em, tickets, giros_gratis`;
+  aposentadorias_vistas_ate, preferencias, versao, criado_em, tickets, giros_gratis, roleta_liberada_em`;
 
 export interface LinhaJogador {
   id: string;
@@ -54,6 +54,7 @@ export interface LinhaJogador {
   criado_em: Date;
   tickets: number;
   giros_gratis: number;
+  roleta_liberada_em: Date | null;
 }
 
 export interface LinhaTransacao {
@@ -121,6 +122,7 @@ export function paraPlayerDTO(l: LinhaJogador, ocupados: number): PlayerDTO {
     criadoEm: iso(l.criado_em),
     tickets: Number(l.tickets ?? 0),
     girosGratis: Number(l.giros_gratis ?? 0),
+    roletaLiberada: !!l.roleta_liberada_em,
   };
 }
 
@@ -141,8 +143,20 @@ export function paraInventario(linhas: { item: Item; quantidade: number }[]): In
   return inv;
 }
 
-export interface LinhaContaDTO { email: string | null; nome: string | null; telefone: string | null; papel?: string | null }
+export interface LinhaContaDTO {
+  email: string | null;
+  nome: string | null;
+  telefone: string | null;
+  papel?: string | null;
+  termos_versao?: string | null;
+}
 
 export function paraContaDTO(l: LinhaContaDTO): ContaDTO {
-  return { email: l.email ?? '', nome: l.nome ?? '', telefone: l.telefone ?? '', admin: ehAdmin({ papel: l.papel, email: l.email }) };
+  return {
+    email: l.email ?? '',
+    nome: l.nome ?? '',
+    telefone: l.telefone ?? '',
+    admin: ehAdmin({ papel: l.papel, email: l.email }),
+    termosPendentes: l.termos_versao !== TERMOS_VERSAO,
+  };
 }

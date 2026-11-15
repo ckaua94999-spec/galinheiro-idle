@@ -119,7 +119,7 @@ function AbreVenda() {
 }
 
 const ESTADO_VENDA = estadoFicticio();
-const ESTADO_SEM_OVOS = { ...estadoFicticio(), inventario: { ovo_galinha: 0, ovo_pato: 0, ovo_ganso: 0, ovo_avestruz: 0 } };
+const ESTADO_SEM_OVOS = { ...estadoFicticio(), inventario: { ovo_codorna: 0, ovo_galinha: 0, ovo_pato: 0, ovo_ganso: 0, ovo_avestruz: 0 } };
 const ESTADO_APOSENTADORIAS = {
   ...estadoFicticio(),
   aposentadoriasNaoVistas: [
@@ -134,7 +134,7 @@ export function SecaoTelas() {
   return (
     <Moldura titulo="Telas">
       {/* pt-7: a fita da vitrine sobe 22 px acima do painel e cobria a legenda */}
-      <Exemplo titulo="Loja: vitrine (nível 4, PIX) e Em breve" className="flex flex-wrap items-start gap-6 pt-7">
+      <Exemplo titulo="Loja: vitrine (nível 4) e Em breve" className="flex flex-wrap items-start gap-6 pt-7">
         <div style={{ width: 358 }} className="space-y-8">
           <VitrineAmpliacao nivel={4} capacidade={16} />
           <VitrineEmBreve />

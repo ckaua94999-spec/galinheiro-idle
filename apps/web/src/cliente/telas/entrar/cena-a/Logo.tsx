@@ -10,7 +10,7 @@
 // com overflow:hidden atravessa a palavra e, dentro dela, uma 4ª cópia das letras em branco anda ao
 // contrário na mesma medida, então fica parada sobre a face e só aparece onde a janela passa — o brilho
 // fica recortado na forma exata das letras (antes eram 10 letras animando background-position).
-// Embaixo, o selo "PIX" em esmalte verde com aro de ouro, ladeado pelas 4 gemas de raridade (de B).
+// Embaixo, o selo "IDLE" em esmalte verde com aro de ouro, ladeado pelas 4 gemas de raridade (de B).
 // Entrada (CSS, roda antes da hidratação): as letras caem uma a uma com squash ao tocar o arco, o clarão
 // abre, o selo estoura e as gemas acendem do comum ao lendário. Vida: o logo flutua, o reflexo passa a
 // cada ~5 s, o selo cintila e as gemas brilham em sequência. Cada letra é UM span (arco em translate/rotate,
@@ -98,7 +98,7 @@ export function LogoA() {
       <div className="ca-logo-flutua">
         <div className="ca-logo-corpo">
           <h1 className="ca-titulo">
-            <span className="sr-only">Galinheiro PIX</span>
+            <span className="sr-only">Galinheiro Idle</span>
             <span className="ca-palavra" aria-hidden>
               {CAMADAS.map((c) => (
                 <span key={c} className={`ca-palavra-camada ca-l-${c}`}>
@@ -121,7 +121,7 @@ export function LogoA() {
             <span className="ca-selo">
               <span className="ca-selo-aro">
                 <span className="ca-selo-esmalte">
-                  <span className="ca-selo-texto">PIX</span>
+                  <span className="ca-selo-texto">IDLE</span>
                   <span className="ca-selo-reflexo" />
                 </span>
               </span>

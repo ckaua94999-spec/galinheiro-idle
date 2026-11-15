@@ -1,7 +1,7 @@
 // Testes da camada HTTP chamando os handlers das rotas diretamente.
 import { NextRequest } from 'next/server';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import type { Rng } from '@galinheiro/game-core';
+import { CONFIG_VERSAO, type Rng } from '@galinheiro/game-core';
 import { criarBancoEmMemoria, usarBancoNosTestes, type Banco } from '@/server/db/banco';
 import { cadastrarMembro } from '@/server/auth/contas';
 import { COOKIE_SESSAO, emitirToken } from '@/server/auth/sessao';
@@ -11,6 +11,9 @@ import { POST as postSpin } from '@/app/api/v1/spin/route';
 import { POST as postCadastrar } from '@/app/api/v1/auth/cadastrar/route';
 import { GET as getEntity, PATCH as patchEntity } from '@/app/api/v1/entities/[id]/route';
 import { GET as getConfig } from '@/app/api/v1/config/route';
+import { POST as postLiberar } from '@/app/api/v1/roleta/liberar/route';
+import { GET as getRinha, POST as postRinha } from '@/app/api/v1/rinha/route';
+import { POST as postTermos } from '@/app/api/v1/termos/route';
 
 let banco: Banco;
 let cookie = '';
@@ -33,7 +36,7 @@ beforeAll(async () => {
   usarBancoNosTestes(banco);
   const { contaId, versao } = await cadastrarMembro(
     banco,
-    { nome: 'Rita Teste', telefone: '+5531991234567', email: 'rita@exemplo.com', senha: 'senha-forte-123' },
+    { nome: 'Rita Teste', telefone: '+5531991234567', email: 'rita@exemplo.com', senha: 'senha-forte-123', aceitouTermos: true },
     Date.now(),
     rng,
   );
@@ -56,7 +59,7 @@ describe('rotas /api/v1', () => {
     const r = await getState(req('GET', '/api/v1/state'));
     expect(r.status).toBe(200);
     expect(r.headers.get('etag')).toMatch(/^"v\d+"$/);
-    expect(r.headers.get('x-config-version')).toBe('1.0.3');
+    expect(r.headers.get('x-config-version')).toBe(CONFIG_VERSAO);
     const corpo = await r.json();
     expect(corpo.ok).toBe(true);
     expect(corpo.data.entidades).toHaveLength(1);
@@ -70,12 +73,23 @@ describe('rotas /api/v1', () => {
   });
 
   it('repetir a mesma chave devolve a resposta original (sem girar 2x)', async () => {
+    // roleta trancada: 409 ROLETA_BLOQUEADA; a liberação pede 12 moedas e dá o primeiro giro
+    const trancada = await postSpin(req('POST', '/api/v1/spin', { chave: 'giro-trancado-01', corpo: {} }));
+    expect(trancada.status).toBe(409);
+    expect((await trancada.json()).error.code).toBe('ROLETA_BLOQUEADA');
     const jogador = await banco.um<{ id: string }>('select id from players limit 1');
     await banco.q(
-      `insert into roleta_pix (player_id, centavos, status, id_transacao, copia_cola, qr_data_url, idempotencia, criado_em, atualizado_em, expira_em)
-       values ($1, 5500, 'pago', 'tx-rota-1', '000201', '', 'idem-rota-1', now(), now(), now() + interval '1 hour')`,
+      `update players set moedas_x100 = moedas_x100 + 1200 where id = $1`,
       [jogador!.id],
     );
+    await banco.q(
+      `insert into transactions (player_id, tipo, valor_x100, saldo_apos_x100, detalhes, config_versao)
+       select id, 'AJUSTE_SUPORTE', 1200, moedas_x100, '{}'::jsonb, 'teste' from players where id = $1`,
+      [jogador!.id],
+    );
+    const lib = await postLiberar(req('POST', '/api/v1/roleta/liberar', { chave: 'liberar-chave-01' }));
+    expect(lib.status).toBe(200);
+    expect((await lib.json()).data).toMatchObject({ girosGratis: 1 });
     const r1 = await postSpin(req('POST', '/api/v1/spin', { chave: 'giro-chave-0001' }));
     const r2 = await postSpin(req('POST', '/api/v1/spin', { chave: 'giro-chave-0001' }));
     expect(r1.status).toBe(200);
@@ -130,12 +144,15 @@ describe('rotas /api/v1', () => {
   });
 
   it('cadastro: cria membro com cookie httpOnly e código de recuperação; recusa telefone repetido ou inválido', async () => {
-    const corpo = { nome: '  João   da Silva ', telefone: '(41) 99876-5432', email: 'Joao@Exemplo.com', senha: 'senha-forte-123' };
+    const corpo = { nome: '  João   da Silva ', telefone: '(41) 99876-5432', email: 'Joao@Exemplo.com', senha: 'senha-forte-123', aceitouTermos: true };
     const nova = await postCadastrar(req('POST', '/api/v1/auth/cadastrar', { semCookie: true, corpo }));
     expect(nova.status).toBe(201);
     expect(nova.headers.get('set-cookie')).toMatch(/gi_sessao=.+HttpOnly/);
     const dados = (await nova.json()).data;
-    expect(dados.conta).toEqual({ nome: 'João da Silva', telefone: '+5541998765432', email: 'joao@exemplo.com', admin: false });
+    expect(dados.conta).toEqual({ nome: 'João da Silva', telefone: '+5541998765432', email: 'joao@exemplo.com', admin: false, termosPendentes: false });
+    const semTermos = await postCadastrar(req('POST', '/api/v1/auth/cadastrar', { semCookie: true, corpo: { ...corpo, email: 'sem@exemplo.com', telefone: '(41) 99876-0000', aceitouTermos: false } }));
+    expect(semTermos.status).toBe(400);
+    expect((await semTermos.json()).error.details.issues[0]).toMatchObject({ caminho: 'aceitouTermos' });
     expect(dados.codigoRecuperacao).toMatch(/^[A-Z2-9]{4}-[A-Z2-9]{4}-[A-Z2-9]{4}$/);
 
     const repetido = await postCadastrar(req('POST', '/api/v1/auth/cadastrar', { semCookie: true, corpo: { ...corpo, email: 'outro@exemplo.com' } }));
@@ -157,9 +174,35 @@ describe('rotas /api/v1', () => {
     expect(r.status).toBe(401);
   });
 
-  it('config pública traz chances e chave VAPID', async () => {
+  it('config pública traz chances, liberação, rinha e chave VAPID', async () => {
     const corpo = await (await getConfig(req('GET', '/api/v1/config', { semCookie: true }))).json();
-    expect(corpo.data.roleta.chances.map((c: { pct: number }) => c.pct)).toEqual([60, 25, 12, 3]);
+    expect(corpo.data.roleta.chances.map((c: { tipo: string; pct: number }) => [c.tipo, c.pct])).toEqual([['codorna', 30], ['galinha', 30], ['pato', 25], ['ganso', 12], ['avestruz', 3]]);
+    expect(corpo.data.roleta.liberacaoX100).toBe(1200);
+    expect(corpo.data.rinha.galos.every((g: { retornoMedioPct: number }) => g.retornoMedioPct < 100)).toBe(true);
     expect(typeof corpo.data.push.vapidPublicKey).toBe('string');
+  });
+
+  it('rinha: valida o corpo, luta, repete pela chave e lista o histórico; termos com versão velha: 409', async () => {
+    const invalido = await postRinha(req('POST', '/api/v1/rinha', { chave: 'rinha-invalida-1', corpo: { galo: 'dragao', apostaX100: 100 } }));
+    expect(invalido.status).toBe(400);
+    const jogador = await banco.um<{ id: string }>('select id from players order by criado_em limit 1');
+    await banco.q(
+      `insert into transactions (player_id, tipo, valor_x100, saldo_apos_x100, detalhes, config_versao)
+       select id, 'AJUSTE_SUPORTE', 1000, moedas_x100 + 1000, '{}'::jsonb, 'teste' from players where id = $1`,
+      [jogador!.id],
+    );
+    await banco.q('update players set moedas_x100 = moedas_x100 + 1000 where id = $1', [jogador!.id]);
+    const r1 = await postRinha(req('POST', '/api/v1/rinha', { chave: 'rinha-chave-0001', corpo: { galo: 'brigao', apostaX100: 200 } }));
+    expect(r1.status).toBe(200);
+    const d1 = (await r1.json()).data;
+    expect(d1.rinha.golpes.length).toBeGreaterThan(0);
+    const r2 = await postRinha(req('POST', '/api/v1/rinha', { chave: 'rinha-chave-0001', corpo: { galo: 'brigao', apostaX100: 200 } }));
+    expect(r2.headers.get('idempotent-replayed')).toBe('true');
+    expect((await r2.json()).data.rinha.id).toBe(d1.rinha.id);
+    const hist = (await (await getRinha(req('GET', '/api/v1/rinha'))).json()).data;
+    expect(hist.itens).toHaveLength(1);
+    expect(hist.itens[0]).not.toHaveProperty('golpes');
+    const velha = await postTermos(req('POST', '/api/v1/termos', { chave: 'termos-velho-01', corpo: { versao: '2000-01-01', aceito: true } }));
+    expect(velha.status).toBe(409);
   });
 });

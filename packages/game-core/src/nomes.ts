@@ -63,6 +63,7 @@ export function contemPalavraImpropria(nome: string): boolean {
 
 // ---------------------------------------------------------------- nomes padrão (GDD Apêndice C)
 export const NOMES_PADRAO: Record<Tipo, readonly string[]> = {
+  codorna: ['Pitoco', 'Miúda', 'Pintinha', 'Grãozinho', 'Pipi', 'Fubá', 'Quirera', 'Bolinha', 'Tico', 'Pitanga'],
   galinha: ['Pipoca', 'Cocó', 'Penélope', 'Chiquinha', 'Paçoca', 'Quindim', 'Cocada', 'Jujuba', 'Pamonha',
     'Canjica', 'Farofa', 'Tapioca', 'Rapadura', 'Cuscuz', 'Bolinha', 'Pintada'],
   pato: ['Dado', 'Quaquá', 'Bolota', 'Pingo', 'Marola', 'Biscoito', 'Remo', 'Nado', 'Bote', 'Lagoa', 'Galocha', 'Bolacha'],

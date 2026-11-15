@@ -3,23 +3,21 @@
 // Loja (GDD 6.8): upgrade de ninho e vitrine "Em breve".
 // Visual (DIRECAO_DE_ARTE 11): vitrine em painel com faixa, diorama do galinheiro crescendo (obra com martelo
 // e ninhos novos surgindo), medalhas de nível atual → próximo, trilha 1–32 e botão de compra azul com preço.
-import type { CobrancaRoletaDTO } from '@galinheiro/api-contract';
 import { CONFIG } from '@galinheiro/game-core';
 import { ChevronsRight, Hammer, Hourglass, Plus } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useEffect, useId, useRef, useState } from 'react';
-import { chamar } from '../api';
+import { useId } from 'react';
 import { FiguraAnimal } from '../arte/Animal';
-import { IconeLoja, IconeNinho } from '../arte/Icones';
-import { Modal } from '../componentes/Modal';
-import { copiarTexto } from '../convites/texto';
+import { IconeLoja, IconeNinho, Moeda } from '../arte/Icones';
 import { CartaoConvite } from '../convites/CartaoConvite';
 import { useEstado } from '../estado';
 import { CartaoIntercambio } from '../intercambio/CartaoIntercambio';
-import { toast } from '../ui';
+import { toast, useUi } from '../ui';
 import { useAcoes } from '../useAcoes';
-import { ConteudoCobranca, tituloCobranca } from './cobranca';
-import { mensagemDeErro, moedas } from '../util';
+import { moedas } from '../util';
+import { CartaoRinha } from '../rinha/CartaoRinha';
+import { CartaoChuva } from '../chuva/CartaoChuva';
+import { CartaoBombas } from '../bombas/CartaoBombas';
 
 /** id seguro para url(#…) (o useId traz ":" e "«"). */
 function useIdSvg(prefixo: string): string {
@@ -355,11 +353,13 @@ export interface PropsVitrine {
   nivel: number;
   capacidade: number;
   ampliando?: boolean;
+  /** Moedas que faltam para ampliar (0 = dá para pagar). */
+  faltaX100?: number;
   aoAmpliar?: () => void;
 }
 
 /** Card "Ampliar galinheiro" (exportado para a galeria de desenvolvimento). */
-export function VitrineAmpliacao({ nivel, capacidade, ampliando = false, aoAmpliar }: PropsVitrine) {
+export function VitrineAmpliacao({ nivel, capacidade, ampliando = false, faltaX100 = 0, aoAmpliar }: PropsVitrine) {
   const { nivelMax, ninhosPorNivel, custoUpgradeX100: custo } = CONFIG.galinheiro;
   const noMaximo = nivel >= nivelMax;
   const pctNivel = (nivel / nivelMax) * 100;
@@ -451,15 +451,20 @@ export function VitrineAmpliacao({ nivel, capacidade, ampliando = false, aoAmpli
             className="botao botao-compra botao-g botao-brilho loja-acao w-full"
             onClick={aoAmpliar}
             disabled={ampliando}
+            aria-disabled={faltaX100 > 0 || undefined}
             data-tut="ampliar"
           >
             <span className="icone-contorno" aria-hidden>
               <Hammer />
               <Hammer />
             </span>
-            {ampliando ? 'Gerando cobrança…' : 'Ampliar'}
-            <span className="sr-only">por</span>
-            <span className="botao-preco">R$ {moedas(custo)}</span>
+            {ampliando ? 'Ampliando…' : faltaX100 > 0 ? 'Faltam' : 'Ampliar'}
+            <span className="sr-only">{faltaX100 > 0 ? 'moedas:' : 'por'}</span>
+            <span className="botao-preco">
+              <Moeda className="h-[1.2em] w-[1.2em]" />
+              {moedas(faltaX100 > 0 ? faltaX100 : custo).replace(/,00$/, '')}
+              <span className="sr-only"> moedas</span>
+            </span>
           </button>
         </>
       )}
@@ -564,76 +569,22 @@ export function TelaLoja() {
   const { data: estado } = useEstado();
   const router = useRouter();
   const { ampliar, ampliando } = useAcoes();
-  const [pix, setPix] = useState<CobrancaRoletaDTO | null>(null);
-  const [gerandoPix, setGerandoPix] = useState(false);
-  const aoPago = useRef<(id: string) => void>(() => {});
-
-  useEffect(() => {
-    if (!pix || pix.status !== 'aguardando') return;
-    let parado = false;
-    const consultar = async () => {
-      try {
-        const r = await chamar<CobrancaRoletaDTO>('GET', `/upgrade-nest/pix?id=${pix.id}`);
-        if (parado) return;
-        if (r.data.status === 'pago') aoPago.current(r.data.id);
-        else if (r.data.status === 'expirado' || r.data.status === 'falhou') {
-          setPix(null);
-          toast(r.data.status === 'expirado'
-            ? (pix.meio === 'usdt' ? 'Essa cobrança em USDT expirou. Toque em Ampliar para gerar outra.' : 'Esse PIX expirou. Toque em Ampliar para gerar outro.')
-            : (pix.meio === 'usdt' ? 'A cobrança em USDT não foi concluída. Tente de novo.' : 'O PIX não foi concluído. Tente de novo.'), 'erro');
-        }
-      } catch {
-        // a próxima consulta tenta de novo; o galinheiro não cresce sem confirmação
-      }
-    };
-    const timer = setInterval(() => void consultar(), 3000);
-    return () => {
-      parado = true;
-      clearInterval(timer);
-    };
-  }, [pix]);
-
-  const custo = CONFIG.galinheiro.custoUpgradeX100;
-
-  const confirmar = async (id: string) => {
-    setPix(null);
-    const slots = await ampliar(id);
-    if (slots) router.push('/galinheiro');
-  };
-  aoPago.current = (id) => {
-    void confirmar(id);
-  };
-
-  const abrirPix = async () => {
-    if (gerandoPix || pix || ampliando) return;
-    setGerandoPix(true);
-    try {
-      const r = await chamar<CobrancaRoletaDTO>('POST', '/upgrade-nest/pix', { idempotente: true });
-      if (r.data.status === 'pago') {
-        void confirmar(r.data.id);
-        return;
-      }
-      if (r.data.status !== 'aguardando' || !r.data.copiaCola) {
-        toast('Não foi possível gerar a cobrança. Tente de novo.', 'erro');
-        return;
-      }
-      setPix(r.data);
-    } catch (erro) {
-      toast(mensagemDeErro(erro), 'erro');
-    } finally {
-      setGerandoPix(false);
-    }
-  };
-
-  const copiarPix = async () => {
-    if (!pix?.copiaCola) return;
-    if (await copiarTexto(pix.copiaCola)) toast(pix.meio === 'usdt' ? 'Endereço USDT copiado.' : 'Código PIX copiado.', 'sucesso');
-    else toast('Não consegui copiar. Selecione o código e copie.', 'erro');
-  };
 
   if (!estado) return null;
 
-  const { nivelGalinheiro, capacidade } = estado.player;
+  const { nivelGalinheiro, capacidade, moedasX100 } = estado.player;
+  const falta = Math.max(0, CONFIG.galinheiro.custoUpgradeX100 - moedasX100);
+
+  const comprar = async () => {
+    if (ampliando) return;
+    if (falta > 0) {
+      toast(`Faltam ${moedas(falta)} moedas para ampliar. Venda ovos para juntar.`, 'erro');
+      useUi.getState().abrirVenda(true);
+      return;
+    }
+    const slots = await ampliar();
+    if (slots) router.push('/galinheiro');
+  };
 
   return (
     <div className="tela loja-tela">
@@ -641,18 +592,10 @@ export function TelaLoja() {
         <IconeLoja className="tela-cabeca-icone" />
         <h1 className="titulo-tela">Loja</h1>
       </div>
-      <VitrineAmpliacao nivel={nivelGalinheiro} capacidade={capacidade} ampliando={gerandoPix || ampliando} aoAmpliar={() => void abrirPix()} />
-      <Modal aberto={!!pix} aoFechar={() => setPix(null)} titulo={tituloCobranca(pix?.meio, 'ampliar')}>
-        <ConteudoCobranca cobranca={pix} custoX100={custo} depois="Os 4 ninhos novos entram" />
-        <div className="mt-4 flex gap-2">
-          <button type="button" className="botao botao-primario flex-1" onClick={() => void copiarPix()}>
-            {pix?.meio === 'usdt' ? 'Copiar endereço' : 'Copiar código'}
-          </button>
-          <button type="button" className="botao botao-secundario flex-1" onClick={() => setPix(null)}>
-            Fechar
-          </button>
-        </div>
-      </Modal>
+      <VitrineAmpliacao nivel={nivelGalinheiro} capacidade={capacidade} ampliando={ampliando} faltaX100={falta} aoAmpliar={() => void comprar()} />
+      <CartaoRinha />
+      <CartaoChuva />
+      <CartaoBombas />
       <CartaoIntercambio />
       <CartaoConvite />
       <VitrineEmBreve />

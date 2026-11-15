@@ -2,7 +2,7 @@
 
 // Tutorial guiado pelo Seu Juca (GDD 5.2): destaca o elemento da etapa e bloqueia o resto da tela.
 // Visual: véu escuro, anel dourado pulsando, seta quicando e balão de fala com o Juca (DIRECAO_DE_ARTE 11).
-import { totalDeOvos } from '@galinheiro/game-core';
+import { CONFIG, formatarMoedas, totalDeOvos } from '@galinheiro/game-core';
 import { AnimatePresence, motion } from 'motion/react';
 import { usePathname } from 'next/navigation';
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
@@ -180,9 +180,15 @@ export function Tutorial({ estado }: { estado: Estado }) {
       passo = { alvo: '[data-tut="vender"]', texto: 'Ovo vira moeda. Toque em Vender e venda tudo!' };
       break;
     case ETAPA.PRIMEIRO_GIRO:
-      passo = caminho.startsWith('/roleta')
-        ? { alvo: '[data-tut="girar"]', texto: 'Com 40 moedas você ganha um animal novo. Toque em Girar e boa sorte!' }
-        : { alvo: '[data-tut="aba-roleta"]', texto: 'Agora vamos à roleta! Toque na aba Roleta.' };
+      passo = !caminho.startsWith('/roleta')
+        ? { alvo: '[data-tut="aba-roleta"]', texto: 'Agora vamos à roleta! Toque na aba Roleta.' }
+        : estado.player.roletaLiberada
+          ? { alvo: '[data-tut="girar"]', texto: 'Na roleta saem codornas, galinhas, patos, gansos e até avestruz. Toque em Girar e boa sorte!' }
+          : {
+              alvo: '[data-tut="liberar"]',
+              texto: `A roleta ainda está trancada. Venda os ovos da sua codorna até juntar ${formatarMoedas(CONFIG.roleta.liberacaoX100).replace(/,00$/, '')} moedas e libere aqui: o primeiro giro vem de presente!`,
+              botao: 'Combinado!',
+            };
       break;
     case ETAPA.NOMEAR:
       passo = null; // acontece dentro do resultado do giro
@@ -221,7 +227,9 @@ export function Tutorial({ estado }: { estado: Estado }) {
 
   if (!ativo || !passo) return null;
   const folga = 8;
-  const proxima = etapa === ETAPA.BOAS_VINDAS ? ETAPA.CONHECER : etapa === ETAPA.CONHECER ? ETAPA.PRIMEIRA_COLETA : ETAPA.CONCLUIDO;
+  // roleta trancada: o tutorial explica a liberação e pula o giro, o nome e a coleta do animal novo
+  const proxima =
+    etapa === ETAPA.BOAS_VINDAS ? ETAPA.CONHECER : etapa === ETAPA.CONHECER ? ETAPA.PRIMEIRA_COLETA : etapa === ETAPA.PRIMEIRO_GIRO ? ETAPA.RITMO : ETAPA.CONCLUIDO;
   // A seta fica acima do alvo; sem espaço (alvo colado no HUD), vai para baixo apontando para cima.
   const setaEmBaixo = rect ? rect.top - folga - 56 < 0 : false;
   const alvoGrande = rect ? rect.height > window.innerHeight * 0.4 : false;

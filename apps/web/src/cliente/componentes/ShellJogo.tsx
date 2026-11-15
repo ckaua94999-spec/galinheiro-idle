@@ -25,6 +25,7 @@ import { ModalAposentadorias } from './ModalAposentadorias';
 import { ModalVender } from './ModalVender';
 import { Toasts } from './Toasts';
 import { Tutorial } from './Tutorial';
+import { PortaoTermos } from '../termos/PortaoTermos';
 
 const nada = () => () => {};
 export const useMontado = (): boolean => useSyncExternalStore(nada, () => true, () => false);
@@ -37,7 +38,7 @@ export function TelaCarregando({ texto = 'Abrindo o galinheiro…', className }:
       <div className="relative flex flex-col items-center gap-4">
         <div className="carregando-logo" aria-hidden>
           <span className="texto-contorno carregando-titulo">Galinheiro</span>
-          <span className="faixa faixa-verde carregando-idle">PIX</span>
+          <span className="faixa faixa-verde carregando-idle">IDLE</span>
         </div>
         <div className="mt-2 flex flex-col items-center" aria-hidden>
           <div className="carregando-juca">
@@ -114,7 +115,7 @@ function AvisoAtualizacao({ oculto }: { oculto: boolean }) {
 }
 
 // Ordem das telas para a direção do deslize na troca de aba.
-const ORDEM_TELAS = ['/galinheiro', '/loja', '/intercambio', '/roleta', '/colecao', '/extrato', '/ajustes', '/convites', '/suporte'];
+const ORDEM_TELAS = ['/galinheiro', '/loja', '/intercambio', '/rinha', '/chuva', '/bombas', '/roleta', '/colecao', '/manual', '/extrato', '/ajustes', '/convites', '/suporte'];
 const indiceDaTela = (caminho: string) => {
   const i = ORDEM_TELAS.findIndex((t) => caminho.startsWith(t));
   return i < 0 ? 0 : i;
@@ -187,9 +188,10 @@ export function ShellJogo({ children }: { children: React.ReactNode }) {
       <ModalInfo />
       <ModalVender estado={estado} />
       <ModalAposentadorias estado={estado} />
-      <CamadaAvisos estado={estado} />
-      <Tutorial estado={estado} />
+      {!estado.conta.termosPendentes && <CamadaAvisos estado={estado} />}
+      {!estado.conta.termosPendentes && <Tutorial estado={estado} />}
       <CamadaEfeitos />
+      <PortaoTermos estado={estado} />
       <Toasts />
       <BannerConexao />
       <AvisoAtualizacao oculto={estado.player.tutorialEtapa < ETAPA.CONCLUIDO} />

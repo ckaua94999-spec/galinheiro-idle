@@ -40,7 +40,7 @@ const TRANSICAO_PAINEL = {
 };
 
 const MODOS_DA_URL: readonly ModoEntrar[] = ['email', 'cadastro', 'recuperar'];
-type Campo = 'nome' | 'telefone' | 'email' | 'senha' | 'convite';
+type Campo = 'nome' | 'telefone' | 'email' | 'senha' | 'convite' | 'aceitouTermos';
 /** O código digitado é conferido depois que o jogador para de digitar (o do link, na hora). */
 const ESPERA_CONFERIR_MS = 500;
 const DICA_CONVITE = 'Confira o código ou apague para criar a conta sem convite.';
@@ -126,6 +126,7 @@ export function TelaEntrar() {
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
   const [codigo, setCodigo] = useState('');
+  const [aceitouTermos, setAceitouTermos] = useState(false);
   const [ocupado, setOcupado] = useState(false);
   const [campoComErro, setCampoComErro] = useState<Campo | null>(null);
   const [codigoNovo, setCodigoNovo] = useState<CodigoNovo | null>(null);
@@ -242,7 +243,7 @@ export function TelaEntrar() {
   // Valida no aparelho com o MESMO schema do servidor (mensagens em português) antes de enviar.
   const cadastrar = () => {
     const conviteEnviado = convite.trim() ? normalizarConvite(convite) : undefined;
-    const corpo = { nome, telefone, email, senha, ...(conviteEnviado ? { convite: conviteEnviado } : {}) };
+    const corpo = { nome, telefone, email, senha, aceitouTermos, ...(conviteEnviado ? { convite: conviteEnviado } : {}) };
     const v = CadastrarBody.safeParse(corpo);
     if (!v.success) {
       const problema = v.error.issues[0];
@@ -478,6 +479,24 @@ export function TelaEntrar() {
             invalido={campoComErro === 'senha'}
           />
           {campoConvite}
+          <label className="termos-aceite" data-erro={campoComErro === 'aceitouTermos' ? '' : undefined}>
+            <input
+              type="checkbox"
+              checked={aceitouTermos}
+              onChange={(e) => {
+                setAceitouTermos(e.target.checked);
+                if (campoComErro === 'aceitouTermos') setCampoComErro(null);
+              }}
+              aria-invalid={campoComErro === 'aceitouTermos' || undefined}
+            />
+            <span>
+              Li e aceito os{' '}
+              <a href="/termos" target="_blank" rel="noopener" className="termos-link">
+                termos de uso
+              </a>
+              . Moedas, ovos e animais são do jogo e não valem dinheiro.
+            </span>
+          </label>
           <button type="submit" className="botao botao-confirmar botao-g w-full" disabled={ocupado}>
             Criar conta e jogar
           </button>

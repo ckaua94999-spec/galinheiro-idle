@@ -29,7 +29,9 @@ import { useReduzirMovimento } from '../../../Provedores';
 import { desbloquearAudio, som } from '../../../som';
 import { Estrela, Fardo, Pedra, Pena, Tufo } from './arte';
 
-type IdAtor = 'juca' | Tipo;
+/** A codorna é o animal de boas-vindas do galinheiro e não entra no elenco da abertura. */
+type AveElenco = Exclude<Tipo, 'codorna'>;
+type IdAtor = 'juca' | AveElenco;
 
 /** [centro horizontal (% do palco), base (cqw), lado da caixa (cqw)] */
 type Ponto = [number, number, number];
@@ -67,7 +69,7 @@ const PENAS: Record<IdAtor, [string, string]> = {
 const ENTRADA: Record<IdAtor, number> = { juca: 0.4, galinha: 0.62, pato: 0.76, ganso: 0.9, avestruz: 1.02 };
 
 /** Onomatopeia do toque (de B). */
-const GRITO: Record<Tipo, string> = { galinha: 'Cocó!', pato: 'Quack!', ganso: 'Honk!', avestruz: 'Bum-bum!' };
+const GRITO: Record<AveElenco, string> = { galinha: 'Cocó!', pato: 'Quack!', ganso: 'Honk!', avestruz: 'Bum-bum!' };
 
 // pulo do toque por espécie (tween: a mola só aceita 2 quadros)
 type Pulo = { y: number[]; scaleX: number[]; scaleY: number[]; rotate: number[] };
@@ -170,7 +172,7 @@ function Ator({ id, children, extraTras, extraFrente, aoTocar }: { id: IdAtor; c
 }
 
 /** Ave com humor que vira "surpresa" por um instante quando tocada, e a onomatopeia que salta. */
-function Ave({ tipo, atrasoS, extraTras, extraFrente }: { tipo: Tipo; atrasoS: number; extraTras?: ReactNode; extraFrente?: ReactNode }) {
+function Ave({ tipo, atrasoS, extraTras, extraFrente }: { tipo: AveElenco; atrasoS: number; extraTras?: ReactNode; extraFrente?: ReactNode }) {
   const [humor, setHumor] = useState<Humor>('feliz');
   const [grito, setGrito] = useState(0);
   const timer = useRef<number | undefined>(undefined);

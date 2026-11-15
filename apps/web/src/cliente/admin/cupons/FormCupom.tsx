@@ -386,7 +386,7 @@ function Formulario({ modo, existentes, aoFechar, aoSujar }: {
             usos > 0
               ? 'Vale para os próximos resgates; quem já resgatou fica com o que recebeu.'
               : r.beneficio === 'giros'
-                ? 'Cada membro ganha esses giros ao resgatar. Na roleta, o clique gira sem pedir PIX.'
+                ? 'Cada membro ganha esses giros ao resgatar. Na roleta, o clique gira sem cobrar moedas.'
                 : 'Cada membro recebe isso ao resgatar (uma vez só).'
           }
         >

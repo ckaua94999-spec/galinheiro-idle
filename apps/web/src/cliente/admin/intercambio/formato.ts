@@ -19,7 +19,7 @@ export const OVOS_MAX = 100_000;
 export const textoTickets = (n: number): string => `${fmt.int(n)} ${Math.abs(n) === 1 ? 'ticket' : 'tickets'}`;
 
 const ehItem = (v: unknown): v is Item => typeof v === 'string' && /^ovo_(galinha|pato|ganso|avestruz)$/.test(v);
-const ehTipo = (v: unknown): v is Tipo => v === 'galinha' || v === 'pato' || v === 'ganso' || v === 'avestruz';
+const ehTipo = (v: unknown): v is Tipo => v === 'codorna' || v === 'galinha' || v === 'pato' || v === 'ganso' || v === 'avestruz';
 const num = (v: unknown): number | null => (typeof v === 'number' && Number.isFinite(v) ? v : null);
 const txt = (v: unknown): string | null => (typeof v === 'string' && v.trim() ? v.trim() : null);
 

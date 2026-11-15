@@ -44,7 +44,7 @@ beforeAll(async () => {
   process.env.ADMIN_SENHA_HASH = (await gerarHash('senha-do-painel-123')).replace(/\$/g, ':');
   const m = await cadastrarMembro(
     banco,
-    { nome: 'Jogador Painel', telefone: '+5551987650001', email: 'jogador.painel@exemplo.com', senha: 'senha-forte-123' },
+    { nome: 'Jogador Painel', telefone: '+5551987650001', email: 'jogador.painel@exemplo.com', senha: 'senha-forte-123', aceitouTermos: true },
     Date.now(),
     rng,
   );

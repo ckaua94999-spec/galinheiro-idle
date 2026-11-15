@@ -28,7 +28,7 @@ async function membro(nome: string, convite?: string): Promise<Membro> {
   seq++;
   const m = await cadastrarMembro(
     banco,
-    { nome, telefone: `+55319${String(80_000_000 + seq).padStart(8, '0')}`, email: `afiliado${seq}@exemplo.com`, senha: 'senha-forte-123', convite },
+    { nome, telefone: `+55319${String(80_000_000 + seq).padStart(8, '0')}`, email: `afiliado${seq}@exemplo.com`, senha: 'senha-forte-123', convite, aceitouTermos: true },
     Date.now(),
     rng,
   );
@@ -60,6 +60,8 @@ async function vender(m: Membro, ovos: number) {
 beforeAll(async () => {
   banco = await criarBancoEmMemoria();
   usarBancoNosTestes(banco);
+  // estes testes partem do bônus de cadastro de 50 moedas (o padrão agora é 0: o membro novo junta com a codorna)
+  await banco.q('update afiliados_config set bonus_geral_x100 = 5000 where id = 1');
 });
 afterAll(async () => {
   await banco.fechar();
@@ -82,7 +84,7 @@ describe('convites', () => {
   it('cadastro com convite liga a quem convidou; convite inválido é recusado e a conta não é criada', async () => {
     const ana = await membro('Ana Souza');
     const corpo = (i: number, convite: string) => ({
-      nome: 'Novo Membro', telefone: `(31) 9${70_000_000 + i}`, email: `novo${i}@exemplo.com`, senha: 'senha-forte-123', convite,
+      nome: 'Novo Membro', telefone: `(31) 9${70_000_000 + i}`, email: `novo${i}@exemplo.com`, senha: 'senha-forte-123', convite, aceitouTermos: true,
     });
     const ruim = await postCadastrar(req(null, 'POST', '/api/v1/auth/cadastrar', { corpo: corpo(1, 'ZZZZZZZ') }));
     expect(ruim.status).toBe(400);
@@ -230,7 +232,6 @@ describe('painel: rede de afiliados e taxas', () => {
     const ficha = await json(await getUsuario(req(admin, 'GET', `/api/admin/usuarios/${fulano1.id}`), params({ id: fulano1.id })));
     expect(ficha.data.afiliacao.bonusLinkX100).toBe(4000);
     expect(ficha.data.afiliacao.bonusGeralX100).toBe(5000);
-    expect(ficha.data.bonusSaque.recebidoX100).toBe(5000);
 
     const alto = await postBonusLink(req(admin, 'POST', `/api/admin/usuarios/${fulano1.id}/bonus-link`, { corpo: { bonusX100: 200_000 }, chave: 'bonus-link-alto' }), params({ id: fulano1.id }));
     expect(alto.status).toBe(400);

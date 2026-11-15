@@ -199,7 +199,8 @@ function leque(a1: number, a2: number): string {
   }
   return d;
 }
-const fimComum = FAIXAS_ROLETA[0]!.grauInicio + FAIXAS_ROLETA[0]!.largura;
+// leque claro dos gomos comuns (codorna + galinha, os primeiros da roda)
+const fimComum = Math.max(...FAIXAS_ROLETA.filter((f) => ANIMAIS[f.tipo].raridade === 'comum').map((f) => f.grauInicio + f.largura));
 const LEQUE_COMUM = leque(0, fimComum);
 const LEQUE_RESTO = leque(fimComum, 360);
 

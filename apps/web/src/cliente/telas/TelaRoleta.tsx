@@ -3,29 +3,27 @@
 // Roleta (GDD 3.6, 6.9 e 6.10). O servidor sorteia; a roda só encena o resultado, parando no ângulo exato.
 // Coreografia (DIRECAO_DE_ARTE 7.2): antecipação (recua) → arranque acelerado → cruzeiro enquanto o servidor responde →
 // desaceleração com suspense até alvo + 2° → mola de volta ao alvo exato → vitória (gomo pisca, confete).
-import type { CobrancaRoletaDTO, GirarResposta } from '@galinheiro/api-contract';
+import type { GirarResposta } from '@galinheiro/api-contract';
 import {
   ANIMAIS, CONFIG, FAIXAS_ROLETA, GEMAS_RARIDADE, NOME_RARIDADE, NOME_TIPO, rotacaoFinal, validarNome,
 } from '@galinheiro/game-core';
-import { Info } from 'lucide-react';
+import { Info, Lock, LockOpen } from 'lucide-react';
 import { animate, motion, useMotionValue, type AnimationPlaybackControls, type ValueAnimationTransition } from 'motion/react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
-import { ErroApi, chamar } from '../api';
+import { ErroApi } from '../api';
 import { FiguraAnimal } from '../arte/Animal';
 import { Gemas, IconeNinho, IconeRoleta, Moeda } from '../arte/Icones';
 import { PalcoRoda } from '../arte/Roda';
 import { Modal } from '../componentes/Modal';
 import { FormNomeRevelacao, RevelacaoAnimal } from '../componentes/RevelacaoAnimal';
-import { useEstado, useGirar, useRenomear } from '../estado';
+import { useEstado, useGirar, useLiberarRoleta, useRenomear } from '../estado';
 import { useReduzirMovimento } from '../Provedores';
 import { useAgora } from '../relogio';
 import { som } from '../som';
 import { toast, useUi } from '../ui';
 import { ETAPA, useAcoes } from '../useAcoes';
-import { copiarTexto } from '../convites/texto';
-import { ConteudoCobranca, tituloCobranca } from './cobranca';
 import { COR_RARIDADE, cx, mensagemDeErro, moedas } from '../util';
 import { vibracao } from '../vibracao';
 
@@ -100,7 +98,7 @@ function ModalChances({ aberto, aoFechar }: { aberto: boolean; aoFechar: () => v
 
 // ---------------------------------------------------------------- botão Girar
 
-export type EstadoBotaoGirar = 'pronto' | 'girando' | 'cheio' | 'saldo' | 'gerando' | 'pix';
+export type EstadoBotaoGirar = 'pronto' | 'girando' | 'cheio' | 'saldo';
 
 /** Botão 3D de compra da roleta (texto contornado + selo de preço com a moeda do jogo). */
 export function BotaoGirar({
@@ -110,15 +108,13 @@ export function BotaoGirar({
   pressionado = false,
   vagas,
   girosGratis = 0,
-  meio,
   onClick,
   className,
 }: {
   estado: EstadoBotaoGirar;
   custoX100: number;
   faltaX100?: number;
-  meio?: 'pix' | 'usdt';
-  /** Giros de cupom ainda disponíveis. No estado pronto, o botão gira sem cobrar. */
+  /** Giros grátis (cupom ou liberação) ainda disponíveis. No estado pronto, o botão gira sem cobrar. */
   girosGratis?: number;
   /** Ninhos livres: selo "N vagas" pendurado no canto do botão (só em telas baixas, onde a pílula de saldo/ninhos
    *  sai; com 1 ou 2 ele fica vermelho de alerta). Com 0 o próprio botão já diz "Galinheiro cheio". */
@@ -134,13 +130,11 @@ export function BotaoGirar({
       className={cx('botao botao-compra botao-g roleta-botao', className)}
       onClick={onClick}
       // girando: o botão fica afundado e azul ("segurando" a roda) em vez de cinza; o clique é ignorado em girar()
-      aria-busy={estado === 'girando' || estado === 'gerando' || estado === 'pix' || undefined}
-      aria-disabled={estado === 'cheio' || estado === 'saldo' || estado === 'gerando' || estado === 'pix'}
+      aria-busy={estado === 'girando' || undefined}
+      aria-disabled={estado === 'cheio' || estado === 'saldo'}
       data-pressionado={pressionado || estado === 'girando' ? '' : undefined}
     >
       {estado === 'girando' && 'Girando…'}
-      {estado === 'gerando' && 'Gerando cobrança…'}
-      {estado === 'pix' && (meio === 'usdt' ? 'Aguardando USDT…' : 'Aguardando PIX…')}
       {estado === 'cheio' && 'Galinheiro cheio'}
       {estado === 'saldo' && (
         <>
@@ -162,8 +156,9 @@ export function BotaoGirar({
       {estado === 'pronto' && girosGratis <= 0 && (
         <>
           Girar
-          <span className="botao-preco" aria-label={`por ${valor(custoX100)} reais no PIX`}>
-            R$ {valor(custoX100)}
+          <span className="botao-preco" aria-label={`por ${valor(custoX100)} moedas`}>
+            <Moeda className="h-[1.2em] w-[1.2em]" />
+            {valor(custoX100)}
           </span>
         </>
       )}
@@ -185,7 +180,7 @@ export function InfoRoleta({
   moedasX100: number;
   livres: number;
   custoX100: number;
-  /** A roleta paga com PIX, então o saldo baixo não bloqueia o giro. */
+  /** Com giro grátis na mão, o saldo baixo não bloqueia o giro. */
   alertarSaldo?: boolean;
 }) {
   return (
@@ -257,12 +252,94 @@ function ModalResultado({ r, aoFechar }: { r: GirarResposta | null; aoFechar: (d
   );
 }
 
+// ---------------------------------------------------------------- roleta trancada (membro novo)
+
+/**
+ * Roleta trancada: o membro novo junta `CONFIG.roleta.liberacaoX100` moedas vendendo os ovos da codorna e paga a
+ * liberação uma vez. A liberação já vem com o primeiro giro (giro grátis).
+ */
+export function PainelLiberacao({
+  moedasX100, estoqueX100, liberando, aoLiberar, aoVender,
+}: {
+  moedasX100: number;
+  /** Quanto os ovos do estoque valem agora (mostra que dá para vender e chegar lá). */
+  estoqueX100: number;
+  liberando: boolean;
+  aoLiberar: () => void;
+  aoVender: () => void;
+}) {
+  const preco = CONFIG.roleta.liberacaoX100;
+  const falta = Math.max(0, preco - moedasX100);
+  const pct = Math.min(100, (moedasX100 / preco) * 100);
+  return (
+    <section className="painel roleta-trava" aria-labelledby="roleta-trava-titulo" data-tut="liberar">
+      <div className="roleta-trava-cabeca">
+        <span className="roleta-trava-codorna" aria-hidden>
+          <FiguraAnimal tipo="codorna" ninho={false} detalhe="p" />
+        </span>
+        <div className="min-w-0">
+          <h2 id="roleta-trava-titulo" className="roleta-trava-titulo texto-contorno">
+            <Lock className="roleta-trava-cadeado" strokeWidth={3} aria-hidden /> Roleta trancada
+          </h2>
+          <p className="roleta-trava-texto">
+            Venda os ovos da sua codorna e junte <b className="numeros">{valor(preco)} moedas</b>. Ao liberar, o primeiro giro já vem de presente.
+          </p>
+        </div>
+      </div>
+      <div
+        className="barra roleta-trava-barra"
+        data-cor="ouro"
+        role="progressbar"
+        aria-valuemin={0}
+        aria-valuemax={preco}
+        aria-valuenow={Math.min(moedasX100, preco)}
+        aria-label={`${moedas(Math.min(moedasX100, preco))} de ${moedas(preco)} moedas`}
+        style={{ '--barra-h': '22px' } as CSSProperties}
+      >
+        <span className="barra-preenchimento" data-anima style={{ '--p': pct } as CSSProperties} />
+        <span className="barra-texto numeros">
+          {moedas(Math.min(moedasX100, preco))} / {valor(preco)}
+        </span>
+      </div>
+      {falta > 0 ? (
+        <>
+          <button type="button" className="botao botao-compra botao-g roleta-botao w-full" aria-disabled onClick={aoLiberar}>
+            Faltam
+            <span className="botao-preco">
+              <Moeda className="h-[1.2em] w-[1.2em]" />
+              {moedas(falta)}
+            </span>
+          </button>
+          {estoqueX100 > 0 && (
+            <button type="button" className="botao botao-secundario botao-p roleta-trava-vender" onClick={aoVender}>
+              Vender ovos ({moedas(estoqueX100)} moedas)
+            </button>
+          )}
+        </>
+      ) : (
+        <button type="button" className="botao botao-compra botao-g botao-brilho roleta-botao w-full" onClick={aoLiberar} disabled={liberando}>
+          <span className="icone-contorno" aria-hidden>
+            <LockOpen />
+            <LockOpen />
+          </span>
+          {liberando ? 'Liberando…' : 'Liberar'}
+          <span className="botao-preco" aria-label={`por ${valor(preco)} moedas`}>
+            <Moeda className="h-[1.2em] w-[1.2em]" />
+            {valor(preco)}
+          </span>
+        </button>
+      )}
+    </section>
+  );
+}
+
 // ---------------------------------------------------------------- tela
 
 export function TelaRoleta() {
   const { data: estado } = useEstado();
   const router = useRouter();
   const girarM = useGirar();
+  const liberarM = useLiberarRoleta();
   const { avancarSe } = useAcoes();
   const reduzir = useReduzirMovimento();
   const pularSempre = useUi((s) => s.preferencias.pularAnimacaoRoleta);
@@ -276,39 +353,11 @@ export function TelaRoleta() {
   const [destaque, setDestaque] = useState<number | null>(null);
   const [resultado, setResultado] = useState<GirarResposta | null>(null);
   const [bloqueio, setBloqueio] = useState<Bloqueio>(null);
-  const [pix, setPix] = useState<CobrancaRoletaDTO | null>(null);
-  const [gerandoPix, setGerandoPix] = useState(false);
   const anim = useRef<AnimationPlaybackControls | null>(null);
   const alvoFinal = useRef<number | null>(null);
   const terminar = useRef<(() => void) | null>(null);
   const girosNaSessao = useRef(0);
   const giroPedido = useRef(false);
-  const aoPago = useRef<(id: string) => void>(() => {});
-
-  useEffect(() => {
-    if (!pix || pix.status !== 'aguardando') return;
-    let parado = false;
-    const consultar = async () => {
-      try {
-        const r = await chamar<CobrancaRoletaDTO>('GET', `/roleta/pix?id=${pix.id}`);
-        if (parado) return;
-        if (r.data.status === 'pago') aoPago.current(r.data.id);
-        else if (r.data.status === 'expirado' || r.data.status === 'falhou') {
-          setPix(null);
-          toast(r.data.status === 'expirado'
-            ? (pix.meio === 'usdt' ? 'Essa cobrança em USDT expirou. Toque em Girar para gerar outra.' : 'Esse PIX expirou. Toque em Girar para gerar outro.')
-            : (pix.meio === 'usdt' ? 'A cobrança em USDT não foi concluída. Tente de novo.' : 'O PIX não foi concluído. Tente de novo.'), 'erro');
-        }
-      } catch {
-        // a próxima consulta tenta de novo; o giro não começa sem confirmação
-      }
-    };
-    const timer = setInterval(() => void consultar(), 3000);
-    return () => {
-      parado = true;
-      clearInterval(timer);
-    };
-  }, [pix]);
 
   // "Tique" do ponteiro a cada pino (24 por volta). A mola do ponteiro mora na própria Roda.
   useEffect(() => {
@@ -343,21 +392,27 @@ export function TelaRoleta() {
     anim.current = animate(rotacao, alvoFinal.current, { duration: 0.35, ease: EASE_SUAVE, onComplete: () => fim?.() });
   };
 
-  const girar = async (cobrancaId?: string) => {
+  const girosGratis = estado.player.girosGratis ?? 0;
+
+  const girar = async () => {
     if (fase !== 'parado' || giroPedido.current) return;
     if (livres <= 0) {
       setBloqueio({ tipo: 'cheio' });
       som.erro();
       return;
     }
+    if (girosGratis <= 0 && moedasX100 < custo) {
+      setBloqueio({ tipo: 'saldo', faltaX100: custo - moedasX100 });
+      som.erro();
+      return;
+    }
     giroPedido.current = true;
-    setPix(null);
     setDestaque(null);
     setFase('girando');
     alvoFinal.current = null;
     som.girar();
     const rapido = reduzir || pularSempre;
-    const pedido = girarM.mutateAsync(cobrancaId);
+    const pedido = girarM.mutateAsync();
     let pronta: Awaited<typeof pedido> | null = null;
     pedido.then(
       (r) => {
@@ -438,43 +493,21 @@ export function TelaRoleta() {
     }
   };
 
-  aoPago.current = (id) => {
-    void girar(id);
-  };
-
-  const abrirPix = async () => {
-    if (fase !== 'parado' || gerandoPix || pix || giroPedido.current) return;
-    if (livres <= 0) {
-      setBloqueio({ tipo: 'cheio' });
+  const liberar = async () => {
+    if (liberarM.isPending) return;
+    if (moedasX100 < CONFIG.roleta.liberacaoX100) {
       som.erro();
+      toast(`Faltam ${moedas(CONFIG.roleta.liberacaoX100 - moedasX100)} moedas. Venda os ovos da codorna para juntar.`, 'erro');
       return;
     }
-    setGerandoPix(true);
     try {
-      const r = await chamar<CobrancaRoletaDTO>('POST', '/roleta/pix', { idempotente: true });
-      if (r.data.status === 'pago') {
-        void girar(r.data.id);
-        return;
-      }
-      if (r.data.status !== 'aguardando' || !r.data.copiaCola) {
-        toast('Não foi possível gerar a cobrança. Tente de novo.', 'erro');
-        return;
-      }
-      setPix(r.data);
+      await liberarM.mutateAsync();
+      som.vitoria('raro');
+      vibracao.roleta('raro');
+      toast('Roleta liberada! O primeiro giro é por nossa conta.', 'sucesso', { duracaoMs: 3200 });
     } catch (erro) {
       som.erro();
       toast(mensagemDeErro(erro), 'erro');
-    } finally {
-      setGerandoPix(false);
-    }
-  };
-
-  const copiarPix = async () => {
-    if (!pix?.copiaCola) return;
-    if (await copiarTexto(pix.copiaCola)) {
-      toast(pix.meio === 'usdt' ? 'Endereço USDT copiado.' : 'Código PIX copiado.', 'sucesso');
-    } else {
-      toast('Não consegui copiar. Selecione o código e copie.', 'erro');
     }
   };
 
@@ -490,8 +523,9 @@ export function TelaRoleta() {
     }
   };
 
-  const girosGratis = estado.player.girosGratis ?? 0;
-  const estadoBotao: EstadoBotaoGirar = fase !== 'parado' ? 'girando' : gerandoPix ? 'gerando' : pix ? 'pix' : livres <= 0 ? 'cheio' : 'pronto';
+  const estadoBotao: EstadoBotaoGirar =
+    fase !== 'parado' ? 'girando' : livres <= 0 ? 'cheio' : girosGratis <= 0 && moedasX100 < custo ? 'saldo' : 'pronto';
+  const liberada = estado.player.roletaLiberada;
   const podePular = fase === 'parando' && girosNaSessao.current >= 1;
 
   return (
@@ -509,37 +543,37 @@ export function TelaRoleta() {
         </div>
       </div>
       {/* a roda encolhe com a altura da tela: em 600 px ainda cabe com o botão acima das abas */}
-      <motion.div className="roleta-caixa" style={{ opacity: opacidade }}>
+      <motion.div className="roleta-caixa" style={{ opacity: opacidade }} data-trancada={liberada ? undefined : ''}>
         <PalcoRoda rotacao={rotacao} destaque={destaque} girando={fase !== 'parado'} onClick={pular} palcoClassName={podePular ? 'cursor-pointer' : undefined}>
           {podePular && <p className="roleta-dica painel-escuro px-3 py-1 text-xs">Toque na roda para pular</p>}
         </PalcoRoda>
       </motion.div>
-      <BotaoGirar
-        estado={estadoBotao}
-        custoX100={custo}
-        faltaX100={Math.max(0, custo - moedasX100)}
-        vagas={livres}
-        girosGratis={girosGratis}
-        meio={pix?.meio}
-        pressionado={pressionado}
-        onClick={() => void (girosGratis > 0 ? girar() : abrirPix())}
-        className="mt-2"
-      />
-      <div className="roleta-info-baixo mt-2.5">
-        <InfoRoleta moedasX100={moedasX100} livres={livres} custoX100={custo} alertarSaldo={false} />
-      </div>
+      {liberada ? (
+        <>
+          <BotaoGirar
+            estado={estadoBotao}
+            custoX100={custo}
+            faltaX100={Math.max(0, custo - moedasX100)}
+            vagas={livres}
+            girosGratis={girosGratis}
+            pressionado={pressionado}
+            onClick={() => void girar()}
+            className="mt-2"
+          />
+          <div className="roleta-info-baixo mt-2.5">
+            <InfoRoleta moedasX100={moedasX100} livres={livres} custoX100={custo} alertarSaldo={girosGratis <= 0} />
+          </div>
+        </>
+      ) : (
+        <PainelLiberacao
+          moedasX100={moedasX100}
+          estoqueX100={estado.resumo.valorInventarioX100}
+          liberando={liberarM.isPending}
+          aoLiberar={() => void liberar()}
+          aoVender={() => useUi.getState().abrirVenda(true)}
+        />
+      )}
 
-      <Modal aberto={!!pix} aoFechar={() => setPix(null)} titulo={tituloCobranca(pix?.meio, 'girar')}>
-        <ConteudoCobranca cobranca={pix} custoX100={custo} depois="A roleta começa a girar" />
-        <div className="mt-4 flex gap-2">
-          <button type="button" className="botao botao-primario flex-1" onClick={() => void copiarPix()}>
-            {pix?.meio === 'usdt' ? 'Copiar endereço' : 'Copiar código'}
-          </button>
-          <button type="button" className="botao botao-secundario flex-1" onClick={() => setPix(null)}>
-            Fechar
-          </button>
-        </div>
-      </Modal>
       <ModalChances aberto={chancesAbertas} aoFechar={() => abrirChances(false)} />
       <ModalResultado r={resultado} aoFechar={fecharResultado} />
       <Modal aberto={bloqueio?.tipo === 'cheio'} aoFechar={() => setBloqueio(null)} titulo="Galinheiro cheio!">

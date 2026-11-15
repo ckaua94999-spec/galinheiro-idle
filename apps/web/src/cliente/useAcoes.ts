@@ -471,9 +471,9 @@ export function useAcoes() {
     [venderM, avancarSe],
   );
 
-  const ampliar = useCallback(async (cobrancaId: string): Promise<number[] | null> => {
+  const ampliar = useCallback(async (): Promise<number[] | null> => {
     try {
-      const r = await ampliarM.mutateAsync(cobrancaId);
+      const r = await ampliarM.mutateAsync();
       som.obra();
       useUi.getState().definirObra(r.data.novosSlots);
       toast(`+4 ninhos! Galinheiro nível ${r.data.nivelGalinheiro}`, 'sucesso', { duracaoMs: 2600 });

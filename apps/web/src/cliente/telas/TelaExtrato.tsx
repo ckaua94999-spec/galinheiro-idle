@@ -4,14 +4,13 @@
 // Visual: placa de madeira com o saldo, transações agrupadas por dia (Hoje, Ontem…), azulejo colorido
 // por tipo e valor +/− em texto contornado verde/vermelho com a moeda do jogo.
 import type { ListaTransacoes, TransacaoDTO } from '@galinheiro/api-contract';
-import { CONFIG, NOME_TIPO, type Tipo } from '@galinheiro/game-core';
+import { NOME_TIPO, type Galo, type Tipo } from '@galinheiro/game-core';
 import { useInfiniteQuery } from '@tanstack/react-query';
-import { CalendarDays, ChevronLeft, Gift, Hammer, Wrench } from 'lucide-react';
+import { CalendarDays, ChevronLeft, Gift, Hammer, LockOpen, Swords, Trophy, Wrench } from 'lucide-react';
 import { motion } from 'motion/react';
 import Link from 'next/link';
 import { chamar } from '../api';
-import { IconeCesto, IconeRoleta, Moeda } from '../arte/Icones';
-import { BotaoSaque } from '../saque/BotaoSaque';
+import { IconeCesto, IconeRoleta, Moeda, Ovo } from '../arte/Icones';
 import { IconeConvite } from '../convites/IconeConvite';
 import { useEstado } from '../estado';
 import { IconeTicket } from '../intercambio/IconeTicket';
@@ -33,18 +32,43 @@ function descricao(t: TransacaoDTO): string {
       return 'Comissão de indicação';
     case 'COMPRA_TICKET':
       return 'Compra de tickets';
+    case 'LIBERACAO_ROLETA':
+      return 'Liberação da roleta';
+    case 'APOSTA_RINHA':
+      return 'Aposta na rinha';
+    case 'PREMIO_RINHA':
+      return 'Prêmio da rinha';
+    case 'APOSTA_CHUVA':
+      return 'Aposta na Chuva de Ovos';
+    case 'PREMIO_CHUVA':
+      return 'Prêmio da Chuva de Ovos';
+    case 'APOSTA_BOMBAS':
+      return 'Aposta nos Ovos-Bomba';
+    case 'PREMIO_BOMBAS':
+      return 'Prêmio dos Ovos-Bomba';
     case 'SAQUE':
-      return 'Saque PIX';
+      return 'Saque (sistema antigo)';
     case 'SAQUE_ESTORNO':
-      return 'Saque devolvido';
+      return 'Saque devolvido (sistema antigo)';
     default:
       return 'Ajuste';
   }
 }
 
+const NOME_GALO: Partial<Record<Galo, string>> = { favorito: 'Favorito', brigao: 'Brigão', azarao: 'Azarão' };
+
 /** Linha extra de alguns tipos: a comissão diz de que nível e de quem foi a venda ("Nível 1 · venda de Ana L.");
  *  a compra de tickets do Intercâmbio, quantos ("3 tickets"). */
 function detalhe(t: TransacaoDTO): string | null {
+  if (t.tipo === 'LIBERACAO_ROLETA') return 'Inclui o primeiro giro';
+  if (t.tipo === 'PREMIO_CHUVA') {
+    const n = Number((t.detalhes as { rodadasGratis?: unknown }).rodadasGratis ?? 0);
+    return n > 0 ? `Com ${n} rodadas grátis` : null;
+  }
+  if (t.tipo === 'APOSTA_RINHA' || t.tipo === 'PREMIO_RINHA') {
+    const g = (t.detalhes as { galo?: Galo }).galo;
+    return g ? `Galo ${NOME_GALO[g] ?? g}` : null;
+  }
   if (t.tipo === 'COMPRA_TICKET') {
     const q = Number((t.detalhes as { quantidade?: unknown }).quantidade);
     return Number.isFinite(q) && q > 0 ? `${q} ${q === 1 ? 'ticket' : 'tickets'}` : null;
@@ -98,6 +122,48 @@ function IconeTransacao({ tipo }: { tipo: TransacaoDTO['tipo'] }) {
       return (
         <span className="tile-icone" data-cor="creme" aria-hidden>
           <IconeTicket />
+        </span>
+      );
+    case 'LIBERACAO_ROLETA':
+      return (
+        <span className="tile-icone" data-cor="azul" aria-hidden>
+          {lucide(LockOpen)}
+        </span>
+      );
+    case 'APOSTA_BOMBAS':
+      return (
+        <span className="tile-icone" data-cor="rosa" aria-hidden>
+          <Ovo tipo="ganso" />
+        </span>
+      );
+    case 'PREMIO_BOMBAS':
+      return (
+        <span className="tile-icone" data-cor="verde" aria-hidden>
+          {lucide(Trophy)}
+        </span>
+      );
+    case 'APOSTA_CHUVA':
+      return (
+        <span className="tile-icone" data-cor="azul" aria-hidden>
+          <Ovo tipo="avestruz" />
+        </span>
+      );
+    case 'PREMIO_CHUVA':
+      return (
+        <span className="tile-icone" data-cor="verde" aria-hidden>
+          {lucide(Trophy)}
+        </span>
+      );
+    case 'APOSTA_RINHA':
+      return (
+        <span className="tile-icone" data-cor="rosa" aria-hidden>
+          {lucide(Swords)}
+        </span>
+      );
+    case 'PREMIO_RINHA':
+      return (
+        <span className="tile-icone" data-cor="verde" aria-hidden>
+          {lucide(Trophy)}
         </span>
       );
     default:
@@ -234,10 +300,6 @@ export function TelaExtrato() {
         <h1 className="titulo-tela">Extrato de moedas</h1>
       </div>
       <CartaoSaldo saldoX100={saldo} />
-      <div className="extrato-sacar">
-        <BotaoSaque />
-        <p className="extrato-taxa">Taxa de R$ {moedas(CONFIG.saque.taxaFixaX100)} + {CONFIG.saque.taxaPercentualBp / 100}% em cima do valor. Nos 3 primeiros dias, só o bônus do cadastro sai na hora; o rendimento das galinhas entra 24 h depois de virar moeda.</p>
-      </div>
       <ListaExtrato itens={itens} carregando={q.isLoading} />
       {q.hasNextPage && (
         <div className="mt-5 text-center">

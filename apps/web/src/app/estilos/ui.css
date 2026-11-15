@@ -216,38 +216,6 @@
     --b-desab-texto: #fbf9f4;
     --b-desab-contorno: #5f574b;
   }
-  /* tábua de madeira com raios no centro (botão de saque) */
-  .botao-saque {
-    --b-texto: #fff8e8;
-    --b-texto-contorno: #3b200c;
-    --b-contorno: #3b200c;
-    --b-labio: #5c3414;
-    --b-desab-texto: #f4efe6;
-    --b-desab-contorno: #5c4632;
-    width: 100%;
-    min-height: 56px;
-    border-width: 3px;
-    border-color: #7a4a22;
-    background:
-      repeating-conic-gradient(from 0deg at 50% 50%, rgb(255 236 190 / 0.34) 0 8deg, transparent 8deg 16deg),
-      repeating-linear-gradient(180deg, transparent 0 10px, rgb(59 32 12 / 0.22) 10px 12px),
-      linear-gradient(180deg, #e8b072 0%, #c48448 55%, #a56a32 100%);
-    box-shadow:
-      inset 0 2px 0 rgb(255 226 170 / 0.7),
-      inset 0 -4px 0 rgb(59 32 12 / 0.28),
-      0 0 0 2px #3b200c,
-      0 4px 0 #3b200c,
-      0 8px 0 rgb(43 26 15 / 0.22);
-  }
-  .botao-saque::before {
-    background: linear-gradient(180deg, rgb(255 255 255 / 0.28), transparent);
-  }
-  .botao-saque:disabled,
-  .botao-saque[aria-disabled='true'] {
-    filter: grayscale(0.55);
-    cursor: not-allowed;
-  }
-
   /* tamanhos */
   .botao-p {
     --b-li: 3px;
@@ -1226,7 +1194,9 @@
   }
   .abas-lista {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    /* uma coluna por aba (hoje 5: Galinheiro, Loja, Roleta, Coleção, Manual) */
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0, 1fr);
     height: var(--altura-abas);
     max-width: 36rem;
     margin-inline: auto;

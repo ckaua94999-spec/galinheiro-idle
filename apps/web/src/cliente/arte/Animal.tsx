@@ -5,6 +5,7 @@
 import type { Tipo } from '@galinheiro/game-core';
 import { memo, type CSSProperties } from 'react';
 import { Avestruz } from './animais/Avestruz';
+import { Codorna } from './animais/Codorna';
 import { SombraContato, type Humor, type PropsEspecie } from './animais/comum';
 import { Galinha } from './animais/Galinha';
 import { Ganso } from './animais/Ganso';
@@ -14,6 +15,7 @@ import { Pato } from './animais/Pato';
 export type { Humor };
 
 const ESPECIES: Record<Tipo, (p: PropsEspecie) => React.ReactNode> = {
+  codorna: Codorna,
   galinha: Galinha,
   pato: Pato,
   ganso: Ganso,

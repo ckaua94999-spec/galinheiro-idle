@@ -5,7 +5,7 @@ import { LayoutGroup } from 'motion/react';
 import { useEffect, useRef, useState } from 'react';
 import { Check, ChevronLeft, Gift, RotateCw, Settings, ShoppingBasket, Timer, Trash2, WifiOff, X } from 'lucide-react';
 import {
-  Gemas, IconeAjustes, IconeCesto, IconeColecao, IconeGalinheiro, IconeLoja, IconeNinho, IconeRoleta, Moeda, Ovo,
+  Gemas, IconeAjustes, IconeCesto, IconeColecao, IconeGalinheiro, IconeLoja, IconeManual, IconeNinho, IconeRoleta, Moeda, Ovo,
 } from '@/cliente/arte/Icones';
 import { Abas } from '@/cliente/componentes/Abas';
 import { Hud } from '@/cliente/componentes/Hud';
@@ -88,7 +88,7 @@ function BotaoFocado() {
 }
 
 const TIPOS = ['galinha', 'pato', 'ganso', 'avestruz'] as const;
-const ICONES_ABAS = [IconeGalinheiro, IconeLoja, IconeRoleta, IconeColecao, IconeAjustes, IconeCesto];
+const ICONES_ABAS = [IconeGalinheiro, IconeLoja, IconeRoleta, IconeColecao, IconeManual, IconeAjustes, IconeCesto];
 const nada = () => {};
 
 // HUD em espera: ninguém pronto e o próximo daqui a ~25 min no relógio de verdade (o HUD usa a hora real)

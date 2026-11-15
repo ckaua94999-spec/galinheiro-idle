@@ -56,6 +56,7 @@ export function DefsIcones() {
       <Diagonal id="gi-icones-moeda-relevo" claro="#fff0a0" base="#ffc83a" escuro="#e08a00" />
 
       {/* ovos por espécie */}
+      <Radial id="gi-icones-ovo-codorna" realce="#fffaf0" base="#efe3cf" sombra="#c4ab8a" />
       <Radial id="gi-icones-ovo-galinha" realce="#fffdf6" base="#f7e5c4" sombra="#d9a877" />
       <Radial id="gi-icones-ovo-pato" realce="#f4fcff" base="#c9e9f5" sombra="#80b2d2" />
       <Radial id="gi-icones-ovo-ganso" realce="#ffffff" base="#f7f5ef" sombra="#bcb4dc" />

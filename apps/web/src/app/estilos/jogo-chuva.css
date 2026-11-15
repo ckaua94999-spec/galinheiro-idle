@@ -1,0 +1,633 @@
+/* Chuva de Ovos (telas/TelaChuva.tsx, chuva/*): máquina dourada com marquise de luzes, placar, palco noturno com
+   raios girando e a grade 6×5 que cai em cascata. Os efeitos de estouro ficam numa camada por cima da grade.
+   Importado por globals.css. Só transform/opacity animam. */
+
+@layer components {
+  .chuva-tela > .tela-cabeca {
+    margin-bottom: 12px;
+  }
+
+  /* ================================================================ máquina */
+  .chuva-maquina {
+    position: relative;
+    padding: 14px 9px 6px;
+    border-radius: 24px;
+    border: 3px solid #4a2c00;
+    background: linear-gradient(180deg, #ffe58a 0%, #ffc93c 22%, #e9a400 60%, #b97a00 100%);
+    box-shadow:
+      inset 0 3px 0 rgb(255 255 255 / 0.65),
+      inset 0 -5px 0 rgb(122 74 0 / 0.45),
+      0 5px 0 #4a2c00,
+      0 12px 18px rgb(43 26 15 / 0.3);
+  }
+  .chuva-maquina[data-gratis] {
+    background: linear-gradient(180deg, #ffd0f0 0%, #ff7ab0 22%, #d6408a 60%, #8a1a5a 100%);
+    border-color: #4a0a30;
+  }
+
+  /* marquise: luzes correndo (mais rápido enquanto joga, alternadas quando esquenta) */
+  .chuva-luzes {
+    position: absolute;
+    inset: -7px 16px auto;
+    display: flex;
+    justify-content: space-between;
+    pointer-events: none;
+  }
+  .chuva-luzes > i {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #fff 0 25%, #fff1a8 60%, #ffc93c 100%);
+    box-shadow: 0 0 0 2px #4a2c00, 0 0 8px 2px rgb(255 236 150 / 0.9);
+    animation: gi-chuva-luz 1.4s steps(1) infinite;
+  }
+  .chuva-maquina[data-jogando] .chuva-luzes > i {
+    animation-duration: 0.36s;
+  }
+
+  /* placar */
+  .chuva-letreiro {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 46px;
+    margin-bottom: 7px;
+    padding: 4px 12px;
+    border-radius: 14px;
+    border: 2px solid #4a2c00;
+    background: linear-gradient(180deg, #1a0f36 0%, #2a1a5c 100%);
+    box-shadow: inset 0 3px 8px rgb(0 0 0 / 0.6), 0 1px 0 rgb(255 255 255 / 0.5);
+  }
+  .chuva-letreiro-rotulo {
+    font-size: 11px;
+    font-weight: 900;
+    letter-spacing: 0.12em;
+    color: #a99ad8;
+  }
+  .chuva-letreiro-ganho {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-right: auto;
+    font-family: var(--font-titulo);
+    font-size: 28px;
+    line-height: 1;
+    color: #ffe066;
+    text-shadow: 0 0 12px rgb(255 214 70 / 0.7), 0 2px 0 #6a4300;
+    transform-origin: left center;
+  }
+  .chuva-letreiro-gratis {
+    padding: 3px 9px;
+    border-radius: 999px;
+    background: linear-gradient(180deg, #fff1a8, #ffc93c);
+    box-shadow: 0 0 0 2px #4a2c00;
+    font-size: 12px;
+    font-weight: 900;
+    color: #5a3a00;
+    white-space: nowrap;
+  }
+
+  /* palco: noite roxa com raios girando; esquenta (dourado, mais rápido) durante as cascatas */
+  .chuva-palco {
+    position: relative;
+    isolation: isolate;
+    border-radius: 16px;
+    padding: 6px;
+    overflow: hidden;
+    background: radial-gradient(120% 90% at 50% 40%, #5b3fd0 0%, #33208c 45%, #170d44 100%);
+    box-shadow:
+      inset 0 0 0 3px #4a2c00,
+      inset 0 0 0 5px #ffe58a,
+      inset 0 0 0 7px #4a2c00,
+      inset 0 8px 18px 6px rgb(0 0 0 / 0.45);
+  }
+  .chuva-raios {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    z-index: -1;
+    width: 190%;
+    aspect-ratio: 1;
+    translate: -50% -50%;
+    background: repeating-conic-gradient(rgb(160 130 255 / 0.22) 0 9deg, transparent 9deg 18deg);
+    -webkit-mask: radial-gradient(closest-side, #000 10%, transparent 78%);
+    mask: radial-gradient(closest-side, #000 10%, transparent 78%);
+    animation: gi-tela-gira 26s linear infinite;
+  }
+  .chuva-maquina[data-quente] .chuva-raios {
+    background: repeating-conic-gradient(rgb(255 214 90 / 0.5) 0 9deg, transparent 9deg 18deg);
+    animation-duration: 5s;
+  }
+  .chuva-maquina[data-gratis] .chuva-palco {
+    background: radial-gradient(120% 90% at 50% 40%, #ff9a3c 0%, #c8321e 45%, #4a0a18 100%);
+  }
+  .chuva-clarao {
+    position: absolute;
+    inset: 0;
+    z-index: 8;
+    background: radial-gradient(closest-side, #fff 0%, rgb(255 246 176 / 0.8) 55%, transparent 100%);
+    pointer-events: none;
+    animation: gi-chuva-flash 0.32s ease-out both;
+  }
+
+  /* grade */
+  .chuva-grade {
+    display: grid;
+    gap: 2px;
+    aspect-ratio: 6 / 5;
+    padding: 2px;
+  }
+  .chuva-celula {
+    position: relative;
+    display: grid;
+    place-items: center;
+    min-width: 0;
+    min-height: 0;
+    border-radius: 12px;
+    background: rgb(255 255 255 / 0.07);
+    box-shadow: inset 0 0 0 1.5px rgb(255 255 255 / 0.08), inset 0 -6px 10px rgb(0 0 0 / 0.18);
+  }
+  /* luz atrás do símbolo: os ovos claros saltam do fundo escuro */
+  .chuva-celula::before {
+    content: '';
+    position: absolute;
+    inset: 8%;
+    border-radius: 50%;
+    background: radial-gradient(closest-side, rgb(255 255 255 / 0.3), transparent 78%);
+  }
+  .chuva-celula[data-simbolo='bomba']::before {
+    inset: -6%;
+    background: radial-gradient(closest-side, rgb(255 214 70 / 0.75), transparent 75%);
+    animation: gi-chuva-pulsa 1s ease-in-out infinite;
+  }
+  .chuva-celula[data-simbolo='ninho']::before {
+    inset: -4%;
+    background: radial-gradient(closest-side, rgb(255 150 210 / 0.6), transparent 75%);
+    animation: gi-chuva-pulsa 1.3s ease-in-out infinite;
+  }
+  .chuva-celula[data-estoura] {
+    z-index: 2;
+    background: rgb(255 236 150 / 0.4);
+    box-shadow: 0 0 0 2.5px #ffe066, 0 0 18px 6px rgb(255 214 70 / 0.9);
+  }
+  .chuva-celula[data-estoura] > .chuva-simbolo {
+    animation: gi-chuva-treme 0.1s ease-in-out infinite;
+  }
+  .chuva-celula[data-ativa] {
+    z-index: 3;
+    background: rgb(255 214 70 / 0.6);
+    box-shadow: 0 0 0 3px #fff6b0, 0 0 26px 10px rgb(255 190 40 / 0.95);
+  }
+  .chuva-celula[data-ativa] > .chuva-simbolo {
+    animation: gi-chuva-acende 0.22s ease-out both;
+  }
+  .chuva-simbolo {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 92%;
+    height: 92%;
+  }
+  .chuva-simbolo > svg {
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+  }
+  /* parado: os símbolos respiram fora de fase (a grade nunca fica morta) */
+  .chuva-maquina:not([data-jogando]) .chuva-celula > .chuva-simbolo {
+    animation: gi-chuva-respira 2.6s var(--ease-senoide, ease-in-out) infinite;
+  }
+  .chuva-maquina:not([data-jogando]) .chuva-celula:nth-child(3n) > .chuva-simbolo { animation-delay: -0.9s; }
+  .chuva-maquina:not([data-jogando]) .chuva-celula:nth-child(3n + 1) > .chuva-simbolo { animation-delay: -1.7s; }
+  .chuva-maquina:not([data-jogando]) .chuva-celula:nth-child(5n) > .chuva-simbolo { animation-delay: -0.4s; }
+  .chuva-simbolo[data-simbolo='bomba'] > svg {
+    animation: gi-chuva-brilha 0.9s var(--ease-senoide, ease-in-out) infinite;
+  }
+  .chuva-mult {
+    position: absolute;
+    left: 50%;
+    bottom: -3px;
+    translate: -50% 0;
+    font-family: var(--font-titulo);
+    font-size: 16px;
+    line-height: 1;
+    color: #fff;
+    --contorno-cor: #b42318;
+    white-space: nowrap;
+  }
+
+  /* linha de aviso / resumo da jogada */
+  .chuva-aviso {
+    min-height: 1.5em;
+    margin-top: 5px;
+    text-align: center;
+    font-family: var(--font-titulo);
+    font-size: 15px;
+    line-height: 1.4;
+    color: #4a2c00;
+  }
+  .chuva-aviso[data-tom='ganho'] {
+    font-size: 18px;
+    color: #1d6a14;
+    animation: gi-tela-pop 0.3s var(--ease-elastico, ease-out) both;
+  }
+  .chuva-aviso[data-tom='nada'] {
+    color: #6a4300;
+    opacity: 0.8;
+  }
+
+  /* ================================================================ efeitos por cima da grade */
+  .chuva-camada-fx {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 5;
+  }
+  .chuva-fx {
+    position: absolute;
+    width: 0;
+    height: 0;
+  }
+  .chuva-fx > * {
+    position: absolute;
+    left: 0;
+    top: 0;
+  }
+  .chuva-fx-clarao {
+    width: calc(var(--t) * 1.9);
+    height: calc(var(--t) * 1.9);
+    margin: calc(var(--t) * -0.95);
+    border-radius: 50%;
+    background: radial-gradient(closest-side, #fff 0%, rgb(255 246 176 / 0.95) 35%, transparent 72%);
+    animation: gi-chuva-clarao 0.3s ease-out both;
+  }
+  .chuva-fx-anel {
+    width: var(--t);
+    height: var(--t);
+    margin: calc(var(--t) * -0.5);
+    border-radius: 50%;
+    border: 4px solid #ffe066;
+    animation: gi-chuva-anel 0.4s ease-out both;
+  }
+  .chuva-fx-gema {
+    width: calc(var(--t) * 0.56);
+    height: calc(var(--t) * 0.46);
+    margin: calc(var(--t) * -0.23) calc(var(--t) * -0.28);
+    border-radius: 50% 50% 46% 54% / 60% 55% 45% 40%;
+    background: radial-gradient(circle at 38% 34%, #fff3b0 0 14%, #ffc21a 38%, #f08a00 100%);
+    box-shadow: 0 0 0 2.5px #fff8e8, 0 0 0 4px rgb(122 74 0 / 0.5);
+    animation: gi-chuva-gema 0.6s cubic-bezier(0.3, 1.4, 0.6, 1) both;
+  }
+  .chuva-fx-gema[data-ouro] {
+    background: radial-gradient(circle at 38% 34%, #fff 0 14%, #ffe066 38%, #e9a400 100%);
+  }
+  .chuva-fx-caco {
+    width: calc(var(--t) * 0.24);
+    height: calc(var(--t) * 0.22);
+    margin: calc(var(--t) * -0.11);
+    clip-path: polygon(50% 0%, 100% 70%, 62% 100%, 0% 80%);
+    box-shadow: inset 0 0 0 1.5px rgb(90 58 18 / 0.45);
+    animation: gi-chuva-caco 0.62s cubic-bezier(0.2, 0.7, 0.4, 1) both;
+  }
+  .chuva-fx-pena {
+    width: calc(var(--t) * 0.17);
+    height: calc(var(--t) * 0.38);
+    margin: calc(var(--t) * -0.19) calc(var(--t) * -0.085);
+    border-radius: 50% 50% 50% 50% / 80% 80% 20% 20%;
+    box-shadow: inset 0 0 0 1.5px rgb(43 26 15 / 0.35);
+    animation: gi-chuva-pena 0.8s ease-out both;
+  }
+  .chuva-fx-faisca {
+    width: 8px;
+    height: 8px;
+    margin: -4px;
+    background: #fff6b0;
+    clip-path: polygon(50% 0%, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0% 50%, 38% 38%);
+    animation: gi-chuva-faisca 0.45s ease-out both;
+  }
+  .chuva-fx-moeda {
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    margin: -7px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #fff6b0 0 22%, #ffc93c 55%, #d48800 100%);
+    box-shadow: 0 0 0 1.5px #6a4300, 0 0 8px 2px rgb(255 214 70 / 0.8);
+    opacity: 0;
+    animation: gi-chuva-moeda 0.5s cubic-bezier(0.5, 0, 0.7, 0.6) both;
+  }
+  .chuva-fx-rotulo {
+    position: absolute;
+    translate: -50% -50%;
+    font-family: var(--font-titulo);
+    font-size: 24px;
+    line-height: 1;
+    color: #ffe066;
+    --contorno-cor: #6a2c00;
+    white-space: nowrap;
+    animation: gi-chuva-rotulo 0.9s ease-out both;
+  }
+  .chuva-fx-rotulo[data-grande] {
+    font-size: 34px;
+    color: #fff;
+    --contorno-cor: #b42318;
+  }
+
+  /* selo da cascata (esquenta de cor a cada nível), multiplicador e faixa de ganho grande */
+  .chuva-combo {
+    position: absolute;
+    right: 16px;
+    top: 12px;
+    z-index: 6;
+    padding: 3px 12px;
+    border-radius: 999px;
+    background: linear-gradient(180deg, #7cc4ff, #1f7ae6);
+    box-shadow: 0 0 0 2.5px #0b2d66, 0 3px 0 #0b2d66, 0 0 16px 4px rgb(124 196 255 / 0.7);
+    font-family: var(--font-titulo);
+    font-size: 17px;
+    color: #fff;
+    --contorno-cor: #0b2d66;
+    pointer-events: none;
+  }
+  .chuva-combo[data-nivel='3'] {
+    background: linear-gradient(180deg, #ffd96b, #e9a400);
+    box-shadow: 0 0 0 2.5px #5a3a00, 0 3px 0 #5a3a00, 0 0 18px 5px rgb(255 214 70 / 0.8);
+    --contorno-cor: #5a3a00;
+    font-size: 19px;
+  }
+  .chuva-combo[data-nivel='4'],
+  .chuva-combo[data-nivel='5'] {
+    background: linear-gradient(180deg, #ff8466, #d8432f);
+    box-shadow: 0 0 0 2.5px #5c0a05, 0 3px 0 #5c0a05, 0 0 22px 7px rgb(255 100 70 / 0.85);
+    --contorno-cor: #5c0a05;
+    font-size: 21px;
+  }
+  .chuva-elogio {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    z-index: 6;
+    translate: -50% -50%;
+    font-family: var(--font-titulo);
+    font-size: clamp(34px, 12vw, 56px);
+    line-height: 1;
+    white-space: nowrap;
+    color: #b6f08a;
+    --contorno-cor: #174d0b;
+    text-shadow: 0 0 22px rgb(150 240 110 / 0.9);
+    pointer-events: none;
+  }
+  .chuva-mult-grande {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    z-index: 6;
+    translate: -50% -50%;
+    font-family: var(--font-titulo);
+    font-size: 78px;
+    line-height: 1;
+    color: #ffe066;
+    --contorno-cor: #6e1208;
+    text-shadow: 0 0 26px rgb(255 214 70 / 0.9);
+    pointer-events: none;
+  }
+  .chuva-faixa {
+    position: absolute;
+    inset: 0;
+    z-index: 7;
+    display: grid;
+    place-content: center;
+    justify-items: center;
+    gap: 4px;
+    overflow: hidden;
+    background: rgb(40 16 0 / 0.6);
+    pointer-events: none;
+  }
+  .chuva-faixa-raios {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 170%;
+    aspect-ratio: 1;
+    translate: -50% -50%;
+    background: repeating-conic-gradient(rgb(255 230 120 / 0.45) 0 10deg, transparent 10deg 20deg);
+    -webkit-mask: radial-gradient(closest-side, #000 20%, transparent 75%);
+    mask: radial-gradient(closest-side, #000 20%, transparent 75%);
+    animation: gi-tela-gira 5s linear infinite;
+  }
+  .chuva-faixa-confete > i {
+    position: absolute;
+    top: -12px;
+    width: 9px;
+    height: 13px;
+    border-radius: 2px;
+    background: #ffe066;
+    animation: gi-chuva-confete 1.3s linear infinite;
+  }
+  .chuva-faixa-confete > i:nth-child(4n + 1) { background: #ff7ab0; }
+  .chuva-faixa-confete > i:nth-child(4n + 2) { background: #7cc4ff; }
+  .chuva-faixa-confete > i:nth-child(4n + 3) { background: #8fe060; }
+  .chuva-faixa-confete > i:nth-child(1) { left: 4%; animation-delay: -0.1s; }
+  .chuva-faixa-confete > i:nth-child(2) { left: 10%; animation-delay: -0.7s; }
+  .chuva-faixa-confete > i:nth-child(3) { left: 17%; animation-delay: -0.3s; }
+  .chuva-faixa-confete > i:nth-child(4) { left: 23%; animation-delay: -1s; }
+  .chuva-faixa-confete > i:nth-child(5) { left: 30%; animation-delay: -0.5s; }
+  .chuva-faixa-confete > i:nth-child(6) { left: 36%; animation-delay: -0.9s; }
+  .chuva-faixa-confete > i:nth-child(7) { left: 43%; animation-delay: -0.2s; }
+  .chuva-faixa-confete > i:nth-child(8) { left: 49%; animation-delay: -0.8s; }
+  .chuva-faixa-confete > i:nth-child(9) { left: 56%; animation-delay: -0.4s; }
+  .chuva-faixa-confete > i:nth-child(10) { left: 62%; animation-delay: -1.1s; }
+  .chuva-faixa-confete > i:nth-child(11) { left: 69%; animation-delay: -0.6s; }
+  .chuva-faixa-confete > i:nth-child(12) { left: 75%; animation-delay: -0.05s; }
+  .chuva-faixa-confete > i:nth-child(13) { left: 82%; animation-delay: -0.75s; }
+  .chuva-faixa-confete > i:nth-child(14) { left: 88%; animation-delay: -0.35s; }
+  .chuva-faixa-confete > i:nth-child(15) { left: 94%; animation-delay: -0.95s; }
+  .chuva-faixa-confete > i:nth-child(16) { left: 53%; animation-delay: -1.2s; }
+  .chuva-faixa-titulo {
+    position: relative;
+    font-family: var(--font-titulo);
+    font-size: clamp(30px, 10vw, 48px);
+    line-height: 1;
+    text-align: center;
+    color: #ffe066;
+    --contorno-cor: #6e1208;
+    text-shadow: 0 0 22px rgb(255 214 70 / 0.9);
+  }
+  .chuva-faixa-sub {
+    position: relative;
+    font-family: var(--font-titulo);
+    font-size: 20px;
+    color: #fff;
+    --contorno-cor: #3b200c;
+  }
+
+  /* ================================================================ controles (sempre na tela) */
+  .chuva-controles {
+    display: grid;
+    gap: 8px;
+    margin-top: 12px;
+  }
+  .chuva-aposta {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+  }
+  .chuva-aposta-valor {
+    display: grid;
+    justify-items: center;
+    min-width: 92px;
+    line-height: 1;
+  }
+  .chuva-aposta-valor > small {
+    font-size: 11px;
+    font-weight: 900;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-texto-suave);
+  }
+  .chuva-aposta-valor > span {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-family: var(--font-titulo);
+    font-size: 28px;
+  }
+  .chuva-controles .rinha-fichas {
+    margin-top: 0;
+  }
+  .chuva-controles[data-travado] .rinha-fichas,
+  .chuva-controles[data-travado] .chuva-aposta {
+    opacity: 0.55;
+  }
+  .botao.chuva-girar {
+    min-height: 64px;
+    font-size: 26px;
+  }
+
+  /* tabela de prêmios (modal) */
+  .chuva-tabela-texto {
+    display: grid;
+    gap: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.45;
+  }
+  .chuva-tabela-texto ul {
+    display: grid;
+    gap: 6px;
+    padding-left: 1.2em;
+    list-style: disc;
+  }
+  .chuva-tabela-simbolo {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .chuva-tabela-simbolo .chuva-simbolo {
+    width: 24px;
+    height: 24px;
+    animation: none;
+  }
+  .chuva-tabela-nota {
+    font-size: 12px;
+    color: var(--color-texto-suave);
+  }
+
+  /* cartão da Loja */
+  .chuva-loja {
+    margin-top: 10px;
+  }
+  .chuva-loja-ceu {
+    border-color: #170d44;
+    background: radial-gradient(120% 90% at 50% 40%, #5b3fd0 0%, #33208c 55%, #170d44 100%);
+  }
+  .chuva-loja-simbolos {
+    position: absolute;
+    inset: 6px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2px;
+  }
+  .chuva-loja-simbolos .chuva-simbolo {
+    width: 100%;
+    height: 100%;
+  }
+  .chuva-loja-simbolos .chuva-mult {
+    font-size: 11px;
+  }
+}
+
+@keyframes gi-chuva-luz {
+  0%, 49% { opacity: 1; scale: 1; }
+  50%, 100% { opacity: 0.3; scale: 0.8; }
+}
+@keyframes gi-chuva-flash {
+  0% { opacity: 0.6; }
+  100% { opacity: 0; }
+}
+@keyframes gi-chuva-pulsa {
+  0%, 100% { scale: 0.85; opacity: 0.7; }
+  50% { scale: 1.15; opacity: 1; }
+}
+@keyframes gi-chuva-respira {
+  0%, 100% { scale: 1; translate: 0 0; }
+  50% { scale: 1.05; translate: 0 -1.5px; }
+}
+@keyframes gi-chuva-treme {
+  0%, 100% { rotate: -11deg; scale: 1.14; }
+  50% { rotate: 11deg; scale: 1.22; }
+}
+@keyframes gi-chuva-acende {
+  0% { scale: 1; }
+  45% { scale: 1.55; rotate: -12deg; }
+  100% { scale: 1.25; rotate: 0deg; }
+}
+@keyframes gi-chuva-brilha {
+  0%, 100% { scale: 1; rotate: 0deg; }
+  50% { scale: 1.1; rotate: -5deg; }
+}
+@keyframes gi-chuva-clarao {
+  0% { scale: 0.3; opacity: 1; }
+  100% { scale: 1.35; opacity: 0; }
+}
+@keyframes gi-chuva-anel {
+  0% { scale: 0.4; opacity: 1; }
+  100% { scale: 2; opacity: 0; }
+}
+@keyframes gi-chuva-gema {
+  0% { scale: 0.2; opacity: 0; }
+  30% { scale: 1.3; opacity: 1; }
+  70% { scale: 1; opacity: 1; translate: 0 5px; }
+  100% { scale: 0.85; opacity: 0; translate: 0 16px; }
+}
+@keyframes gi-chuva-caco {
+  0% { translate: 0 0; rotate: 0deg; scale: var(--s); opacity: 1; }
+  50% { translate: var(--dx) var(--dy); opacity: 1; }
+  100% { translate: calc(var(--dx) * 1.3) calc(var(--dy) + var(--cai)); rotate: var(--r); scale: var(--s); opacity: 0; }
+}
+@keyframes gi-chuva-pena {
+  0% { translate: 0 0; rotate: 0deg; opacity: 1; }
+  35% { translate: var(--dx) var(--dy); rotate: calc(var(--r) * 0.4); }
+  65% { translate: calc(var(--dx) * 1.4) calc(var(--dy) + var(--cai) * 0.5); rotate: calc(var(--r) * -0.3); opacity: 1; }
+  100% { translate: calc(var(--dx) * 1.1) calc(var(--dy) + var(--cai)); rotate: var(--r); opacity: 0; }
+}
+@keyframes gi-chuva-faisca {
+  0% { transform: rotate(var(--a)) translateX(0) scale(0.4); opacity: 1; }
+  100% { transform: rotate(var(--a)) translateX(var(--d)) scale(1.3); opacity: 0; }
+}
+@keyframes gi-chuva-moeda {
+  0% { translate: 0 0; scale: 0.4; opacity: 1; }
+  25% { translate: 0 -14px; scale: 1.15; opacity: 1; }
+  100% { translate: var(--dx) var(--dy); scale: 0.7; opacity: 0.9; }
+}
+@keyframes gi-chuva-rotulo {
+  0% { translate: -50% -20%; scale: 0.3; opacity: 0; }
+  18% { translate: -50% -70%; scale: 1.3; opacity: 1; }
+  65% { translate: -50% -110%; scale: 1; opacity: 1; }
+  100% { translate: -50% -150%; scale: 1; opacity: 0; }
+}
+@keyframes gi-chuva-confete {
+  0% { translate: 0 0; rotate: 0deg; }
+  100% { translate: 12px 340px; rotate: 540deg; }
+}

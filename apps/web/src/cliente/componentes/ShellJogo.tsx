@@ -115,7 +115,7 @@ function AvisoAtualizacao({ oculto }: { oculto: boolean }) {
 }
 
 // Ordem das telas para a direção do deslize na troca de aba.
-const ORDEM_TELAS = ['/galinheiro', '/loja', '/intercambio', '/roleta', '/colecao', '/extrato', '/ajustes', '/convites', '/suporte'];
+const ORDEM_TELAS = ['/galinheiro', '/loja', '/intercambio', '/rinha', '/chuva', '/bombas', '/roleta', '/colecao', '/manual', '/extrato', '/ajustes', '/convites', '/suporte'];
 const indiceDaTela = (caminho: string) => {
   const i = ORDEM_TELAS.findIndex((t) => caminho.startsWith(t));
   return i < 0 ? 0 : i;

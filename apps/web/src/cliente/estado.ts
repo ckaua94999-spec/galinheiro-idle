@@ -3,7 +3,7 @@
 'use client';
 
 import type {
-  AmpliarResposta, ColetarResposta, ColetarTodosResposta, EntityDTO, Galo, GirarResposta, LiberarRoletaResposta, PlayerDTO,
+  AmpliarResposta, BombasEstadoDTO, BombasResposta, ChuvaResposta, ColetarResposta, ColetarTodosResposta, EntityDTO, Galo, GirarResposta, LiberarRoletaResposta, PlayerDTO,
   Preferencias, RinhaResposta, StateDTO, TermosAceitosDTO, VenderResposta,
 } from '@galinheiro/api-contract';
 import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
@@ -201,6 +201,53 @@ export function useLutarRinha() {
 export function concluirRinha(qc: QueryClient, saldoX100: number): void {
   aplicarNoEstado(qc, null, (e) => ({ ...e, player: { ...e.player, moedasX100: saldoX100 } }));
   void qc.invalidateQueries({ queryKey: ['rinha'] });
+}
+
+/**
+ * Uma jogada da Chuva de Ovos (moedas do jogo). Como na rinha, na hora só sai a aposta do saldo: o prêmio entra
+ * quando a cascata termina na tela (concluirChuva).
+ */
+export function useGirarChuva() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (apostaX100: number) => chamar<ChuvaResposta>('POST', '/chuva', { corpo: { apostaX100 }, idempotente: true }),
+    onSuccess: (r) => {
+      aplicarNoEstado(qc, r, (e) => ({ ...e, player: { ...e.player, moedasX100: r.data.saldoX100 - r.data.resultado.premioX100 } }));
+      void qc.invalidateQueries({ queryKey: ['extrato'] });
+    },
+  });
+}
+
+/** Fim da jogada na tela (Chuva de Ovos e Ovos-Bomba): o prêmio entra no saldo. */
+export function concluirChuva(qc: QueryClient, saldoX100: number): void {
+  aplicarNoEstado(qc, null, (e) => ({ ...e, player: { ...e.player, moedasX100: saldoX100 } }));
+}
+
+/** Tabuleiros de bombas presas do jogador (um por valor de aposta). */
+export const CHAVE_BOMBAS = ['bombas'] as const;
+export function useTabuleirosBombas(ativo: boolean) {
+  return useQuery({
+    queryKey: CHAVE_BOMBAS,
+    queryFn: async () => (await chamar<BombasEstadoDTO>('GET', '/bombas')).data,
+    enabled: ativo,
+    staleTime: 60_000,
+  });
+}
+
+/** Um giro dos Ovos-Bomba (moedas do jogo). Na hora só sai a aposta: o prêmio entra quando o giro termina na tela. */
+export function useGirarBombas() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (apostaX100: number) => chamar<BombasResposta>('POST', '/bombas', { corpo: { apostaX100 }, idempotente: true }),
+    onSuccess: (r) => {
+      aplicarNoEstado(qc, r, (e) => ({ ...e, player: { ...e.player, moedasX100: r.data.saldoX100 - r.data.resultado.premioX100 } }));
+      // o tabuleiro dessa aposta passa a ser o que o giro deixou
+      qc.setQueryData<BombasEstadoDTO>(CHAVE_BOMBAS, (ant) => ({
+        tabuleiros: { ...(ant?.tabuleiros ?? {}), [String(r.data.resultado.apostaX100)]: r.data.resultado.proximo.bombas },
+      }));
+      void qc.invalidateQueries({ queryKey: ['extrato'] });
+    },
+  });
 }
 
 /** Aceite dos termos de uso (contas que ainda não aceitaram a versão atual). */

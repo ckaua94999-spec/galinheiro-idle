@@ -6,3 +6,5 @@ export * from './economia';
 export * from './nomes';
 export * from './tempo';
 export * from './rinha';
+export * from './chuva';
+export * from './bombas';

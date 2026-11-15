@@ -1,0 +1,406 @@
+/* Ovos-Bomba (telas/TelaBombas.tsx, bombas/*): 5 rolos × 3 casas que giram e param um a um, ovos-bomba presos com
+   contagem, raios das explosões (casa da bomba + vizinhas) e as linhas premiadas. A moldura da máquina, o placar,
+   os estouros e os controles vêm de jogo-chuva.css.
+   Importado por globals.css. Só transform/opacity animam. */
+
+@layer components {
+  .bombas-tela > .tela-cabeca {
+    margin-bottom: 12px;
+  }
+  /* máquina vermelha (a da Chuva de Ovos é dourada) */
+  .bombas-maquina {
+    border-color: #4a0a05;
+    background: linear-gradient(180deg, #ffb09a 0%, #ff6a4a 22%, #d8321e 60%, #8a1408 100%);
+    box-shadow:
+      inset 0 3px 0 rgb(255 255 255 / 0.55),
+      inset 0 -5px 0 rgb(90 10 5 / 0.45),
+      0 5px 0 #4a0a05,
+      0 12px 18px rgb(43 26 15 / 0.3);
+  }
+  .bombas-maquina .chuva-aviso {
+    color: #fff;
+    text-shadow: 0 1.5px 0 #4a0a05;
+  }
+  .bombas-maquina .chuva-aviso[data-tom='ganho'] {
+    color: #d8ffb8;
+  }
+  .bombas-maquina .chuva-aviso[data-tom='nada'] {
+    color: #ffe0d6;
+  }
+  .bombas-palco {
+    background: radial-gradient(120% 90% at 50% 40%, #2f6ad0 0%, #1b3a8c 45%, #0a1644 100%);
+  }
+  .bombas-palco .chuva-raios {
+    background: repeating-conic-gradient(rgb(120 180 255 / 0.2) 0 9deg, transparent 9deg 18deg);
+  }
+  .bombas-maquina[data-quente] .chuva-raios {
+    background: repeating-conic-gradient(rgb(255 150 90 / 0.55) 0 9deg, transparent 9deg 18deg);
+    animation-duration: 4s;
+  }
+
+  /* grade */
+  .bombas-grade {
+    position: relative;
+    display: grid;
+    gap: 3px;
+    aspect-ratio: 5 / 3;
+    padding: 2px;
+  }
+  /* janela de cada rolo: escura nas pontas e clara no meio, como um cilindro */
+  .bombas-trilho {
+    min-width: 0;
+    min-height: 0;
+    border-radius: 12px;
+    background: linear-gradient(
+      180deg,
+      rgb(4 9 40 / 0.72) 0%,
+      rgb(255 255 255 / 0.06) 18%,
+      rgb(255 255 255 / 0.14) 50%,
+      rgb(255 255 255 / 0.06) 82%,
+      rgb(4 9 40 / 0.72) 100%
+    );
+    box-shadow: inset 0 0 0 1.5px rgb(255 255 255 / 0.14), inset 0 0 12px rgb(0 0 0 / 0.35);
+  }
+  .bombas-casa {
+    position: relative;
+    display: grid;
+    place-items: center;
+    min-width: 0;
+    min-height: 0;
+    border-radius: 12px;
+    transition: opacity 0.15s;
+  }
+  .bombas-casa::before {
+    content: '';
+    position: absolute;
+    inset: 12%;
+    border-radius: 50%;
+    background: radial-gradient(closest-side, rgb(255 255 255 / 0.22), transparent 78%);
+  }
+  /* casa com bomba presa: placa escura com aro dourado, por cima do rolo que continua girando */
+  .bombas-casa[data-presa] {
+    z-index: 2;
+    background: radial-gradient(circle at 50% 38%, #3b4a96 0%, #1a2360 60%, #0c1238 100%);
+    box-shadow:
+      inset 0 0 0 2px #ffcf4a,
+      inset 0 0 0 3.5px rgb(74 44 0 / 0.75),
+      0 2px 0 rgb(0 0 0 / 0.35);
+  }
+  .bombas-casa[data-presa]::before {
+    background: radial-gradient(closest-side, rgb(255 207 74 / 0.35), transparent 78%);
+  }
+  /* rolo girando */
+  .bombas-rolo {
+    position: relative;
+    z-index: 1;
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
+    border-radius: 12px;
+    pointer-events: none;
+  }
+  .bombas-fita {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 400%;
+    display: grid;
+    grid-template-rows: repeat(12, minmax(0, 1fr));
+    filter: blur(1.6px);
+    opacity: 0.92;
+    will-change: transform;
+    animation: gi-bombas-rola 0.26s linear infinite;
+  }
+  .bombas-fita-casa {
+    display: grid;
+    place-items: center;
+    min-height: 0;
+  }
+  .bombas-fita-casa > .chuva-simbolo {
+    width: 82%;
+    height: 82%;
+    scale: 1 1.18;
+  }
+  .bombas-casa[data-premiada] {
+    z-index: 2;
+    background: rgb(255 236 150 / 0.35);
+    box-shadow: 0 0 0 2.5px #ffe066, 0 0 16px 5px rgb(255 214 70 / 0.85);
+  }
+  .bombas-casa[data-premiada] > .bombas-peca {
+    animation: gi-bombas-premiada 0.36s ease-in-out infinite alternate;
+  }
+  .bombas-casa[data-apagada] {
+    opacity: 0.45;
+  }
+  .bombas-peca {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 88%;
+    height: 88%;
+  }
+  .bombas-peca > .chuva-simbolo {
+    width: 100%;
+    height: 100%;
+  }
+  .bombas-peca[data-para] {
+    animation: gi-bombas-para 0.2s ease-out both;
+  }
+  .bombas-peca[data-revelada] {
+    animation: gi-bombas-revela 0.3s cubic-bezier(0.3, 1.6, 0.6, 1) both;
+  }
+  .bombas-peca[data-nova] {
+    animation: gi-bombas-trava 0.4s ease-out both;
+  }
+  .bombas-peca[data-detona] {
+    z-index: 3;
+    animation: gi-bombas-detona 0.17s ease-in both;
+  }
+
+  /* ovo-bomba */
+  .bombas-ovo {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 100%;
+    height: 100%;
+  }
+  .bombas-ovo > svg {
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+  }
+  .bombas-faisca {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: gi-bombas-faisca 0.3s steps(2) infinite;
+  }
+  .bombas-ovo[data-urgente] > svg {
+    animation: gi-bombas-urgente 0.18s ease-in-out infinite alternate;
+  }
+  .bombas-contagem {
+    position: absolute;
+    right: -4%;
+    bottom: -2%;
+    display: grid;
+    place-items: center;
+    min-width: 46%;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    border: 2.5px solid #15101f;
+    background: radial-gradient(circle at 35% 30%, #fff 0%, #ffe9a8 70%);
+    font-family: var(--font-titulo);
+    font-size: clamp(13px, 4.6vw, 20px);
+    line-height: 1;
+    color: #2b1a0f;
+    animation: gi-bombas-conta 0.3s cubic-bezier(0.3, 1.8, 0.6, 1) both;
+  }
+  .bombas-ovo[data-urgente] .bombas-contagem {
+    background: radial-gradient(circle at 35% 30%, #fff 0%, #ff8a70 60%, #e2292a 100%);
+    color: #fff;
+    text-shadow: 0 1px 0 #6e0f08;
+  }
+
+  /* raio da explosão: a caixa cobre a casa da bomba e as vizinhas (3 × 3); as faixas saem do centro no padrão */
+  .bombas-raio {
+    position: absolute;
+    z-index: 4;
+    pointer-events: none;
+  }
+  .bombas-raio::before {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 44%;
+    aspect-ratio: 1;
+    translate: -50% -50%;
+    border-radius: 50%;
+    background: radial-gradient(closest-side, #fff 0%, #fff6b0 40%, rgb(255 150 40 / 0.7) 70%, transparent 100%);
+    animation: gi-bombas-bola 0.42s ease-out both;
+  }
+  .bombas-raio > i {
+    position: absolute;
+    left: 0;
+    top: 50%;
+    width: 100%;
+    height: 24%;
+    translate: 0 -50%;
+    border-radius: 999px;
+    background: linear-gradient(180deg, transparent 0%, #fff6b0 28%, #fff 50%, #fff6b0 72%, transparent 100%);
+    box-shadow: 0 0 20px 7px rgb(255 190 60 / 0.9);
+    animation: gi-bombas-raio 0.44s ease-out both;
+  }
+  .bombas-raio[data-tipo='vertical'] > i:nth-child(1) { rotate: 90deg; }
+  .bombas-raio[data-tipo='vertical'] > i:nth-child(2),
+  .bombas-raio[data-tipo='horizontal'] > i:nth-child(2) { display: none; }
+  .bombas-raio[data-tipo='cruz'] > i:nth-child(2) { rotate: 90deg; }
+  .bombas-raio[data-tipo='xis'] > i {
+    left: -20%;
+    width: 140%;
+  }
+  .bombas-raio[data-tipo='xis'] > i:nth-child(1) { rotate: 45deg; }
+  .bombas-raio[data-tipo='xis'] > i:nth-child(2) { rotate: -45deg; }
+
+  /* linhas premiadas */
+  .bombas-linhas {
+    position: absolute;
+    inset: 8px;
+    width: calc(100% - 16px);
+    height: calc(100% - 16px);
+    z-index: 3;
+    pointer-events: none;
+    overflow: visible;
+    animation: gi-bombas-linha 0.3s ease-out both;
+  }
+
+  /* controles */
+  .bombas-aposta-rotulo {
+    text-align: center;
+    font-size: 12.5px;
+    font-weight: 800;
+    color: var(--color-texto-suave);
+  }
+  .bombas-ficha {
+    position: relative;
+  }
+  .bombas-ficha-presas {
+    position: absolute;
+    top: -8px;
+    right: -6px;
+    display: grid;
+    place-items: center;
+    min-width: 19px;
+    height: 19px;
+    padding: 0 4px;
+    border-radius: 999px;
+    border: 2px solid #15101f;
+    background: #3a3350;
+    font-size: 11px;
+    font-weight: 900;
+    line-height: 1;
+    color: #fff;
+  }
+
+  /* tabela de regras (modal) */
+  .bombas-tabela-titulo {
+    margin-top: 4px;
+    font-family: var(--font-titulo);
+    font-size: 17px;
+  }
+  .bombas-tipos {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .bombas-tipo {
+    display: grid;
+    grid-template-columns: 34px 1fr;
+    align-items: center;
+    gap: 6px 8px;
+    padding: 8px;
+    border-radius: 12px;
+    background: rgb(201 154 85 / 0.14);
+    font-size: 12.5px;
+    line-height: 1.3;
+  }
+  .bombas-tipo > span:last-child {
+    grid-column: 1 / -1;
+  }
+  .bombas-tipo-ovo {
+    width: 34px;
+    height: 40px;
+  }
+  .bombas-mini {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 2px;
+    width: 76px;
+  }
+  .bombas-mini > i {
+    aspect-ratio: 1;
+    border-radius: 3px;
+    background: rgb(107 74 38 / 0.2);
+  }
+  .bombas-mini > i[data-on] {
+    background: #ffb03a;
+  }
+  .bombas-mini > i[data-centro] {
+    background: #3a3350;
+  }
+
+  /* cartão da Loja */
+  .bombas-loja-ceu {
+    border-color: #0a1644;
+    background: radial-gradient(120% 90% at 50% 40%, #2f6ad0 0%, #1b3a8c 55%, #0a1644 100%);
+  }
+  .bombas-loja-ovos {
+    position: absolute;
+    inset: 8px 6px 6px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px;
+  }
+  .bombas-loja-ovos .bombas-contagem {
+    font-size: 12px;
+    border-width: 2px;
+  }
+}
+
+@keyframes gi-bombas-rola {
+  0% { translate: 0 -75%; }
+  100% { translate: 0 0; }
+}
+@keyframes gi-bombas-para {
+  0% { translate: 0 -60%; }
+  58% { translate: 0 10%; }
+  100% { translate: 0 0; }
+}
+@keyframes gi-bombas-trava {
+  0% { translate: 0 -60%; scale: 1; }
+  30% { translate: 0 10%; scale: 1; }
+  45% { translate: 0 0; scale: 1; }
+  70% { translate: 0 0; scale: 1.28; }
+  100% { translate: 0 0; scale: 1; }
+}
+@keyframes gi-bombas-bola {
+  0% { scale: 0.2; opacity: 1; }
+  45% { scale: 1.5; opacity: 1; }
+  100% { scale: 2.1; opacity: 0; }
+}
+@keyframes gi-bombas-revela {
+  0% { scale: 0.1; rotate: -40deg; opacity: 0; }
+  60% { scale: 1.3; rotate: 6deg; opacity: 1; }
+  100% { scale: 1; rotate: 0deg; opacity: 1; }
+}
+@keyframes gi-bombas-detona {
+  0% { scale: 1; }
+  60% { scale: 1.5; rotate: -8deg; }
+  100% { scale: 1.8; rotate: 6deg; }
+}
+@keyframes gi-bombas-faisca {
+  0% { scale: 0.7; rotate: 0deg; }
+  100% { scale: 1.3; rotate: 45deg; }
+}
+@keyframes gi-bombas-urgente {
+  0% { rotate: -6deg; scale: 1.02; }
+  100% { rotate: 6deg; scale: 1.08; }
+}
+@keyframes gi-bombas-conta {
+  0% { scale: 1.9; }
+  100% { scale: 1; }
+}
+@keyframes gi-bombas-raio {
+  0% { scale: 0 1; opacity: 1; }
+  35% { scale: 1 1.3; opacity: 1; }
+  100% { scale: 1 0.1; opacity: 0; }
+}
+@keyframes gi-bombas-premiada {
+  0% { scale: 1; }
+  100% { scale: 1.14; }
+}
+@keyframes gi-bombas-linha {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}

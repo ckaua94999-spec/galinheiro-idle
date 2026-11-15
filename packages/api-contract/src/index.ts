@@ -1,12 +1,12 @@
 // Contrato da API /api/v1 (GDD seção 9): tipos dos DTOs + schemas zod das entradas.
 import { z } from 'zod';
-import { CONFIG, GALOS, formatarMoedas } from '@galinheiro/game-core';
-import type { Galo, Golpe, Inventario, Item, Raridade, Tier, Tipo } from '@galinheiro/game-core';
+import { CONFIG, CONFIG_BOMBAS, CONFIG_CHUVA, GALOS, ehApostaBombas, formatarMoedas } from '@galinheiro/game-core';
+import type { BombaPresa, Galo, Golpe, Inventario, Item, Raridade, ResultadoBombas, ResultadoChuva, Tier, Tipo } from '@galinheiro/game-core';
 import { normalizarTelefone } from './telefone';
 
 export { formatarTelefone, mascararTelefone, normalizarTelefone } from './telefone';
 
-export type { Galo, Golpe, Inventario, Item, Raridade, Tier, Tipo };
+export type { BombaPresa, Galo, Golpe, Inventario, Item, Raridade, ResultadoBombas, ResultadoChuva, Tier, Tipo };
 
 // ---------------------------------------------------------------- envelopes
 export type CodigoErro =
@@ -19,7 +19,7 @@ export type CodigoErro =
   | 'ACESSO_NEGADO' | 'CONTA_BLOQUEADA' | 'CONVITE_INVALIDO'
   | 'TICKETS_INSUFICIENTES' | 'INTERCAMBIO_FECHADO' | 'COMPRA_DESLIGADA' | 'LIMITE_DIARIO' | 'OFERTA_INDISPONIVEL'
   | 'CUPOM_INVALIDO' | 'CUPOM_JA_USADO' | 'CUPOM_ESGOTADO'
-  | 'ROLETA_BLOQUEADA' | 'ROLETA_JA_LIBERADA' | 'TERMOS_PENDENTES' | 'RINHA_BLOQUEADA';
+  | 'ROLETA_BLOQUEADA' | 'ROLETA_JA_LIBERADA' | 'TERMOS_PENDENTES' | 'RINHA_BLOQUEADA' | 'CHUVA_BLOQUEADA' | 'BOMBAS_BLOQUEADA';
 
 export interface Envelope<T> { ok: true; data: T; serverTime: string; stateVersion?: number }
 export interface EnvelopeErro {
@@ -147,7 +147,8 @@ export interface TransacaoDTO {
 /** SAQUE e SAQUE_ESTORNO só aparecem em extratos antigos: o jogo não tem mais saque. */
 export type TipoTransacaoDTO =
   | 'BONUS_INICIAL' | 'VENDA_OVOS' | 'GIRO_ROLETA' | 'UPGRADE_NINHO' | 'AJUSTE_SUPORTE' | 'COMISSAO_INDICACAO' | 'COMPRA_TICKET'
-  | 'SAQUE' | 'SAQUE_ESTORNO' | 'LIBERACAO_ROLETA' | 'APOSTA_RINHA' | 'PREMIO_RINHA';
+  | 'SAQUE' | 'SAQUE_ESTORNO' | 'LIBERACAO_ROLETA' | 'APOSTA_RINHA' | 'PREMIO_RINHA' | 'APOSTA_CHUVA' | 'PREMIO_CHUVA'
+  | 'APOSTA_BOMBAS' | 'PREMIO_BOMBAS';
 export interface ListaTransacoes { itens: TransacaoDTO[]; proximoCursor: string | null }
 
 export interface ConfigPublicaDTO {
@@ -170,6 +171,8 @@ export interface ConfigPublicaDTO {
     apostaMaxX100: number;
     galos: { galo: Galo; nome: string; chancePct: number; premioPct: number; retornoMedioPct: number }[];
   };
+  chuva: { apostaMinX100: number; apostaMaxX100: number; retornoPct: number };
+  bombas: { apostasX100: number[]; retornoPct: number };
   termos: { versao: string };
   push: { vapidPublicKey: string | null };
   dev: { relogioAjustavel: boolean };
@@ -875,6 +878,29 @@ export interface HistoricoRinhaDTO {
   apostadoX100: number;
   ganhoX100: number;
 }
+
+// ---------------------------------------------------------------- Chuva de Ovos (caça-níquel, moedas do jogo)
+export const ChuvaBody = z.object({
+  apostaX100: z
+    .number()
+    .int('Use centavos de moeda inteiros.')
+    .min(CONFIG_CHUVA.apostaMinX100, `A aposta mínima é ${formatarMoedas(CONFIG_CHUVA.apostaMinX100)} moeda.`)
+    .max(CONFIG_CHUVA.apostaMaxX100, `A aposta máxima é ${formatarMoedas(CONFIG_CHUVA.apostaMaxX100)} moedas.`),
+});
+/** Uma jogada: todos os quadros da cascata (giro pago + rodadas grátis) e o saldo no fim. */
+export interface ChuvaResposta { id: string; resultado: ResultadoChuva; saldoX100: number }
+
+// ---------------------------------------------------------------- Ovos-Bomba (caça-níquel de bombas presas, moedas do jogo)
+export const BombasBody = z.object({
+  apostaX100: z
+    .number()
+    .int()
+    .refine(ehApostaBombas, `Escolha uma das apostas: ${CONFIG_BOMBAS.apostasX100.map((a) => formatarMoedas(a).replace(/,00$/, '')).join(', ')}.`),
+});
+/** Um giro: o roteiro inteiro (grade, bombas, explosões, linhas) e o saldo no fim. */
+export interface BombasResposta { id: string; resultado: ResultadoBombas; saldoX100: number }
+/** Bombas presas em cada tabuleiro do jogador (um por valor de aposta; a chave é a aposta em centavos). */
+export interface BombasEstadoDTO { tabuleiros: Record<string, BombaPresa[]> }
 
 // ---------------------------------------------------------------- notificações push
 export const PushAssinaturaBody = z.object({

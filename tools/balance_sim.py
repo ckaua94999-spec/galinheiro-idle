@@ -2,11 +2,12 @@
 import heapq, random, statistics, sys
 
 # ---- parâmetros (mesmos nomes da tabela 4.1) ----
-MOEDAS_INICIAIS, CUSTO_GIRO, CUSTO_UPGRADE, NIVEL_MAX = 50.0, 40.0, 20.0, 32
+MOEDAS_INICIAIS, CUSTO_GIRO, CUSTO_UPGRADE, NIVEL_MAX = 0.0, 55.0, 25.0, 32
+CUSTO_LIBERACAO = 12.0  # roleta trancada: paga uma vez e ganha o primeiro giro
 ANIMAL_BOAS_VINDAS, PRIMEIRA_POSTURA_IMEDIATA, JANELA_GRACA_H = True, True, 4
 VIDA_UTIL_H, Q_EXTRA_BASE = 90 * 24, 0.5
-ESPECIES = [  # (chance, preço do ovo, fator de decaimento)
-    (0.60, 1.20, 1.00), (0.25, 1.80, 0.90), (0.12, 2.50, 0.80), (0.03, 4.00, 0.70)]
+ESPECIES = [  # (chance, preço do ovo, fator de decaimento); a 1ª (codorna) é também a de boas-vindas
+    (0.30, 0.35, 1.00), (0.30, 1.20, 1.00), (0.25, 1.80, 0.90), (0.12, 2.50, 0.80), (0.03, 4.00, 0.70)]
 TIERS = [(75, 1.00, 0), (50, 0.75, 2), (25, 0.50, 6), (0, 0.25, 12)]  # (acima de, mult, atraso h)
 DIAS, LOGIN_A_CADA_H = 240, 24  # 1 = "ideal", 12 = 2x/dia, 24 = 1x/dia
 
@@ -27,6 +28,7 @@ def sortear_especie(rng):
 def simular(semente):
     rng = random.Random(semente)
     moedas, nivel, animais, fila, giros = MOEDAS_INICIAIS, 1, {}, [], []
+    liberada, gratis = False, 0
     marcos, proximo_id = {}, [0]
 
     def ovos(mult):
@@ -62,10 +64,17 @@ def simular(semente):
                 del animais[chave]                            # aposentadoria + presente de despedida
             else:
                 iniciar_ciclo(a, max(pronto, t - JANELA_GRACA_H))
-        while True:                                           # gira / amplia enquanto puder
+        if not liberada and moedas >= CUSTO_LIBERACAO:         # liberação da roleta (com 1 giro grátis)
+            moedas -= CUSTO_LIBERACAO
+            liberada, gratis = True, 1
+            marcos["liberou"] = t / 24
+        while liberada:                                       # gira / amplia enquanto puder
             livres = nivel * 4 - len(animais)
-            if livres > 0 and moedas >= CUSTO_GIRO:
-                moedas -= CUSTO_GIRO
+            if livres > 0 and (gratis > 0 or moedas >= CUSTO_GIRO):
+                if gratis > 0:
+                    gratis -= 1
+                else:
+                    moedas -= CUSTO_GIRO
                 moedas += novo_animal(t, sortear_especie(rng))
                 giros.append(t / 24)
             elif livres == 0 and nivel < NIVEL_MAX and moedas >= CUSTO_UPGRADE + CUSTO_GIRO:
@@ -85,7 +94,7 @@ def simular(semente):
 if __name__ == "__main__":
     n = int(sys.argv[1]) if len(sys.argv) > 1 else 300
     res = [simular(1000 + i) for i in range(n)]
-    for chave in ("giro2", 8, 32, 128, "saldo_d90"):
+    for chave in ("liberou", "giro2", 8, 32, 128, "saldo_d90"):
         vals = sorted(r[chave] for r in res if r.get(chave) is not None)
         q = statistics.quantiles(vals, n=10)
         print(f"{chave!s:>9}: mediana {statistics.median(vals):8.1f} | p10 {q[0]:8.1f} | p90 {q[-1]:8.1f} ({len(vals)}/{n})")

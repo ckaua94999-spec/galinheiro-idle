@@ -1,0 +1,190 @@
+/* Manual do jogo (telas/TelaManual.tsx): índice de chips e seções que abrem e fecham (<details>), com tabelas
+   simples. Importado por globals.css. */
+
+@layer components {
+  .manual-tela > .tela-cabeca {
+    margin-bottom: 6px;
+  }
+  .manual-intro {
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1.4;
+    color: var(--color-texto-suave);
+  }
+  .manual-indice {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 12px 0 4px;
+  }
+  .manual-chip {
+    display: inline-flex;
+    align-items: center;
+    height: 30px;
+    padding: 0 12px;
+    border-radius: 999px;
+    border: 2px solid #c99a55;
+    background: #fffaf0;
+    font-size: 13px;
+    font-weight: 900;
+    color: var(--color-texto);
+    text-decoration: none;
+  }
+  .manual-chip:active {
+    translate: 0 1px;
+  }
+  .manual-chip:focus-visible {
+    outline: 3px solid var(--color-compra-escura);
+    outline-offset: 2px;
+  }
+
+  .manual-secao {
+    margin-top: 12px;
+    padding: 0;
+    overflow: hidden;
+    scroll-margin-top: calc(var(--altura-hud) + var(--seguro-topo) + 16px);
+  }
+  .manual-secao-titulo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    font-family: var(--font-titulo);
+    font-size: 18px;
+    line-height: 1.15;
+    cursor: pointer;
+    list-style: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .manual-secao-titulo::-webkit-details-marker {
+    display: none;
+  }
+  .manual-secao-titulo::after {
+    content: '';
+    flex: none;
+    width: 10px;
+    height: 10px;
+    border-right: 3px solid #6b4a26;
+    border-bottom: 3px solid #6b4a26;
+    rotate: 45deg;
+    translate: 0 -3px;
+    transition: rotate 0.18s, translate 0.18s;
+  }
+  .manual-secao[open] > .manual-secao-titulo::after {
+    rotate: 225deg;
+    translate: 0 3px;
+  }
+  .manual-secao-titulo:focus-visible {
+    outline: 3px solid var(--color-compra-escura);
+    outline-offset: -3px;
+  }
+  .manual-secao-emoji {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    background: rgb(201 154 85 / 0.18);
+    font-size: 19px;
+  }
+  .manual-secao-corpo {
+    display: grid;
+    gap: 10px;
+    padding: 0 14px 14px;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.5;
+    color: var(--color-texto);
+  }
+  .manual-secao-corpo ul,
+  .manual-secao-corpo ol {
+    display: grid;
+    gap: 6px;
+    padding-left: 1.25em;
+  }
+  .manual-secao-corpo ul {
+    list-style: disc;
+  }
+  .manual-secao-corpo ol {
+    list-style: decimal;
+  }
+  .manual-secao-corpo b {
+    font-weight: 900;
+  }
+  .manual-link {
+    color: var(--color-compra-escura);
+    font-weight: 800;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+  .manual-destaque {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    border-radius: 14px;
+    background: rgb(255 201 60 / 0.16);
+    box-shadow: inset 0 0 0 2px rgb(194 124 0 / 0.3);
+  }
+  .manual-destaque-arte {
+    flex: none;
+    width: 64px;
+    height: 64px;
+  }
+  .manual-destaque-arte > svg {
+    width: 100%;
+    height: 100%;
+  }
+  .manual-tabela {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    overflow: hidden;
+    border-radius: 12px;
+    box-shadow: inset 0 0 0 2px #e6c88e;
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
+  }
+  .manual-tabela th {
+    padding: 7px 6px;
+    background: #f3dcae;
+    font-size: 12px;
+    font-weight: 900;
+    text-align: left;
+    color: #5a3a12;
+  }
+  .manual-tabela td {
+    padding: 7px 6px;
+    border-top: 1px solid #ecd9b2;
+    font-weight: 700;
+  }
+  .manual-tabela tbody tr:nth-child(even) td {
+    background: rgb(255 255 255 / 0.5);
+  }
+  .manual-animal {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .manual-animal-ovo {
+    width: 16px;
+    height: 19px;
+    flex: none;
+  }
+  .manual-preco {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    white-space: nowrap;
+  }
+  .manual-moeda {
+    width: 18px;
+    height: 18px;
+  }
+  .manual-acoes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+}

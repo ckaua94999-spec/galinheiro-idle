@@ -6,6 +6,7 @@ import {
   inicioDoProximoCiclo, nomePadrao, rotacaoFinal, setorSobPonteiro, sortearOvos, sortearRoleta, tierDe,
   validarNome, valorVendaX100, vidaEm, vidaExibida, type Rng, type Tier,
   ANIMAIS, FAIXAS_ROLETA, GALOS, lutarRinha, premioRinhaX100, retornoMedioRinhaPct,
+  CONFIG_CHUVA, jogarChuva, multDaCascata, pagamentoNinhosPct, pagamentoPct,
 } from '../src';
 
 const fixo = (valores: number[]): Rng => {
@@ -101,13 +102,14 @@ describe('ciclo (Apêndice D)', () => {
 
 describe('roleta (Apêndice D)', () => {
   it.each([
-    [0, 'galinha'], [5999, 'galinha'], [6000, 'pato'], [8499, 'pato'],
+    [0, 'codorna'], [2999, 'codorna'], [3000, 'galinha'], [5999, 'galinha'], [6000, 'pato'], [8499, 'pato'],
     [8500, 'ganso'], [9699, 'ganso'], [9700, 'avestruz'], [9999, 'avestruz'],
   ] as const)('faixa %i → %s', (r, tipo) => expect(faixaDe(r).tipo).toBe(tipo));
 
   it('ângulos de referência', () => {
-    expect(anguloResultado(0)).toBeCloseTo(1.518, 3);
-    expect(anguloResultado(1234)).toBeCloseTo(45.325, 3);
+    expect(anguloResultado(0)).toBeCloseTo(1.5175, 4);
+    expect(anguloResultado(1234)).toBeCloseTo(44.7075, 4);
+    expect(anguloResultado(3000)).toBeCloseTo(109.5175, 4);
     expect(anguloResultado(6000)).toBeCloseTo(217.517, 3);
     expect(anguloResultado(9712)).toBeCloseTo(351.025, 3);
     expect(anguloResultado(9999)).toBeCloseTo(358.487, 3);
@@ -129,7 +131,7 @@ describe('roleta (Apêndice D)', () => {
     expect((351.025 + r2) % 360).toBeCloseTo(0, 6);
     for (const r of [0, 1234, 6000, 9712, 9999]) {
       const rot = rotacaoFinal(777, anguloResultado(r));
-      expect(setorSobPonteiro(rot)).toBe(['galinha', 'pato', 'ganso', 'avestruz'].indexOf(faixaDe(r).tipo));
+      expect(setorSobPonteiro(rot)).toBe(['codorna', 'galinha', 'pato', 'ganso', 'avestruz'].indexOf(faixaDe(r).tipo));
     }
   });
 
@@ -139,7 +141,9 @@ describe('roleta (Apêndice D)', () => {
     const prng: Rng = { int: (n) => { s = (s * 48271) % 2147483647; return s % n; } };
     const N = 400_000;
     for (let i = 0; i < N; i++) cont[sortearRoleta(prng).tipo]++;
-    expect(cont.galinha / N).toBeCloseTo(0.6, 2);
+    expect(cont.codorna / N).toBeCloseTo(0.3, 2);
+    expect(cont.galinha / N).toBeCloseTo(0.3, 2);
+    expect(Math.abs(cont.codorna - cont.galinha) / N).toBeLessThan(0.004);
     expect(cont.pato / N).toBeCloseTo(0.25, 2);
     expect(cont.ganso / N).toBeCloseTo(0.12, 2);
     expect(Math.abs(cont.avestruz / N - 0.03)).toBeLessThan(0.002);
@@ -155,12 +159,14 @@ describe('economia (Apêndice D)', () => {
     expect(formatarMoedas(123450)).toMatch(/^1\.234,50$/);
     expect(capacidade(32)).toBe(128);
   });
-  it('codorna: 0,35 por ovo, é o animal de boas-vindas e não sai na roleta', () => {
+  it('codorna: 0,35 por ovo, é o animal de boas-vindas e sai na roleta com a mesma chance da galinha', () => {
     expect(ANIMAIS.codorna.precoOvoX100).toBe(35);
     expect(valorVendaX100({ ovo_codorna: 4 })).toBe(140);
     expect(CONFIG.animalBoasVindas).toBe('codorna');
     expect(CONFIG.roleta.liberacaoX100).toBe(1_200);
-    expect(FAIXAS_ROLETA.some((f) => f.tipo === 'codorna')).toBe(false);
+    const chance = (t: string) => FAIXAS_ROLETA.filter((f) => f.tipo === t).reduce((s, f) => s + f.ate - f.de + 1, 0);
+    expect(chance('codorna')).toBe(3_000);
+    expect(chance('codorna')).toBe(chance('galinha'));
   });
   it('dias restantes', () => {
     expect(diasRestantes(VIDA_UTIL, 0)).toBe(90);
@@ -235,4 +241,78 @@ describe('rinha de galo (moedas do jogo)', () => {
     for (let i = 0; i < N; i++) if (lutarRinha('azarao', prng).venceu) v++;
     expect(Math.abs(v / N - 0.15)).toBeLessThan(0.005);
   });
+});
+
+describe('Chuva de Ovos (caça-níquel de cascata, moedas do jogo)', () => {
+  const lcg = (semente: number): Rng => {
+    let x = semente;
+    return { int: (n) => { x = (x * 48271) % 2147483647; return x % n; } };
+  };
+  it('tabela: 8–9, 10–11 e 12+ iguais; ninhos a partir de 4', () => {
+    expect(pagamentoPct('pena_azul', 7)).toBe(0);
+    expect(pagamentoPct('pena_azul', 8)).toBe(30);
+    expect(pagamentoPct('pena_azul', 11)).toBe(60);
+    expect(pagamentoPct('ovo_avestruz', 30)).toBe(1_500);
+    expect(pagamentoNinhosPct(3)).toBe(0);
+    expect(pagamentoNinhosPct(4)).toBe(200);
+    expect(pagamentoNinhosPct(9)).toBe(5_000);
+    // cada cascata seguida vale mais, até o teto
+    expect([0, 1, 2, 3, 4, 5, 9].map(multDaCascata)).toEqual([1, 2, 3, 4, 5, 5, 5]);
+  });
+  it('cada quadro é coerente: grade 6×5, prêmios com 8+, cascata só troca quem estourou', () => {
+    const rng = lcg(3);
+    for (let k = 0; k < 3_000; k++) {
+      const r = jogarChuva(100, rng);
+      let soma = 0;
+      for (const rd of r.rodadas) {
+        rd.passos.forEach((p, idx) => {
+          expect(p.grade).toHaveLength(CONFIG_CHUVA.colunas);
+          for (const col of p.grade) expect(col).toHaveLength(CONFIG_CHUVA.linhas);
+          expect(p.mult).toBe(multDaCascata(idx));
+          for (const g of p.ganhos) {
+            expect(p.grade.flat().filter((c) => c.s === g.s)).toHaveLength(g.n);
+            // o prêmio do grupo é a tabela × o multiplicador da cascata
+            expect(g.pagoX100).toBe(pagamentoPct(g.s, g.n) * p.mult);
+          }
+          const ultimo = idx === rd.passos.length - 1;
+          expect(p.ganhos.length === 0).toBe(ultimo);
+          if (!ultimo) {
+            const sai = new Set(p.estouram);
+            const ficam = p.grade.flat().filter((c) => !sai.has(c.i)).map((c) => c.i).sort((a, b) => a - b);
+            const depois = rd.passos[idx + 1]!.grade.flat().map((c) => c.i);
+            expect(depois.filter((i) => ficam.includes(i)).sort((a, b) => a - b)).toEqual(ficam);
+            for (let col = 0; col < CONFIG_CHUVA.colunas; col++) {
+              // quem fica desce na mesma coluna e na mesma ordem
+              const antes = p.grade[col]!.filter((c) => !sai.has(c.i)).map((c) => c.i);
+              expect(rd.passos[idx + 1]!.grade[col]!.slice(CONFIG_CHUVA.linhas - antes.length).map((c) => c.i)).toEqual(antes);
+            }
+          }
+        });
+        expect(rd.multiplicador).toBe(rd.ganhoSimbolosX100 > 0 && rd.bombas.length ? rd.bombas.reduce((a, b) => a + b, 0) : 1);
+        expect(rd.ganhoX100).toBe(rd.ganhoSimbolosX100 * rd.multiplicador + rd.ganhoNinhosX100);
+        soma += rd.ganhoX100;
+      }
+      expect(r.premioX100).toBe(Math.min(soma, 100 * CONFIG_CHUVA.tetoVezes));
+      expect(r.rodadas.length - 1).toBeLessThanOrEqual(CONFIG_CHUVA.maxGratis);
+    }
+  });
+  it(`retorno médio perto do anunciado (${CONFIG_CHUVA.retornoPct}%) e abaixo de 100%`, () => {
+    const rng = lcg(1);
+    const N = 300_000;
+    let pago = 0;
+    let acertos = 0;
+    let gratis = 0;
+    for (let k = 0; k < N; k++) {
+      const r = jogarChuva(100, rng);
+      pago += r.premioX100;
+      if (r.premioX100 > 0) acertos++;
+      if (r.rodadas.length > 1) gratis++;
+    }
+    const rtp = pago / (N * 100);
+    expect(rtp).toBeGreaterThan(CONFIG_CHUVA.retornoPct / 100 - 0.035);
+    expect(rtp).toBeLessThan(CONFIG_CHUVA.retornoPct / 100 + 0.035);
+    expect(rtp).toBeLessThan(1);
+    expect(Math.abs(acertos / N - CONFIG_CHUVA.acertoPct / 100)).toBeLessThan(0.02);
+    expect(Math.abs(N / gratis - CONFIG_CHUVA.gratisACada)).toBeLessThan(20);
+  }, 60_000);
 });

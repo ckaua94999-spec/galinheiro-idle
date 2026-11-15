@@ -293,6 +293,26 @@ export function IconeColecao({ className, titulo }: PropsIcone) {
   );
 }
 
+/** Livro aberto com marcador e um ovo dourado (aba Manual). */
+export function IconeManual({ className, titulo }: PropsIcone) {
+  return (
+    <svg viewBox="0 0 32 32" className={className} {...a11y(titulo)}>
+      {/* capa */}
+      <path d="M2.6 10Q9.4 7.8 16 10.8Q22.6 7.8 29.4 10V26.4Q22.6 24.4 16 27.4Q9.4 24.4 2.6 26.4Z" fill="#d8432f" {...CONTORNO} />
+      {/* páginas */}
+      <path d="M4.6 8.2Q10.4 6.2 15.3 9.2V25Q10.4 22.4 4.6 24Z" fill="#fffaf0" stroke={TINTA} strokeWidth={1.6} strokeLinejoin="round" />
+      <path d="M27.4 8.2Q21.6 6.2 16.7 9.2V25Q21.6 22.4 27.4 24Z" fill="#fff1d2" stroke={TINTA} strokeWidth={1.6} strokeLinejoin="round" />
+      {/* linhas de texto */}
+      <path d="M7 12Q10.2 11 13.2 12.4M7 15Q10.2 14 13.2 15.4M7 18Q10.2 17 13.2 18.4M7 21Q9.4 20.2 11.6 21.2" stroke="#b9895a" strokeWidth={1.3} strokeLinecap="round" fill="none" />
+      {/* ovo dourado na página da direita */}
+      <ellipse cx="21.6" cy="16.6" rx="3" ry="3.8" fill="#ffd24a" stroke={TINTA} strokeWidth={1.5} />
+      <ellipse cx="20.6" cy="15.1" rx=".85" ry="1.3" fill="#fff" opacity={0.9} />
+      {/* fita do marcador */}
+      <path d="M23.4 7.4V13L25 11.7L26.6 13V7.6Z" fill="#46a8ff" stroke={TINTA} strokeWidth={1.3} strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 // Engrenagem de 8 dentes, calculada uma vez.
 const ENGRENAGEM_D = (() => {
   const c = 16;

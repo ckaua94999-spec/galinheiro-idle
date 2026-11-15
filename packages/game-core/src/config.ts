@@ -1,5 +1,5 @@
 // Parâmetros de balanceamento (GDD seção 4.1). Toda mudança de número gera nova CONFIG_VERSAO.
-export const CONFIG_VERSAO = '1.1.0';
+export const CONFIG_VERSAO = '1.5.0';
 
 export type Tipo = 'codorna' | 'galinha' | 'pato' | 'ganso' | 'avestruz';
 export type Raridade = 'comum' | 'raro' | 'epico' | 'lendario';
@@ -27,7 +27,7 @@ export const TIERS: Record<Tier, TierCfg> = {
 };
 
 export const ANIMAIS: Record<Tipo, AnimalCfg> = {
-  // animal de boas-vindas: não sai na roleta; rende pouco para o membro novo juntar a liberação da roleta
+  // animal de boas-vindas (e também da roleta, com a mesma chance da galinha); rende pouco: o membro novo junta a liberação
   codorna:  { raridade: 'comum',    precoOvoX100: 35,  fatorPct: 100 },
   galinha:  { raridade: 'comum',    precoOvoX100: 120, fatorPct: 100 },
   pato:     { raridade: 'raro',     precoOvoX100: 180, fatorPct: 90 },
@@ -37,7 +37,9 @@ export const ANIMAIS: Record<Tipo, AnimalCfg> = {
 
 // Ordem = ordem dos setores na roda, no sentido horário a partir do topo (ponteiro).
 export const FAIXAS_ROLETA: readonly FaixaRoleta[] = [
-  { tipo: 'galinha',  de: 0,     ate: 5_999, grauInicio: 0,     largura: 216 },
+  // codorna e galinha dividem o antigo gomo da galinha (60%): 30% cada; os raros continuam com as mesmas chances
+  { tipo: 'codorna',  de: 0,     ate: 2_999, grauInicio: 0,     largura: 108 },
+  { tipo: 'galinha',  de: 3_000, ate: 5_999, grauInicio: 108,   largura: 108 },
   { tipo: 'pato',     de: 6_000, ate: 8_499, grauInicio: 216,   largura: 90 },
   { tipo: 'ganso',    de: 8_500, ate: 9_699, grauInicio: 306,   largura: 43.2 },
   { tipo: 'avestruz', de: 9_700, ate: 9_999, grauInicio: 349.2, largura: 10.8 },

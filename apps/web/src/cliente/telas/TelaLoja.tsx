@@ -16,6 +16,8 @@ import { toast, useUi } from '../ui';
 import { useAcoes } from '../useAcoes';
 import { moedas } from '../util';
 import { CartaoRinha } from '../rinha/CartaoRinha';
+import { CartaoChuva } from '../chuva/CartaoChuva';
+import { CartaoBombas } from '../bombas/CartaoBombas';
 
 /** id seguro para url(#…) (o useId traz ":" e "«"). */
 function useIdSvg(prefixo: string): string {
@@ -592,6 +594,8 @@ export function TelaLoja() {
       </div>
       <VitrineAmpliacao nivel={nivelGalinheiro} capacidade={capacidade} ampliando={ampliando} faltaX100={falta} aoAmpliar={() => void comprar()} />
       <CartaoRinha />
+      <CartaoChuva />
+      <CartaoBombas />
       <CartaoIntercambio />
       <CartaoConvite />
       <VitrineEmBreve />

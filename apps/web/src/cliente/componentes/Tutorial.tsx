@@ -183,7 +183,7 @@ export function Tutorial({ estado }: { estado: Estado }) {
       passo = !caminho.startsWith('/roleta')
         ? { alvo: '[data-tut="aba-roleta"]', texto: 'Agora vamos à roleta! Toque na aba Roleta.' }
         : estado.player.roletaLiberada
-          ? { alvo: '[data-tut="girar"]', texto: 'Na roleta saem galinhas, patos, gansos e até avestruz. Toque em Girar e boa sorte!' }
+          ? { alvo: '[data-tut="girar"]', texto: 'Na roleta saem codornas, galinhas, patos, gansos e até avestruz. Toque em Girar e boa sorte!' }
           : {
               alvo: '[data-tut="liberar"]',
               texto: `A roleta ainda está trancada. Venda os ovos da sua codorna até juntar ${formatarMoedas(CONFIG.roleta.liberacaoX100).replace(/,00$/, '')} moedas e libere aqui: o primeiro giro vem de presente!`,

@@ -1,6 +1,6 @@
 # Galinheiro Idle
 
-Jogo **idle/colecionável de fazenda** em PWA, todo em português do Brasil. O jogador começa com uma codorna, junta moedas vendendo os ovos dela, libera a roleta para ganhar galinhas, patos, gansos e avestruzes, amplia o galinheiro e pode apostar moedas do jogo na rinha de galo.
+Jogo **idle/colecionável de fazenda** em PWA, todo em português do Brasil. O jogador começa com uma codorna, junta moedas vendendo os ovos dela, libera a roleta para ganhar codornas, galinhas, patos, gansos e avestruzes, amplia o galinheiro e pode apostar moedas do jogo na rinha de galo.
 
 > **Sem dinheiro real.** Toda a economia é interna (moedas do jogo). Não há compras, depósitos, saques, PIX, cripto, anúncios nem qualquer forma de pagamento. Moedas, ovos, tickets e animais não valem dinheiro.
 
@@ -161,7 +161,7 @@ Todas as respostas usam o mesmo envelope:
 |---|---|
 | Autenticação | `auth/cadastrar`, `auth/entrar`, `auth/redefinir`, `auth/sair`, `auth/sessao` |
 | Estado | `state` (com ETag), `me`, `players`, `config`, `health` |
-| Jogo | `collect`, `collect-all`, `sell`, `roleta/liberar`, `spin`, `upgrade-nest`, `rinha` (GET histórico, POST luta), `entities`, `entities/[id]`, `retirements/ack`, `tutorial`, `transactions` |
+| Jogo | `collect`, `collect-all`, `sell`, `roleta/liberar`, `spin`, `upgrade-nest`, `rinha` (GET histórico, POST luta), `chuva`, `bombas` (GET tabuleiros, POST giro), `entities`, `entities/[id]`, `retirements/ack`, `tutorial`, `transactions` |
 | Termos | `termos` (aceite da versão atual por quem já tem conta; o cadastro exige `aceitouTermos: true`) |
 | Popups e atendimento | `avisos`, `avisos/[id]/visto`, `avisos/[id]/clique`, `suporte` |
 | Convites | `convites`, `convites/[codigo]` (público) e o link curto `/c/[codigo]` (fora do `/v1`) |
@@ -292,10 +292,13 @@ Em desenvolvimento há atalhos: **Ajustes › Desenvolvimento › Tornar esta co
 
 | Peça | Como funciona |
 |---|---|
-| Codorna | Animal de boas-vindas de toda conta nova (`CONFIG.animalBoasVindas`). Ovo vale **0,35** moeda. Não sai na roleta. |
+| Codorna | Animal de boas-vindas de toda conta nova (`CONFIG.animalBoasVindas`). Ovo vale **0,35** moeda. Também sai na roleta, com a mesma chance da galinha. |
+| Chances da roleta | Codorna 30%, galinha 30%, pato 25%, ganso 12%, avestruz 3% (`FAIXAS_ROLETA`). |
 | Roleta trancada | Conta nova começa com `0` moedas e a roleta trancada. Vendendo os ovos da codorna, o membro junta **12 moedas** (`CONFIG.roleta.liberacaoX100`) e paga a liberação uma vez (`POST /roleta/liberar`); ela já vem com o primeiro giro grátis. Depois, cada giro custa `CONFIG.roleta.custoX100` (55 moedas). Com 2 ovos por dia, a codorna leva umas duas semanas e meia para juntar as 12 moedas; o tutorial explica a trava. |
 | Ampliação | `CONFIG.galinheiro.custoUpgradeX100` (25 moedas) por nível, debitados do saldo. |
 | Rinha de galo | Minijogo de aposta **só com moedas do jogo**, aberto depois da liberação da roleta e com os termos aceitos. Três galos (`CONFIG.rinha.galos`): Favorito 55% × 1,6, Brigão 40% × 2,2 e Azarão 15% × 5. A casa leva vantagem: retorno médio de 88%, 88% e 75%, mostrado na tela antes da aposta. Um único sorteio no servidor (`rngValor < chanceBp`) decide; os golpes (`lutarRinha` no game-core) só encenam o resultado. Aposta de 1 a 50 moedas. Cada luta fica em `rinhas` com as duas transações. |
+| Chuva de Ovos | Caça-níquel de cascata **só com moedas do jogo** (`/chuva`, `POST /api/v1/chuva`), aberto depois da liberação da roleta e com os termos aceitos. Grade 6×5 com penas, asa e ovos; 8 ou mais iguais em qualquer lugar pagam, os premiados estouram e caem novos. Cada cascata seguida vale mais (×2, ×3… até ×5); ovo de ouro multiplica o ganho da cascata; 4+ ninhos dão 10 rodadas grátis. Pesos e tabela em `packages/game-core/src/chuva.ts`. Retorno médio de **97%** (medido por simulação; o golden test confere), prêmio em ~1 de cada 3 giros (acima da aposta em ~15% dos giros), rodadas grátis a cada ~95 giros, teto de 2.000× a aposta. O servidor sorteia a jogada inteira e devolve os quadros; o resumo fica em `chuva_jogadas` (migration `0023`). |
+| Ovos-Bomba | Caça-níquel de rolos com bombas presas **só com moedas do jogo** (`/bombas`, `GET`/`POST /api/v1/bombas`). 5 rolos × 3 casas, 20 linhas (3 a 5 iguais a partir da esquerda). O ovo-bomba para com o rolo, fica preso e conta um giro por giro (chega marcando de 3 a 9) enquanto os outros símbolos continuam girando; no zero explode nas casas **vizinhas** do padrão dele (cima/baixo, lados, cruz ou X) e a casa da bomba e as atingidas viram o mesmo símbolo sorteado; bomba presa atingida detona junto. Como as bombas ficam de um giro para o outro, cada jogador tem **um tabuleiro por valor de aposta** (`bombas_estado`, migration `0024`): não dá para esperar a bomba com aposta baixa e explodir com aposta alta. Motor em `packages/game-core/src/bombas.ts`. Retorno médio de **81%** (medido por simulação; `test/bombas.test.ts` confere), prêmio em ~24% dos giros, uma bomba nova a cada ~5 giros e uma explosão a cada ~6, máximo de 1.000× a aposta. |
 | Termos de uso | Texto em `cliente/termos/TextoTermos.tsx`, página pública `/termos`. O cadastro exige a caixa marcada (`aceitouTermos`). Quem já tem conta, ou quando `TERMOS_VERSAO` (api-contract) muda, vê o aceite por cima do jogo antes de continuar. O texto é um rascunho: revise com um advogado antes de publicar. |
 
 ## Convites e afiliação
@@ -370,14 +373,16 @@ O navegador pode ser apontado pela variável `CHROME`. Os erros do console e as 
 pnpm test
 ```
 
-São **121 testes** (Vitest):
+São **135 testes** (Vitest):
 
 | Pacote | Arquivo | Testes | Cobertura |
 |---|---|---|---|
-| `game-core` | `test/golden.test.ts` | 53 | *Golden tests* do GDD (Apêndice D): vida e tiers, ciclos (último ciclo encurtado, janela de graça de 4 h, ovos em {1,2,3}), roleta (faixas, ângulos, frequências em 400 mil giros com margem de ±0,2 p.p.), economia, validação e filtro de nomes, formatos de tempo |
+| `game-core` | `test/golden.test.ts` | 58 | *Golden tests* do GDD (Apêndice D): vida e tiers, ciclos (último ciclo encurtado, janela de graça de 4 h, ovos em {1,2,3}), roleta (faixas, ângulos, frequências em 400 mil giros com margem de ±0,2 p.p.), economia, validação e filtro de nomes, formatos de tempo |
+| `game-core` | `test/bombas.test.ts` | 7 | Ovos-Bomba: padrões de explosão (casa da bomba + vizinhas), as 20 linhas, contagem das bombas presas, reação em cadeia, coerência de 20 mil giros seguidos e o **retorno medido** (perto dos 81% anunciados e abaixo de 100%) |
 | `web` | `test/banco.test.ts` | 3 | Migrations aplicadas no PGlite, **blindagem `anon`/`authenticated`** e a 0022 sobre um banco antigo (PIX pago vira giro, roleta aberta para quem já jogava) |
-| `web` | `test/dominio.test.ts` | 17 | Fluxo do jogo: conta inicial (codorna, 0 moedas, roleta trancada), liberação da roleta, giro e ampliação pagos em moedas, rinha (bloqueio, termos, prêmio pela tabela, saldo = extrato), coleta e ciclo de 24 h, venda, roleta, saldo e ninhos, coletar todos, renomear, aposentadoria aos 90 dias, extrato paginado, invariantes de integridade, `fn_vida` igual ao `vidaEm` do game-core, janela de graça, cadastro (e-mail/telefone repetidos), login, redefinição de senha, contas antigas recusadas, faixas da roleta |
+| `web` | `test/dominio.test.ts` | 19 | Fluxo do jogo: conta inicial (codorna, 0 moedas, roleta trancada), liberação da roleta, giro e ampliação pagos em moedas, rinha, Chuva de Ovos e Ovos-Bomba (bloqueio, termos, prêmio, saldo = extrato), coleta e ciclo de 24 h, venda, roleta, saldo e ninhos, coletar todos, renomear, aposentadoria aos 90 dias, extrato paginado, invariantes de integridade, `fn_vida` igual ao `vidaEm` do game-core, janela de graça, cadastro (e-mail/telefone repetidos), login, redefinição de senha, contas antigas recusadas, faixas da roleta |
 | `web` | `test/rotas.test.ts` | 12 | Rotas HTTP: 401 com envelope, ETag do `/state`, `Idempotency-Key` ausente, repetida e conflitante, **coletas concorrentes** (só uma credita), payload inválido, `/entities/[id]`, cadastro (cookie `httpOnly`, código de recuperação, telefone repetido/inválido), sessão de convidado recusada, config pública |
+| `web` | `test/chave-idempotencia.test.ts` | 3 | Chave de idempotência gerada no aparelho: com `randomUUID`, sem ele (UUID v4 montado à mão) e reaproveitada nas repetições do mesmo pedido |
 | `web` | `test/cadastro.test.ts` | 5 | Telefone brasileiro (normalização E.164, DDDs, celular/fixo, máscara) e mensagens do schema de cadastro |
 | `web` | `test/painel-login.test.ts` | 4 | Login próprio do painel: usuário e senha do ambiente (hash com `:`), cookie `httpOnly`/`Strict`/12 h, erro genérico, token do painel recusado no jogo, ações assinadas pelo operador (auditoria, idempotência, nome da equipe no atendimento), sessão que cai ao trocar a senha, saída, e a conta do jogo com papel de admin ainda entrando |
 | `web` | `test/admin.test.ts` | 7 | Painel: 403 para jogador comum e acesso por `ADMIN_EMAILS`; busca, ficha e edição; ajuste de saldo **idempotente** e sem saldo negativo; bloqueio derruba a sessão e mostra o motivo no login; atendimento ida e volta com contadores; popups ("uma vez", público por contas, cliques); séries e projeções dos gráficos |

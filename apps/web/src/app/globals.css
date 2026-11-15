@@ -25,6 +25,9 @@
 @import "./estilos/jogo-intercambio.css";
 @import "./estilos/admin-intercambio.css";
 @import "./estilos/jogo-rinha.css";
+@import "./estilos/jogo-manual.css";
+@import "./estilos/jogo-chuva.css";
+@import "./estilos/jogo-bombas.css";
 
 /* Tokens do design system (docs/DIRECAO_DE_ARTE.md, seção 2). Viram utilitários do Tailwind.
    "static": todas as variáveis saem no CSS mesmo sem uso detectado (estilos inline usam var(--color-…)). */

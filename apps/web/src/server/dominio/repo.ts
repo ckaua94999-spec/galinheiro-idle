@@ -14,7 +14,7 @@ import {
 
 export type TipoTransacao =
   | 'BONUS_INICIAL' | 'VENDA_OVOS' | 'GIRO_ROLETA' | 'UPGRADE_NINHO' | 'AJUSTE_SUPORTE' | 'COMISSAO_INDICACAO' | 'COMPRA_TICKET'
-  | 'LIBERACAO_ROLETA' | 'APOSTA_RINHA' | 'PREMIO_RINHA';
+  | 'LIBERACAO_ROLETA' | 'APOSTA_RINHA' | 'PREMIO_RINHA' | 'APOSTA_CHUVA' | 'PREMIO_CHUVA' | 'APOSTA_BOMBAS' | 'PREMIO_BOMBAS';
 export type OrigemEntidade = 'ROLETA' | 'BOAS_VINDAS' | 'SUPORTE' | 'INTERCAMBIO';
 
 const d = (ms: number): Date => new Date(ms);

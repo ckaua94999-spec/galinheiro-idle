@@ -1,6 +1,6 @@
 // Texto dos termos de uso (mesmo conteúdo na página /termos e no portão de aceite dentro do jogo).
 // Mudou o texto? Suba TERMOS_VERSAO em @galinheiro/api-contract: todo membro aceita de novo ao abrir o jogo.
-import { CONFIG, GALOS, formatarMoedas, retornoMedioRinhaPct } from '@galinheiro/game-core';
+import { CONFIG, CONFIG_BOMBAS, CONFIG_CHUVA, GALOS, formatarMoedas, retornoMedioRinhaPct } from '@galinheiro/game-core';
 import { TERMOS_VERSAO } from '@galinheiro/api-contract';
 
 const versaoLegivel = (v: string) => v.split('-').reverse().join('/');
@@ -31,11 +31,13 @@ export function TextoTermos() {
         cada animal ficam no botão &ldquo;Chances&rdquo; da roleta.
       </p>
 
-      <h2>4. Rinha de galo</h2>
+      <h2>4. Rinha de galo, Chuva de Ovos e Ovos-Bomba</h2>
       <ul>
-        <li>É um minijogo de aposta só com moedas do jogo. Você pode perder as moedas apostadas.</li>
-        <li>A casa leva vantagem: a cada 100 moedas apostadas, voltam em média menos de 100 ({retornos}).</li>
-        <li>A chance e o prêmio de cada galo aparecem antes da aposta. O resultado é sorteado no servidor; a luta só mostra esse resultado.</li>
+        <li>São minijogos de aposta só com moedas do jogo. Você pode perder as moedas apostadas.</li>
+        <li>
+          A casa leva vantagem: a cada 100 moedas apostadas, voltam em média menos de 100 (rinha: {retornos}; Chuva de Ovos: {CONFIG_CHUVA.retornoPct}%; Ovos-Bomba: {CONFIG_BOMBAS.retornoPct}%).
+        </li>
+        <li>As chances e os prêmios aparecem antes da aposta. O resultado é sorteado no servidor; a animação só mostra esse resultado.</li>
         <li>Os galos são desenhos. O jogo não apoia nem promove rinha de animais de verdade, que é crime no Brasil.</li>
       </ul>
 

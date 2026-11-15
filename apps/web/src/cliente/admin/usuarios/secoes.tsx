@@ -768,6 +768,10 @@ const ICONE_TRANSACAO: Record<TransacaoDTO['tipo'], ReactNode> = {
   LIBERACAO_ROLETA: <IconeRoleta className="h-5 w-5" />,
   APOSTA_RINHA: <Swords className="h-4 w-4" />,
   PREMIO_RINHA: <Trophy className="h-4 w-4" />,
+  APOSTA_CHUVA: <Egg className="h-4 w-4" />,
+  PREMIO_CHUVA: <Trophy className="h-4 w-4" />,
+  APOSTA_BOMBAS: <Egg className="h-4 w-4" />,
+  PREMIO_BOMBAS: <Trophy className="h-4 w-4" />,
 };
 
 function VerMais({ total, abertos, aoAlternar, rotulo = 'Mostrar todas' }: { total: number; abertos: boolean; aoAlternar: () => void; rotulo?: string }) {

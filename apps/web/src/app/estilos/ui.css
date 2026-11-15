@@ -1194,7 +1194,9 @@
   }
   .abas-lista {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    /* uma coluna por aba (hoje 5: Galinheiro, Loja, Roleta, Coleção, Manual) */
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0, 1fr);
     height: var(--altura-abas);
     max-width: 36rem;
     margin-inline: auto;

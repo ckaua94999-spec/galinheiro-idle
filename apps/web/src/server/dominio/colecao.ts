@@ -3,7 +3,7 @@ import {
   TERMOS_VERSAO, type ConfigPublicaDTO, type EntityDetalheDTO, type ListaEntidades, type ListaTransacoes,
 } from '@galinheiro/api-contract';
 import {
-  ANIMAIS, CONFIG, CONFIG_VERSAO, FAIXAS_ROLETA, GALOS, TIERS, chanceRinhaPct, efeitosDoTier, idadeEmDias,
+  ANIMAIS, CONFIG, CONFIG_BOMBAS, CONFIG_CHUVA, CONFIG_VERSAO, FAIXAS_ROLETA, GALOS, TIERS, chanceRinhaPct, efeitosDoTier, idadeEmDias,
   retornoMedioRinhaPct, type Tier,
 } from '@galinheiro/game-core';
 import type { Consulta } from '../db/banco';
@@ -142,6 +142,8 @@ export function configPublica(vapidPublicKey: string | null, relogioAjustavel: b
         retornoMedioPct: retornoMedioRinhaPct(galo),
       })),
     },
+    chuva: { apostaMinX100: CONFIG_CHUVA.apostaMinX100, apostaMaxX100: CONFIG_CHUVA.apostaMaxX100, retornoPct: CONFIG_CHUVA.retornoPct },
+    bombas: { apostasX100: [...CONFIG_BOMBAS.apostasX100], retornoPct: CONFIG_BOMBAS.retornoPct },
     termos: { versao: TERMOS_VERSAO },
     push: { vapidPublicKey },
     dev: { relogioAjustavel },

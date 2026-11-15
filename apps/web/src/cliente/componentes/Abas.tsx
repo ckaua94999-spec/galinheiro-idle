@@ -6,7 +6,7 @@ import { CONFIG } from '@galinheiro/game-core';
 import { motion } from 'motion/react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { IconeColecao, IconeGalinheiro, IconeLoja, IconeRoleta } from '../arte/Icones';
+import { IconeColecao, IconeGalinheiro, IconeLoja, IconeManual, IconeRoleta } from '../arte/Icones';
 import { contarProntos } from '../derivados';
 import type { Estado } from '../estado';
 import { EASE, MOLA } from '../movimento';
@@ -38,6 +38,7 @@ export function Abas({ estado, caminhoAtivo }: { estado: Estado; /** força a ab
       tut: 'aba-roleta',
     },
     { href: '/colecao', rotulo: 'Coleção', Icone: IconeColecao, badge: null, tut: 'aba-colecao' },
+    { href: '/manual', rotulo: 'Manual', Icone: IconeManual, badge: null, tut: 'aba-manual' },
   ];
 
   return (

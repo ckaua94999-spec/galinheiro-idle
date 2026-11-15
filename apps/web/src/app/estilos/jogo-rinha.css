@@ -158,38 +158,84 @@
     color: var(--color-texto);
   }
 
-  /* arena: picadeiro de terra batida com cerca e platéia de feno */
+  /* arena: fim de tarde, holofotes, platéia pulando e o picadeiro de terra */
   .rinha-arena {
     position: relative;
+    isolation: isolate;
     overflow: hidden;
     border-radius: 22px;
     border: 3px solid #3b200c;
-    background:
-      radial-gradient(120% 60% at 50% 0%, #ffd9a0 0%, transparent 60%),
-      linear-gradient(180deg, #8fd0ff 0%, #c5e8ff 34%, #e9c48a 34.5%, #d9a466 70%, #b97c45 100%);
+    background: linear-gradient(180deg, #24155a 0%, #5b3fd0 26%, #ff8f5a 44%, #f0cf96 44.5%, #d9a466 72%, #a8703c 100%);
     box-shadow:
-      0 4px 0 #3b200c,
-      inset 0 3px 0 rgb(255 255 255 / 0.4);
-    padding: 10px 10px 8px;
+      0 5px 0 #3b200c,
+      0 12px 18px rgb(43 26 15 / 0.3),
+      inset 0 3px 0 rgb(255 255 255 / 0.3);
+    padding: 10px 10px 6px;
   }
-  .rinha-arena[data-tremor] {
-    animation: gi-rinha-tremor 0.34s steps(6) both;
+  .rinha-arena[data-fim='derrota'] .rinha-holofotes {
+    opacity: 0.25;
+  }
+  .rinha-holofotes {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    transform-origin: 50% 0;
+    background:
+      conic-gradient(from 148deg at 10% 0%, transparent 0 6deg, rgb(255 246 176 / 0.3) 6deg 26deg, transparent 26deg),
+      conic-gradient(from 186deg at 90% 0%, transparent 0 6deg, rgb(255 246 176 / 0.3) 6deg 26deg, transparent 26deg);
+    animation: gi-rinha-holofote 2.2s ease-in-out infinite alternate;
+  }
+  .rinha-plateia {
+    position: absolute;
+    left: -10px;
+    right: -10px;
+    top: 33%;
+    height: 13%;
+    z-index: -1;
+    background:
+      radial-gradient(circle at 50% 100%, #1c1008 0 60%, transparent 62%) 0 0 / 24px 100% repeat-x,
+      radial-gradient(circle at 50% 100%, #3b200c 0 52%, transparent 54%) 12px 4px / 24px 100% repeat-x;
+    opacity: 0.7;
+    animation: gi-rinha-torcida 0.32s ease-in-out infinite alternate;
+  }
+  .rinha-bandeirolas {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 44px;
+    height: 13px;
+    z-index: -1;
+    background:
+      conic-gradient(from 150deg at 50% 0%, #ff5a48 60deg, transparent 0) 0 0 / 40px 13px repeat-x,
+      conic-gradient(from 150deg at 50% 0%, #ffc93c 60deg, transparent 0) 20px 0 / 40px 13px repeat-x;
+    opacity: 0.95;
   }
   .rinha-arena-chao {
     position: absolute;
-    left: 6%;
-    right: 6%;
-    bottom: 26px;
-    height: 46%;
+    left: 5%;
+    right: 5%;
+    bottom: 14px;
+    height: 42%;
+    z-index: -1;
     border-radius: 50%;
-    background: radial-gradient(closest-side, #f0cf96 0%, #d8a868 70%, transparent 100%);
-    border: 3px dashed rgb(110 60 20 / 0.35);
+    background: radial-gradient(closest-side, #f6dcae 0%, #dcae70 72%, transparent 100%);
+    border: 3px dashed rgb(110 60 20 / 0.4);
   }
+  .rinha-flash {
+    position: absolute;
+    inset: 0;
+    z-index: 9;
+    background: #fff;
+    pointer-events: none;
+    animation: gi-rinha-flash 0.24s ease-out both;
+  }
+
+  /* barras de vida de jogo de luta: caem na hora e deixam um rastro branco */
   .rinha-vidas {
     position: relative;
     display: grid;
     grid-template-columns: 1fr auto 1fr;
-    align-items: center;
+    align-items: end;
     gap: 8px;
   }
   .rinha-vida {
@@ -200,36 +246,73 @@
   .rinha-vida[data-lado='rival'] {
     text-align: right;
   }
-  .rinha-vida[data-lado='rival'] .barra {
-    scale: -1 1;
-  }
   .rinha-vida-nome {
     font-size: 12.5px;
     font-weight: 900;
     color: #fff;
-    --contorno-cor: #3b200c;
+    --contorno-cor: #1c1008;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
-  .rinha-vida .barra-preenchimento {
-    transition: width 0.25s var(--ease-suave, ease-out);
+  .rinha-hp {
+    position: relative;
+    display: block;
+    height: 18px;
+    overflow: hidden;
+    border-radius: 7px;
+    border: 2.5px solid #1c1008;
+    background: #2b1a0f;
+    box-shadow: 0 2px 0 rgb(0 0 0 / 0.35), inset 0 2px 3px rgb(0 0 0 / 0.5);
+    --hp-clara: #c8f59a;
+    --hp-base: #4fb832;
+  }
+  .rinha-vida[data-lado='rival'] .rinha-hp {
+    scale: -1 1;
+  }
+  .rinha-hp[data-cor='amarela'] {
+    --hp-clara: #fff1a8;
+    --hp-base: #f5a301;
+  }
+  .rinha-hp[data-cor='vermelha'] {
+    --hp-clara: #ffb0a0;
+    --hp-base: #e2292a;
+    animation: gi-rinha-perigo 0.4s steps(2) infinite;
+  }
+  .rinha-hp-rastro,
+  .rinha-hp-cheio {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+  }
+  .rinha-hp-rastro {
+    background: #fff;
+    transition: width 0.4s ease-in 0.16s;
+  }
+  .rinha-hp-cheio {
+    background: linear-gradient(180deg, var(--hp-clara) 0%, var(--hp-base) 55%);
+    box-shadow: inset 0 -3px 0 rgb(0 0 0 / 0.18);
+    transition: width 0.08s linear;
   }
   .rinha-vs {
     font-family: var(--font-titulo);
-    font-size: 22px;
+    font-size: 24px;
+    line-height: 1;
     color: #ffc93c;
     --contorno-cor: #6e1208;
   }
+
+  /* ringue e galos */
   .rinha-ringue {
     position: relative;
-    height: 168px;
+    height: 182px;
   }
   .rinha-galo {
     position: absolute;
     bottom: 4px;
     width: 46%;
-    max-width: 170px;
+    max-width: 176px;
     aspect-ratio: 1;
   }
   .rinha-galo[data-lado='jogador'] {
@@ -239,78 +322,151 @@
     right: 2%;
   }
   .rinha-galo-arte {
+    position: relative;
     width: 100%;
     height: 100%;
     overflow: visible;
   }
+  /* parados, os dois gingam rápido e fora de fase: prontos para pular */
   .rinha-galo:not([data-acao]) .rinha-galo-arte {
-    animation: gi-rinha-ginga 0.9s var(--ease-senoide) infinite;
+    animation: gi-rinha-ginga 0.46s var(--ease-senoide, ease-in-out) infinite;
   }
   .rinha-galo[data-lado='rival']:not([data-acao]) .rinha-galo-arte {
-    animation-delay: -0.45s;
+    animation-delay: -0.23s;
   }
-  /* estocada: recua, avança até o meio e volta */
   .rinha-galo[data-lado='jogador'][data-acao='ataca'] {
-    animation: gi-rinha-ataca-d 0.62s cubic-bezier(0.3, 0, 0.2, 1) both;
+    z-index: 2;
+    animation: gi-rinha-ataca-d 0.3s cubic-bezier(0.3, 0, 0.2, 1) both;
   }
   .rinha-galo[data-lado='rival'][data-acao='ataca'] {
-    animation: gi-rinha-ataca-e 0.62s cubic-bezier(0.3, 0, 0.2, 1) both;
+    z-index: 2;
+    animation: gi-rinha-ataca-e 0.3s cubic-bezier(0.3, 0, 0.2, 1) both;
   }
   .rinha-galo[data-lado='jogador'][data-acao='apanha'] {
-    animation: gi-rinha-apanha-d 0.6s ease-out both;
+    animation: gi-rinha-apanha-d 0.32s ease-out both;
   }
   .rinha-galo[data-lado='rival'][data-acao='apanha'] {
-    animation: gi-rinha-apanha-e 0.6s ease-out both;
+    animation: gi-rinha-apanha-e 0.32s ease-out both;
   }
   .rinha-galo[data-acao='apanha'] .rinha-galo-arte {
-    animation: gi-rinha-pisca 0.6s steps(2) both;
+    animation: gi-rinha-branco 0.3s steps(1) both;
   }
   .rinha-galo[data-acao='desvia'] {
-    animation: gi-rinha-desvia 0.6s var(--ease-elastico, ease-out) both;
+    animation: gi-rinha-desvia 0.28s var(--ease-elastico, ease-out) both;
   }
   .rinha-galo[data-lado='jogador'][data-acao='cai'] {
-    animation: gi-rinha-cai-d 0.9s cubic-bezier(0.5, 0, 0.8, 0.6) both;
+    animation: gi-rinha-cai-d 0.5s cubic-bezier(0.3, 1.3, 0.6, 1) both;
   }
   .rinha-galo[data-lado='rival'][data-acao='cai'] {
-    animation: gi-rinha-cai-e 0.9s cubic-bezier(0.5, 0, 0.8, 0.6) both;
+    animation: gi-rinha-cai-e 0.5s cubic-bezier(0.3, 1.3, 0.6, 1) both;
   }
   .rinha-galo[data-acao='cai'] .rinha-galo-arte {
-    filter: grayscale(0.7);
+    filter: grayscale(0.75);
   }
   .rinha-galo[data-acao='vence'] {
-    animation: gi-rinha-vence 0.8s var(--ease-elastico, ease-out) 2 both;
+    z-index: 2;
+    animation: gi-rinha-vence 0.44s var(--ease-elastico, ease-out) infinite;
   }
-
-  /* impacto no galo que apanhou: estouro, penas e o número de dano subindo */
-  .rinha-impacto {
+  /* rastro de velocidade atrás de quem ataca */
+  .rinha-rastro {
     position: absolute;
-    bottom: 58px;
+    top: 28%;
+    height: 44%;
+    width: 90%;
+    border-radius: 999px;
+    opacity: 0;
+    pointer-events: none;
+  }
+  .rinha-galo[data-lado='jogador'] .rinha-rastro {
+    right: 55%;
+    background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.85));
+  }
+  .rinha-galo[data-lado='rival'] .rinha-rastro {
+    left: 55%;
+    background: linear-gradient(270deg, transparent, rgb(255 255 255 / 0.85));
+  }
+  .rinha-galo[data-acao='ataca'] .rinha-rastro {
+    animation: gi-rinha-rastro 0.3s ease-out both;
+  }
+  /* poeira no chão de onde o galo arrancou */
+  .rinha-poeira {
+    position: absolute;
+    bottom: 6px;
     width: 0;
     height: 0;
     pointer-events: none;
   }
+  .rinha-poeira[data-lado='jogador'] {
+    left: 20%;
+  }
+  .rinha-poeira[data-lado='rival'] {
+    right: 20%;
+  }
+  .rinha-poeira > i {
+    position: absolute;
+    width: 22px;
+    height: 16px;
+    margin: -8px -11px;
+    border-radius: 50%;
+    background: #f6e3c0;
+    opacity: 0;
+    animation: gi-rinha-poeira 0.4s ease-out both;
+  }
+  .rinha-poeira > i:nth-child(1) { --px: -22px; --py: -10px; }
+  .rinha-poeira > i:nth-child(2) { --px: 2px; --py: -18px; animation-delay: 0.03s; }
+  .rinha-poeira > i:nth-child(3) { --px: 22px; --py: -8px; animation-delay: 0.06s; }
+
+  /* impacto: corte, estouro, penas e o número de dano */
+  .rinha-impacto {
+    position: absolute;
+    bottom: 76px;
+    width: 0;
+    height: 0;
+    translate: var(--dx, 0) var(--dy, 0);
+    pointer-events: none;
+    z-index: 4;
+  }
   .rinha-impacto[data-lado='rival'] {
-    right: 30%;
+    right: 27%;
   }
   .rinha-impacto[data-lado='jogador'] {
-    left: 30%;
+    left: 27%;
+  }
+  .rinha-corte {
+    position: absolute;
+    left: -52px;
+    top: -52px;
+    width: 104px;
+    height: 104px;
+    border-radius: 50%;
+    border: 0 solid transparent;
+    border-top: 9px solid #fff;
+    rotate: -35deg;
+    animation: gi-rinha-corte 0.22s ease-out both;
+  }
+  .rinha-corte[data-critico] {
+    left: -70px;
+    top: -70px;
+    width: 140px;
+    height: 140px;
+    border-top: 13px solid #fff6b0;
   }
   .rinha-estouro {
     position: absolute;
-    left: -38px;
-    top: -38px;
-    width: 76px;
-    height: 76px;
+    left: -44px;
+    top: -44px;
+    width: 88px;
+    height: 88px;
     background: conic-gradient(from 10deg, #fff6b0 0 8%, transparent 8% 14%, #ffd23f 14% 24%, transparent 24% 32%, #fff6b0 32% 42%, transparent 42% 50%, #ffd23f 50% 60%, transparent 60% 68%, #fff6b0 68% 78%, transparent 78% 86%, #ffd23f 86% 96%, transparent 96%);
     -webkit-mask: radial-gradient(closest-side, #000 30%, transparent 100%);
     mask: radial-gradient(closest-side, #000 30%, transparent 100%);
-    animation: gi-rinha-estouro 0.42s ease-out 0.18s both;
+    animation: gi-rinha-estouro 0.28s ease-out both;
   }
   .rinha-estouro[data-critico] {
-    left: -56px;
-    top: -56px;
-    width: 112px;
-    height: 112px;
+    left: -70px;
+    top: -70px;
+    width: 140px;
+    height: 140px;
     background: conic-gradient(from 10deg, #ff5a48 0 8%, transparent 8% 14%, #ffd23f 14% 24%, transparent 24% 32%, #ff5a48 32% 42%, transparent 42% 50%, #ffd23f 50% 60%, transparent 60% 68%, #ff5a48 68% 78%, transparent 78% 86%, #ffd23f 86% 96%, transparent 96%);
   }
   .rinha-penas > i {
@@ -322,112 +478,169 @@
     border-radius: 50% 50% 50% 50% / 70% 70% 30% 30%;
     background: #fff4e2;
     border: 2px solid #8a4a22;
-    animation: gi-rinha-pena 0.9s ease-out 0.2s both;
+    animation: gi-rinha-pena 0.7s ease-out both;
   }
-  .rinha-penas > i:nth-child(1) { --dx: -38px; --dy: -46px; --r: -80deg; }
-  .rinha-penas > i:nth-child(2) { --dx: 34px; --dy: -52px; --r: 120deg; }
-  .rinha-penas > i:nth-child(3) { --dx: -22px; --dy: -70px; --r: 200deg; background: #ffb73d; }
-  .rinha-penas > i:nth-child(4) { --dx: 26px; --dy: -24px; --r: -160deg; background: #d8432f; }
+  .rinha-penas > i:nth-child(1) { --dx: -44px; --dy: -52px; --r: -80deg; }
+  .rinha-penas > i:nth-child(2) { --dx: 40px; --dy: -58px; --r: 120deg; }
+  .rinha-penas > i:nth-child(3) { --dx: -24px; --dy: -78px; --r: 200deg; background: #ffb73d; }
+  .rinha-penas > i:nth-child(4) { --dx: 30px; --dy: -26px; --r: -160deg; background: #d8432f; }
+  .rinha-penas > i:nth-child(5) { --dx: -58px; --dy: -18px; --r: 90deg; }
+  .rinha-penas > i:nth-child(6) { --dx: 56px; --dy: -40px; --r: -220deg; background: #ffb73d; }
   .rinha-dano {
     position: absolute;
     left: 50%;
-    top: -64px;
+    top: -70px;
     translate: -50% 0;
     display: grid;
     justify-items: center;
     font-family: var(--font-titulo);
-    font-size: 30px;
+    font-size: 36px;
     line-height: 1;
     color: #fff;
     --contorno-cor: #b42318;
     white-space: nowrap;
-    animation: gi-rinha-dano 0.85s ease-out 0.2s both;
+    animation: gi-rinha-dano 0.75s ease-out both;
   }
   .rinha-dano small {
-    font-size: 15px;
+    font-size: 16px;
     color: #ffd23f;
   }
   .rinha-dano-critico {
-    font-size: 40px;
+    font-size: 54px;
+    color: #ffe066;
   }
   .rinha-dano-desvio {
-    font-size: 20px;
+    font-size: 21px;
     --contorno-cor: #1868d0;
+  }
+  .rinha-combo {
+    position: absolute;
+    top: 2px;
+    z-index: 5;
+    font-family: var(--font-titulo);
+    font-size: 22px;
+    line-height: 1;
+    color: #ffe066;
+    --contorno-cor: #6e1208;
+    rotate: -6deg;
+    animation: gi-rinha-combo 0.22s var(--ease-elastico, ease-out) both;
+  }
+  .rinha-combo[data-lado='jogador'] {
+    left: 4%;
+  }
+  .rinha-combo[data-lado='rival'] {
+    right: 4%;
+    rotate: 6deg;
+    color: #ff9a8a;
+  }
+
+  /* nocaute */
+  .rinha-onda {
+    position: absolute;
+    left: 50%;
+    top: 55%;
+    width: 60px;
+    height: 60px;
+    margin: -30px;
+    border-radius: 50%;
+    border: 6px solid #fff6b0;
+    pointer-events: none;
+    animation: gi-rinha-onda 0.5s ease-out both;
   }
   .rinha-ko {
     position: absolute;
     left: 50%;
     top: 30%;
+    z-index: 6;
     translate: -50% -50%;
     font-family: var(--font-titulo);
-    font-size: 44px;
-    color: #ffd23f;
+    font-size: 56px;
+    line-height: 1;
+    white-space: nowrap;
+    color: #ffe066;
     --contorno-cor: #6e1208;
-    animation: gi-tela-pop 0.5s var(--ease-elastico, ease-out) both;
+    text-shadow: 0 0 24px rgb(255 214 70 / 0.9);
+    animation: gi-rinha-ko 0.34s cubic-bezier(0.2, 1.6, 0.4, 1) both;
   }
   .rinha-ko[data-fim='derrota'] {
     color: #fff;
-    --contorno-cor: #3b200c;
+    --contorno-cor: #b42318;
+    text-shadow: none;
   }
+  .rinha-ko-valor {
+    position: absolute;
+    left: 50%;
+    top: 62%;
+    z-index: 6;
+    translate: -50% -50%;
+    font-family: var(--font-titulo);
+    font-size: 40px;
+    line-height: 1;
+    white-space: nowrap;
+    color: #b6f08a;
+    --contorno-cor: #174d0b;
+    animation: gi-rinha-ko 0.34s cubic-bezier(0.2, 1.6, 0.4, 1) 0.18s both;
+  }
+  .rinha-ko-valor[data-fim='derrota'] {
+    color: #ffb0a0;
+    --contorno-cor: #6e0f08;
+  }
+  .rinha-chuva-penas > i {
+    position: absolute;
+    top: -16px;
+    width: 9px;
+    height: 14px;
+    border-radius: 2px;
+    background: #ffe066;
+    animation: gi-rinha-confete 1.1s linear infinite;
+  }
+  .rinha-chuva-penas[data-fim='vitoria'] > i:nth-child(4n + 1) { background: #ff7ab0; }
+  .rinha-chuva-penas[data-fim='vitoria'] > i:nth-child(4n + 2) { background: #7cc4ff; }
+  .rinha-chuva-penas[data-fim='vitoria'] > i:nth-child(4n + 3) { background: #8fe060; }
+  .rinha-chuva-penas[data-fim='derrota'] > i {
+    border-radius: 50% 50% 50% 50% / 70% 70% 30% 30%;
+    background: #e6dcc8;
+    animation-duration: 1.9s;
+  }
+  .rinha-chuva-penas > i:nth-child(1) { left: 5%; animation-delay: -0.1s; }
+  .rinha-chuva-penas > i:nth-child(2) { left: 12%; animation-delay: -0.6s; }
+  .rinha-chuva-penas > i:nth-child(3) { left: 19%; animation-delay: -0.3s; }
+  .rinha-chuva-penas > i:nth-child(4) { left: 26%; animation-delay: -0.9s; }
+  .rinha-chuva-penas > i:nth-child(5) { left: 33%; animation-delay: -0.45s; }
+  .rinha-chuva-penas > i:nth-child(6) { left: 40%; animation-delay: -0.75s; }
+  .rinha-chuva-penas > i:nth-child(7) { left: 47%; animation-delay: -0.2s; }
+  .rinha-chuva-penas > i:nth-child(8) { left: 54%; animation-delay: -0.85s; }
+  .rinha-chuva-penas > i:nth-child(9) { left: 61%; animation-delay: -0.5s; }
+  .rinha-chuva-penas > i:nth-child(10) { left: 68%; animation-delay: -1s; }
+  .rinha-chuva-penas > i:nth-child(11) { left: 75%; animation-delay: -0.35s; }
+  .rinha-chuva-penas > i:nth-child(12) { left: 82%; animation-delay: -0.65s; }
+  .rinha-chuva-penas > i:nth-child(13) { left: 89%; animation-delay: -0.05s; }
+  .rinha-chuva-penas > i:nth-child(14) { left: 95%; animation-delay: -0.8s; }
+
   .rinha-narracao {
-    position: relative;
-    min-height: 1.4em;
-    margin-top: 4px;
+    min-height: 1.5em;
+    margin-top: 8px;
     text-align: center;
-    font-size: 14px;
-    font-weight: 900;
+    font-family: var(--font-titulo);
+    font-size: 15px;
+    line-height: 1.4;
     color: #3b200c;
   }
-  .rinha-pular {
-    display: flex;
-    margin: 10px auto 0;
-    gap: 6px;
-  }
-
-  /* resultado */
-  .rinha-resultado {
-    margin-top: 12px;
-    padding: 16px;
-    text-align: center;
-  }
-  .rinha-resultado-titulo {
-    font-family: var(--font-titulo);
-    font-size: 26px;
-    color: #fff;
-    --contorno-cor: #3b200c;
-  }
-  .rinha-resultado[data-venceu] .rinha-resultado-titulo {
-    color: #ffd23f;
-    --contorno-cor: #5a3a00;
-  }
-  .rinha-resultado-valor {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    margin-top: 4px;
-    font-family: var(--font-titulo);
-    font-size: 30px;
-    color: #b42318;
-  }
-  .rinha-resultado[data-venceu] .rinha-resultado-valor {
-    color: #1d7a14;
-  }
-  .rinha-resultado-sorteio {
-    margin-top: 4px;
-    font-size: 12px;
+  .rinha-narracao[data-fim] {
+    font-family: inherit;
+    font-size: 12.5px;
     font-weight: 800;
     color: var(--color-texto-suave);
   }
 
-  /* escolha do galo e da aposta */
-  .rinha-secao {
-    margin-top: 14px;
-    padding: 14px;
+  /* controles (sempre na tela) */
+  .rinha-controles {
+    display: grid;
+    gap: 8px;
+    margin-top: 8px;
   }
-  .rinha-secao-titulo {
-    font-family: var(--font-titulo);
-    font-size: 19px;
-    margin-bottom: 10px;
+  .rinha-controles[data-travado] > :not(.rinha-lutar) {
+    opacity: 0.55;
   }
   .rinha-galos {
     display: grid;
@@ -438,49 +651,51 @@
     display: grid;
     justify-items: center;
     align-content: start;
-    gap: 2px;
-    padding: 8px 6px 10px;
+    gap: 1px;
+    padding: 6px 4px 8px;
     border-radius: 16px;
     border: 3px solid #e6c88e;
     background: #fffaf0;
+    box-shadow: 0 3px 0 #c99a55;
     color: var(--color-texto);
     text-align: center;
     cursor: pointer;
-    transition: translate 0.12s, border-color 0.12s;
+    transition: translate 0.1s, border-color 0.1s;
   }
   .rinha-opcao[aria-checked='true'] {
     border-color: #1868d0;
     background: #eaf4ff;
-    box-shadow: 0 0 0 2px #1868d0;
-    translate: 0 -2px;
+    box-shadow: 0 0 0 2px #1868d0, 0 4px 0 #0b2d66;
+    translate: 0 -3px;
+  }
+  .rinha-opcao:active:not(:disabled) {
+    translate: 0 1px;
   }
   .rinha-opcao:focus-visible {
     outline: 3px solid var(--color-compra-escura);
     outline-offset: 2px;
   }
   .rinha-opcao-arte {
-    width: 64px;
-    height: 64px;
+    width: 58px;
+    height: 58px;
+  }
+  .rinha-opcao[aria-checked='true'] .rinha-opcao-arte {
+    animation: gi-rinha-ginga 0.46s var(--ease-senoide, ease-in-out) infinite;
   }
   .rinha-opcao-nome {
     font-family: var(--font-titulo);
     font-size: 16px;
+    line-height: 1.1;
   }
   .rinha-opcao-dado {
-    font-size: 12px;
+    font-size: 11.5px;
     font-weight: 800;
+    line-height: 1.25;
     color: var(--color-texto-suave);
   }
   .rinha-opcao-dado b {
-    font-size: 14px;
+    font-size: 12.5px;
     color: var(--color-texto);
-  }
-  .rinha-opcao-desc {
-    margin-top: 4px;
-    font-size: 11.5px;
-    font-weight: 700;
-    line-height: 1.25;
-    color: var(--color-texto-suave);
   }
   .rinha-aposta {
     display: flex;
@@ -488,21 +703,11 @@
     justify-content: center;
     gap: 14px;
   }
-  .rinha-aposta-valor {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    min-width: 5ch;
-    justify-content: center;
-    font-family: var(--font-titulo);
-    font-size: 32px;
-  }
   .rinha-fichas {
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
     gap: 6px;
-    margin-top: 10px;
   }
   .rinha-ficha {
     min-width: 48px;
@@ -511,50 +716,35 @@
     border-radius: 999px;
     border: 2px solid #c27c00;
     background: linear-gradient(180deg, #fff1a8, #ffc93c);
+    box-shadow: 0 3px 0 #a86a00;
     font-weight: 900;
     color: #5a3a00;
     cursor: pointer;
   }
+  .rinha-ficha:active:not(:disabled) {
+    translate: 0 2px;
+    box-shadow: 0 1px 0 #a86a00;
+  }
   .rinha-ficha[aria-pressed='true'] {
-    box-shadow: 0 0 0 3px #1868d0;
+    box-shadow: 0 0 0 3px #1868d0, 0 3px 0 #a86a00;
   }
   .rinha-ficha:disabled {
     opacity: 0.4;
     cursor: not-allowed;
   }
-  .rinha-saldo {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 4px;
-    margin-top: 10px;
-    font-size: 13.5px;
-    font-weight: 800;
-    color: var(--color-texto-suave);
-  }
-  .rinha-conta {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-    margin-top: 10px;
-  }
-  .rinha-conta > div {
-    padding: 8px;
-    border-radius: 12px;
-    background: rgb(201 154 85 / 0.14);
+  .rinha-conta-linha {
     text-align: center;
-  }
-  .rinha-conta dt {
-    font-size: 12px;
-    font-weight: 800;
+    font-size: 13.5px;
+    font-weight: 700;
     color: var(--color-texto-suave);
   }
-  .rinha-conta dd {
-    font-family: var(--font-titulo);
-    font-size: 20px;
+  .rinha-conta-linha b {
+    font-weight: 900;
+    color: var(--color-texto);
   }
-  .rinha-lutar {
-    margin-top: 14px;
+  .botao.rinha-lutar {
+    min-height: 64px;
+    font-size: 26px;
   }
   .rinha-aviso {
     margin-top: 10px;
@@ -563,6 +753,15 @@
     line-height: 1.4;
     text-align: center;
     color: var(--color-texto-suave);
+  }
+  .rinha-secao {
+    margin-top: 14px;
+    padding: 14px;
+  }
+  .rinha-secao-titulo {
+    font-family: var(--font-titulo);
+    font-size: 19px;
+    margin-bottom: 10px;
   }
   .rinha-historico {
     display: grid;
@@ -664,8 +863,8 @@
 }
 
 @keyframes gi-rinha-ginga {
-  0%, 100% { translate: 0 0; rotate: 0deg; }
-  50% { translate: 0 -3px; rotate: -2deg; }
+  0%, 100% { translate: 0 0; rotate: 0deg; scale: 1; }
+  50% { translate: 0 -5px; rotate: -3deg; scale: 1.02 0.98; }
 }
 @keyframes gi-rinha-encara {
   0%, 100% { translate: 0 0; }
@@ -675,76 +874,117 @@
   0%, 100% { translate: 0 0; }
   50% { translate: -4px -2px; }
 }
+@keyframes gi-rinha-holofote {
+  0% { rotate: -4deg; }
+  100% { rotate: 4deg; }
+}
+@keyframes gi-rinha-torcida {
+  0% { translate: 0 0; }
+  100% { translate: 0 -4px; }
+}
+@keyframes gi-rinha-flash {
+  /* clarão curto e parcial: no máximo ~2 por segundo (crítico e nocaute) */
+  0% { opacity: 0.6; }
+  100% { opacity: 0; }
+}
+@keyframes gi-rinha-perigo {
+  0% { box-shadow: 0 2px 0 rgb(0 0 0 / 0.35), 0 0 0 2px #ff5a48; }
+  100% { box-shadow: 0 2px 0 rgb(0 0 0 / 0.35), 0 0 0 0 transparent; }
+}
 @keyframes gi-rinha-ataca-d {
-  0% { translate: 0 0; rotate: 0deg; }
-  22% { translate: -14px 0; rotate: -6deg; }
-  48% { translate: 52% -18px; rotate: 10deg; }
-  62% { translate: 46% -6px; rotate: 4deg; }
-  100% { translate: 0 0; rotate: 0deg; }
+  0% { translate: 0 0; rotate: 0deg; scale: 1; }
+  16% { translate: -18px 2px; rotate: -10deg; scale: 0.94 1.06; }
+  36% { translate: 60% -24px; rotate: 16deg; scale: 1.14; }
+  54% { translate: 52% -4px; rotate: 6deg; scale: 1.04; }
+  100% { translate: 0 0; rotate: 0deg; scale: 1; }
 }
 @keyframes gi-rinha-ataca-e {
-  0% { translate: 0 0; rotate: 0deg; }
-  22% { translate: 14px 0; rotate: 6deg; }
-  48% { translate: -52% -18px; rotate: -10deg; }
-  62% { translate: -46% -6px; rotate: -4deg; }
-  100% { translate: 0 0; rotate: 0deg; }
+  0% { translate: 0 0; rotate: 0deg; scale: 1; }
+  16% { translate: 18px 2px; rotate: 10deg; scale: 0.94 1.06; }
+  36% { translate: -60% -24px; rotate: -16deg; scale: 1.14; }
+  54% { translate: -52% -4px; rotate: -6deg; scale: 1.04; }
+  100% { translate: 0 0; rotate: 0deg; scale: 1; }
+}
+@keyframes gi-rinha-rastro {
+  0%, 12% { opacity: 0; scale: 0.3 1; }
+  36% { opacity: 1; scale: 1 1; }
+  70%, 100% { opacity: 0; scale: 1.2 0.4; }
+}
+@keyframes gi-rinha-poeira {
+  0% { translate: 0 0; scale: 0.3; opacity: 0.9; }
+  100% { translate: var(--px) var(--py); scale: 1.5; opacity: 0; }
 }
 @keyframes gi-rinha-apanha-d {
   0%, 30% { translate: 0 0; rotate: 0deg; }
-  45% { translate: -22px -6px; rotate: -14deg; }
-  70% { translate: -8px 0; rotate: -4deg; }
+  42% { translate: -30px -10px; rotate: -20deg; }
+  70% { translate: -10px 0; rotate: -5deg; }
   100% { translate: 0 0; rotate: 0deg; }
 }
 @keyframes gi-rinha-apanha-e {
   0%, 30% { translate: 0 0; rotate: 0deg; }
-  45% { translate: 22px -6px; rotate: 14deg; }
-  70% { translate: 8px 0; rotate: 4deg; }
+  42% { translate: 30px -10px; rotate: 20deg; }
+  70% { translate: 10px 0; rotate: 5deg; }
   100% { translate: 0 0; rotate: 0deg; }
 }
-@keyframes gi-rinha-pisca {
-  0%, 30% { opacity: 1; }
-  40%, 60% { opacity: 0.35; }
-  100% { opacity: 1; }
+@keyframes gi-rinha-branco {
+  0%, 30% { filter: none; }
+  34%, 55% { filter: brightness(4) saturate(0); }
+  56%, 100% { filter: none; }
 }
 @keyframes gi-rinha-desvia {
-  0%, 25% { translate: 0 0; }
-  45% { translate: 0 -34px; }
-  100% { translate: 0 0; }
+  0%, 20% { translate: 0 0; }
+  45% { translate: 0 -40px; rotate: 8deg; }
+  100% { translate: 0 0; rotate: 0deg; }
 }
 @keyframes gi-rinha-cai-d {
   0% { translate: 0 0; rotate: 0deg; }
-  100% { translate: -10px 22px; rotate: -88deg; }
+  35% { translate: -40px -46px; rotate: -60deg; }
+  100% { translate: -14px 24px; rotate: -92deg; }
 }
 @keyframes gi-rinha-cai-e {
   0% { translate: 0 0; rotate: 0deg; }
-  100% { translate: 10px 22px; rotate: 88deg; }
+  35% { translate: 40px -46px; rotate: 60deg; }
+  100% { translate: 14px 24px; rotate: 92deg; }
 }
 @keyframes gi-rinha-vence {
   0%, 100% { translate: 0 0; scale: 1; }
-  40% { translate: 0 -26px; scale: 1.08 0.94; }
-  60% { translate: 0 0; scale: 0.94 1.06; }
+  40% { translate: 0 -30px; scale: 1.1 0.92; }
+  70% { translate: 0 0; scale: 0.92 1.08; }
 }
-@keyframes gi-rinha-tremor {
-  0% { translate: 0 0; }
-  20% { translate: -6px 3px; }
-  40% { translate: 6px -3px; }
-  60% { translate: -4px 2px; }
-  80% { translate: 3px -1px; }
-  100% { translate: 0 0; }
+@keyframes gi-rinha-corte {
+  0% { scale: 0.4; opacity: 1; rotate: -80deg; }
+  100% { scale: 1.3; opacity: 0; rotate: 10deg; }
 }
 @keyframes gi-rinha-estouro {
-  0% { scale: 0.2; opacity: 0; }
-  30% { scale: 1.1; opacity: 1; }
-  100% { scale: 1.4; opacity: 0; }
+  0% { scale: 0.2; opacity: 1; }
+  35% { scale: 1.15; opacity: 1; }
+  100% { scale: 1.5; opacity: 0; }
 }
 @keyframes gi-rinha-pena {
-  0% { translate: 0 0; rotate: 0deg; opacity: 0; }
-  15% { opacity: 1; }
-  100% { translate: var(--dx) var(--dy); rotate: var(--r); opacity: 0; }
+  0% { translate: 0 0; rotate: 0deg; opacity: 1; }
+  60% { opacity: 1; }
+  100% { translate: var(--dx) calc(var(--dy) + 30px); rotate: var(--r); opacity: 0; }
 }
 @keyframes gi-rinha-dano {
-  0% { translate: -50% 10px; scale: 0.4; opacity: 0; }
-  25% { translate: -50% -6px; scale: 1.15; opacity: 1; }
-  70% { translate: -50% -16px; scale: 1; opacity: 1; }
-  100% { translate: -50% -30px; scale: 1; opacity: 0; }
+  0% { translate: -50% 14px; scale: 0.3; opacity: 0; }
+  16% { translate: -50% -8px; scale: 1.35; opacity: 1; }
+  30% { scale: 1; }
+  70% { translate: -50% -20px; scale: 1; opacity: 1; }
+  100% { translate: -50% -40px; scale: 1; opacity: 0; }
+}
+@keyframes gi-rinha-combo {
+  0% { scale: 2.2; opacity: 0; }
+  100% { scale: 1; opacity: 1; }
+}
+@keyframes gi-rinha-onda {
+  0% { scale: 0.4; opacity: 1; }
+  100% { scale: 7; opacity: 0; }
+}
+@keyframes gi-rinha-ko {
+  0% { scale: 3.4; opacity: 0; }
+  100% { scale: 1; opacity: 1; }
+}
+@keyframes gi-rinha-confete {
+  0% { translate: 0 0; rotate: 0deg; }
+  100% { translate: 14px 230px; rotate: 520deg; }
 }

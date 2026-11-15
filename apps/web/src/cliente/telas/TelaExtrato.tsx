@@ -10,7 +10,7 @@ import { CalendarDays, ChevronLeft, Gift, Hammer, LockOpen, Swords, Trophy, Wren
 import { motion } from 'motion/react';
 import Link from 'next/link';
 import { chamar } from '../api';
-import { IconeCesto, IconeRoleta, Moeda } from '../arte/Icones';
+import { IconeCesto, IconeRoleta, Moeda, Ovo } from '../arte/Icones';
 import { IconeConvite } from '../convites/IconeConvite';
 import { useEstado } from '../estado';
 import { IconeTicket } from '../intercambio/IconeTicket';
@@ -38,6 +38,14 @@ function descricao(t: TransacaoDTO): string {
       return 'Aposta na rinha';
     case 'PREMIO_RINHA':
       return 'Prêmio da rinha';
+    case 'APOSTA_CHUVA':
+      return 'Aposta na Chuva de Ovos';
+    case 'PREMIO_CHUVA':
+      return 'Prêmio da Chuva de Ovos';
+    case 'APOSTA_BOMBAS':
+      return 'Aposta nos Ovos-Bomba';
+    case 'PREMIO_BOMBAS':
+      return 'Prêmio dos Ovos-Bomba';
     case 'SAQUE':
       return 'Saque (sistema antigo)';
     case 'SAQUE_ESTORNO':
@@ -53,6 +61,10 @@ const NOME_GALO: Partial<Record<Galo, string>> = { favorito: 'Favorito', brigao:
  *  a compra de tickets do Intercâmbio, quantos ("3 tickets"). */
 function detalhe(t: TransacaoDTO): string | null {
   if (t.tipo === 'LIBERACAO_ROLETA') return 'Inclui o primeiro giro';
+  if (t.tipo === 'PREMIO_CHUVA') {
+    const n = Number((t.detalhes as { rodadasGratis?: unknown }).rodadasGratis ?? 0);
+    return n > 0 ? `Com ${n} rodadas grátis` : null;
+  }
   if (t.tipo === 'APOSTA_RINHA' || t.tipo === 'PREMIO_RINHA') {
     const g = (t.detalhes as { galo?: Galo }).galo;
     return g ? `Galo ${NOME_GALO[g] ?? g}` : null;
@@ -116,6 +128,30 @@ function IconeTransacao({ tipo }: { tipo: TransacaoDTO['tipo'] }) {
       return (
         <span className="tile-icone" data-cor="azul" aria-hidden>
           {lucide(LockOpen)}
+        </span>
+      );
+    case 'APOSTA_BOMBAS':
+      return (
+        <span className="tile-icone" data-cor="rosa" aria-hidden>
+          <Ovo tipo="ganso" />
+        </span>
+      );
+    case 'PREMIO_BOMBAS':
+      return (
+        <span className="tile-icone" data-cor="verde" aria-hidden>
+          {lucide(Trophy)}
+        </span>
+      );
+    case 'APOSTA_CHUVA':
+      return (
+        <span className="tile-icone" data-cor="azul" aria-hidden>
+          <Ovo tipo="avestruz" />
+        </span>
+      );
+    case 'PREMIO_CHUVA':
+      return (
+        <span className="tile-icone" data-cor="verde" aria-hidden>
+          {lucide(Trophy)}
         </span>
       );
     case 'APOSTA_RINHA':

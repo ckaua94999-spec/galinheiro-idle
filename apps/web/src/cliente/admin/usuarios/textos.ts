@@ -28,6 +28,10 @@ export const NOME_TRANSACAO: Record<TipoTransacao, string> = {
   LIBERACAO_ROLETA: 'Liberação da roleta',
   APOSTA_RINHA: 'Aposta na rinha',
   PREMIO_RINHA: 'Prêmio da rinha',
+  APOSTA_CHUVA: 'Aposta na Chuva de Ovos',
+  PREMIO_CHUVA: 'Prêmio da Chuva de Ovos',
+  APOSTA_BOMBAS: 'Aposta nos Ovos-Bomba',
+  PREMIO_BOMBAS: 'Prêmio dos Ovos-Bomba',
 };
 
 export function descreverTransacao(t: TransacaoDTO): { titulo: string; detalhe?: string } {

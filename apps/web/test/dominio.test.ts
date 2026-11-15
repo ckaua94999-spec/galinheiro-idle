@@ -13,6 +13,8 @@ import {
 import { aceitarTermos } from '@/server/auth/contas';
 import { movimentarSaldo } from '@/server/dominio/repo';
 import { lutar } from '@/server/dominio/rinha';
+import { girarChuva } from '@/server/dominio/chuva';
+import { girarOvosBomba, tabuleirosBombas } from '@/server/dominio/bombas';
 import { extrato, listarEntidades } from '@/server/dominio/colecao';
 import { resgatarCupom } from '@/server/dominio/intercambio';
 import { ErroDominio } from '@/server/erros';
@@ -122,7 +124,6 @@ describe('fluxo principal do jogo', () => {
     expect(r.data.girosGratis).toBe(0);
     expect(r.data.saldoX100).toBe(0);
     expect(r.data.entity.slotId).toBe(2);
-    expect(r.data.entity.tipo).not.toBe('codorna');
     expect(r.data.entity.pronto).toBe(true); // primeira postura imediata
     const f = faixaDe(r.data.giro.rngValor);
     expect(f.tipo).toBe(r.data.giro.tipo);
@@ -290,6 +291,74 @@ describe('rinha de galo (moedas do jogo)', () => {
     expect(vitorias).toBeGreaterThan(0);
     expect(vitorias).toBeLessThan(40);
     expect(await codigoDoErro(banco.tx((c) => lutar(c, contaId, { galo: 'azarao', apostaX100: 99_999 }, T0, rng)))).toBe('PAYLOAD_INVALIDO');
+    const n = await banco.um<{ n: number }>('select job_checar_integridade() as n');
+    expect(n?.n).toBe(0);
+  });
+});
+
+describe('Chuva de Ovos (moedas do jogo)', () => {
+  it('fecha até liberar a roleta, cobra a aposta, paga o prêmio sorteado e mantém saldo = extrato', async () => {
+    const { contaId } = await novoMembro();
+    expect(await codigoDoErro(banco.tx((c) => girarChuva(c, contaId, 100, T0, rng)))).toBe('CHUVA_BLOQUEADA');
+    await darMoedas(contaId, CONFIG.roleta.liberacaoX100);
+    await banco.tx((c) => liberarRoleta(c, contaId, T0));
+    expect(await codigoDoErro(banco.tx((c) => girarChuva(c, contaId, 100, T0, rng)))).toBe('SALDO_INSUFICIENTE');
+    await darMoedas(contaId, 20_000);
+    expect(await codigoDoErro(banco.tx((c) => girarChuva(c, contaId, 99_999, T0, rng)))).toBe('PAYLOAD_INVALIDO');
+    let esperado = 20_000;
+    let ganhou = 0;
+    for (let i = 0; i < 60; i++) {
+      const r = await banco.tx((c) => girarChuva(c, contaId, 100, T0 + i, rng));
+      const { resultado } = r.data;
+      expect(resultado.premioX100).toBe(Math.min(resultado.rodadas.reduce((s, x) => s + x.ganhoX100, 0), 100 * 2_000));
+      esperado += resultado.premioX100 - 100;
+      if (resultado.premioX100 > 0) ganhou++;
+      expect(r.data.saldoX100).toBe(esperado);
+    }
+    expect(ganhou).toBeGreaterThan(0);
+    const jogadas = await banco.um<{ n: number }>('select count(*)::int as n from chuva_jogadas where player_id = $1', [contaId]);
+    expect(jogadas?.n).toBe(60);
+    const n = await banco.um<{ n: number }>('select job_checar_integridade() as n');
+    expect(n?.n).toBe(0);
+  });
+});
+
+describe('Ovos-Bomba (moedas do jogo)', () => {
+  it('fecha até liberar a roleta; o tabuleiro de bombas fica salvo por valor de aposta; saldo = extrato', async () => {
+    const { contaId } = await novoMembro();
+    expect(await codigoDoErro(banco.tx((c) => girarOvosBomba(c, contaId, 200, T0, rng)))).toBe('BOMBAS_BLOQUEADA');
+    await darMoedas(contaId, CONFIG.roleta.liberacaoX100);
+    await banco.tx((c) => liberarRoleta(c, contaId, T0));
+    expect(await codigoDoErro(banco.tx((c) => girarOvosBomba(c, contaId, 200, T0, rng)))).toBe('SALDO_INSUFICIENTE');
+    await darMoedas(contaId, 50_000);
+    expect(await codigoDoErro(banco.tx((c) => girarOvosBomba(c, contaId, 150, T0, rng)))).toBe('PAYLOAD_INVALIDO');
+
+    let esperado = 50_000;
+    let explosoes = 0;
+    let anterior: { id: number; contagem: number }[] = [];
+    for (let i = 0; i < 80; i++) {
+      const r = await banco.tx((c) => girarOvosBomba(c, contaId, 200, T0 + i, rng));
+      const { resultado } = r.data;
+      // as bombas que estavam presas contaram exatamente um giro
+      for (const b of anterior) expect(resultado.bombas.find((x) => x.id === b.id)?.contagem).toBe(b.contagem - 1);
+      anterior = resultado.proximo.bombas.map((b) => ({ id: b.id, contagem: b.contagem }));
+      explosoes += resultado.explosoes.length;
+      esperado += resultado.premioX100 - 200;
+      expect(r.data.saldoX100).toBe(esperado);
+      // o que o servidor guardou é o tabuleiro que o giro devolveu
+      const salvo = (await banco.tx((c) => tabuleirosBombas(c, contaId))).tabuleiros;
+      expect(salvo['200']).toEqual(resultado.proximo.bombas);
+    }
+    expect(explosoes).toBeGreaterThan(0);
+
+    // outra aposta = outro tabuleiro: o de 2 moedas não muda
+    const antes = (await banco.tx((c) => tabuleirosBombas(c, contaId))).tabuleiros['200'];
+    const outro = await banco.tx((c) => girarOvosBomba(c, contaId, 500, T0 + 500, rng));
+    expect(outro.data.resultado.bombas.every((b) => outro.data.resultado.novas.includes(b.id))).toBe(true); // começou vazio
+    expect((await banco.tx((c) => tabuleirosBombas(c, contaId))).tabuleiros['200']).toEqual(antes);
+
+    const jogadas = await banco.um<{ n: number }>('select count(*)::int as n from bombas_jogadas where player_id = $1', [contaId]);
+    expect(jogadas?.n).toBe(81);
     const n = await banco.um<{ n: number }>('select job_checar_integridade() as n');
     expect(n?.n).toBe(0);
   });

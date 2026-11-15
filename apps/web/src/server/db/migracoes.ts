@@ -1086,6 +1086,77 @@ alter table rinhas enable row level security;
 alter table pagamentos_config enable row level security;
 `;
 
+/** Chuva de Ovos: caça-níquel de cascata com moedas do jogo. Guarda o resumo de cada jogada (os quadros só vão na resposta). */
+const M0023_CHUVA_DE_OVOS = `
+alter type transacao_tipo add value if not exists 'APOSTA_CHUVA';
+alter type transacao_tipo add value if not exists 'PREMIO_CHUVA';
+
+alter table transactions drop constraint transactions_sinal_ck;
+alter table transactions add constraint transactions_sinal_ck check (
+     (tipo::text in ('BONUS_INICIAL', 'VENDA_OVOS', 'COMISSAO_INDICACAO', 'SAQUE_ESTORNO', 'PREMIO_RINHA', 'PREMIO_CHUVA') and valor_x100 > 0)
+  or (tipo::text in ('GIRO_ROLETA', 'UPGRADE_NINHO', 'COMPRA_TICKET', 'SAQUE', 'LIBERACAO_ROLETA', 'APOSTA_RINHA', 'APOSTA_CHUVA') and valor_x100 < 0)
+  or  tipo::text = 'AJUSTE_SUPORTE'
+);
+
+create table if not exists chuva_jogadas (
+  id                   uuid        primary key default gen_random_uuid(),
+  player_id            uuid        not null references players (id) on delete cascade,
+  aposta_x100          bigint      not null check (aposta_x100 > 0),
+  premio_x100          bigint      not null check (premio_x100 >= 0),
+  rodadas_gratis       integer     not null check (rodadas_gratis >= 0),
+  maior_multiplicador  integer     not null check (maior_multiplicador >= 1),
+  bateu_teto           boolean     not null,
+  aposta_transacao_id  uuid        not null unique references transactions (id) on delete cascade,
+  premio_transacao_id  uuid        unique references transactions (id) on delete cascade,
+  config_versao        text        not null,
+  criado_em            timestamptz not null,
+  constraint chuva_premio_ck check ((premio_x100 > 0) = (premio_transacao_id is not null))
+);
+create index if not exists chuva_jogadas_player_ix on chuva_jogadas (player_id, criado_em desc);
+alter table chuva_jogadas enable row level security;
+`;
+
+/**
+ * Ovos-Bomba: caça-níquel de bombas presas, com moedas do jogo. As bombas ficam de um giro para o outro, então cada
+ * jogador tem um tabuleiro por valor de aposta (bombas_estado). bombas_jogadas guarda o resumo de cada giro.
+ */
+const M0024_OVOS_BOMBA = `
+alter type transacao_tipo add value if not exists 'APOSTA_BOMBAS';
+alter type transacao_tipo add value if not exists 'PREMIO_BOMBAS';
+
+alter table transactions drop constraint transactions_sinal_ck;
+alter table transactions add constraint transactions_sinal_ck check (
+     (tipo::text in ('BONUS_INICIAL', 'VENDA_OVOS', 'COMISSAO_INDICACAO', 'SAQUE_ESTORNO', 'PREMIO_RINHA', 'PREMIO_CHUVA', 'PREMIO_BOMBAS') and valor_x100 > 0)
+  or (tipo::text in ('GIRO_ROLETA', 'UPGRADE_NINHO', 'COMPRA_TICKET', 'SAQUE', 'LIBERACAO_ROLETA', 'APOSTA_RINHA', 'APOSTA_CHUVA', 'APOSTA_BOMBAS') and valor_x100 < 0)
+  or  tipo::text = 'AJUSTE_SUPORTE'
+);
+
+create table if not exists bombas_estado (
+  player_id      uuid        not null references players (id) on delete cascade,
+  aposta_x100    bigint      not null check (aposta_x100 > 0),
+  bombas         jsonb       not null default '[]'::jsonb,
+  seq            integer     not null default 1 check (seq >= 1),
+  atualizado_em  timestamptz not null,
+  primary key (player_id, aposta_x100)
+);
+alter table bombas_estado enable row level security;
+
+create table if not exists bombas_jogadas (
+  id                   uuid        primary key default gen_random_uuid(),
+  player_id            uuid        not null references players (id) on delete cascade,
+  aposta_x100          bigint      not null check (aposta_x100 > 0),
+  premio_x100          bigint      not null check (premio_x100 >= 0),
+  explosoes            integer     not null check (explosoes >= 0),
+  aposta_transacao_id  uuid        not null unique references transactions (id) on delete cascade,
+  premio_transacao_id  uuid        unique references transactions (id) on delete cascade,
+  config_versao        text        not null,
+  criado_em            timestamptz not null,
+  constraint bombas_premio_ck check ((premio_x100 > 0) = (premio_transacao_id is not null))
+);
+create index if not exists bombas_jogadas_player_ix on bombas_jogadas (player_id, criado_em desc);
+alter table bombas_jogadas enable row level security;
+`;
+
 export const MIGRACOES: readonly Migracao[] = [
   { nome: '0001_init', sql: M0001_INIT },
   { nome: '0002_funcoes', sql: M0002_FUNCOES },
@@ -1109,4 +1180,6 @@ export const MIGRACOES: readonly Migracao[] = [
   { nome: '0020_bonus_cadastro', sql: M0020_BONUS_CADASTRO },
   { nome: '0021_cobranca_usdt', sql: M0021_COBRANCA_USDT },
   { nome: '0022_sem_dinheiro_real', sql: M0022_SEM_DINHEIRO_REAL },
+  { nome: '0023_chuva_de_ovos', sql: M0023_CHUVA_DE_OVOS },
+  { nome: '0024_ovos_bomba', sql: M0024_OVOS_BOMBA },
 ];

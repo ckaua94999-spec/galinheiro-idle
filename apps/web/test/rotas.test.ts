@@ -176,7 +176,7 @@ describe('rotas /api/v1', () => {
 
   it('config pública traz chances, liberação, rinha e chave VAPID', async () => {
     const corpo = await (await getConfig(req('GET', '/api/v1/config', { semCookie: true }))).json();
-    expect(corpo.data.roleta.chances.map((c: { pct: number }) => c.pct)).toEqual([60, 25, 12, 3]);
+    expect(corpo.data.roleta.chances.map((c: { tipo: string; pct: number }) => [c.tipo, c.pct])).toEqual([['codorna', 30], ['galinha', 30], ['pato', 25], ['ganso', 12], ['avestruz', 3]]);
     expect(corpo.data.roleta.liberacaoX100).toBe(1200);
     expect(corpo.data.rinha.galos.every((g: { retornoMedioPct: number }) => g.retornoMedioPct < 100)).toBe(true);
     expect(typeof corpo.data.push.vapidPublicKey).toBe('string');

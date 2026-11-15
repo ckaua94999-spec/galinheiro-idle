@@ -13,7 +13,7 @@ const CACHE_ESTATICO = `${VERSAO}-estatico`;
 const CACHE_PAGINAS = `${VERSAO}-paginas`;
 const ICONES_V = 2; // igual a ICONES_V em app/manifest.ts
 const PRECACHE = ['/offline.html', `/icones/icone-192.png?v=${ICONES_V}`, `/icones/icone-512.png?v=${ICONES_V}`, `/icones/selo-96.png?v=${ICONES_V}`, '/manifest.webmanifest'];
-const TELAS = ['/galinheiro', '/roleta', '/loja', '/colecao', '/ajustes', '/extrato', '/suporte', '/convites', '/intercambio', '/rinha', '/termos', '/entrar'];
+const TELAS = ['/galinheiro', '/roleta', '/loja', '/colecao', '/ajustes', '/extrato', '/suporte', '/convites', '/intercambio', '/rinha', '/chuva', '/bombas', '/manual', '/termos', '/entrar'];
 const RECURSO_ESTATICO = /\/_next\/static\/[^"'\\\s)<>]+/g;
 
 async function guardarTela(caminho, paginas, estatico) {
